@@ -1,4 +1,4 @@
-import type { Flight } from '../types';
+import type { Flight, Membership } from '../types';
 import { db } from '../db/db';
 
 /**
@@ -21,13 +21,37 @@ async function smartUpsert(flight: Omit<Flight, 'id'>) {
   }
 }
 
-export const exportToJSON = (flights: Flight[]) => {
-  const data = JSON.stringify(flights, null, 2);
+/**
+ * Smart Upsert for Memberships: Update if matching airline and number exists.
+ */
+async function smartUpsertMembership(membership: Omit<Membership, 'id'>) {
+  const existing = await db.memberships
+    .where({
+      airlineName: membership.airlineName,
+      membershipNumber: membership.membershipNumber,
+    })
+    .first();
+
+  if (existing) {
+    return db.memberships.update(existing.id!, membership);
+  } else {
+    return db.memberships.add(membership);
+  }
+}
+
+export const exportToJSON = (flights: Flight[], memberships: Membership[]) => {
+  const bundle = {
+    version: 3,
+    exportedAt: new Date().toISOString(),
+    flights,
+    memberships
+  };
+  const data = JSON.stringify(bundle, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `booba-pass-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `booba-pass-bundle-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
 };
@@ -39,7 +63,7 @@ export const exportToCSV = (flights: Flight[]) => {
   const headers = [
     'departureIata', 'arrivalIata', 'departureCity', 'arrivalCity',
     'scheduledDepartureDate', 'scheduledDepartureTime', 'scheduledArrivalDate', 'scheduledArrivalTime',
-    'airline', 'flightNumber', 'seatClass', 'seat', 'aircraft', 'notes', 'distanceKm'
+    'airline', 'flightNumber', 'seatClass', 'seat', 'aircraft', 'notes', 'distanceKm', 'boardingPassDataUrl'
   ];
 
   const csvRows = flights.map(f => {
@@ -62,46 +86,82 @@ export const exportToCSV = (flights: Flight[]) => {
 export const handleImportFile = async (file: File): Promise<{ success: number; failed: number }> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = async (event) => {
       try {
-        const content = e.target?.result as string;
-        let flights: any[] = [];
+        const content = event.target?.result as string;
+        let success = 0;
+        let failed = 0;
 
+        // Handle JSON Bundle
         if (file.name.endsWith('.json')) {
-          flights = JSON.parse(content);
-        } else if (file.name.endsWith('.csv')) {
+          const bundle = JSON.parse(content);
+
+          // Case 1: Legacy format (just an array of flights)
+          if (Array.isArray(bundle)) {
+            for (const f of bundle) {
+              if (f.airline && f.flightNumber && f.scheduledDepartureDate) {
+                const { id, ...data } = f;
+                await smartUpsert(data);
+                success++;
+              } else {
+                failed++;
+              }
+            }
+          }
+          // Case 2: New Bundle format
+          else if (bundle.flights || bundle.memberships) {
+            if (bundle.flights && Array.isArray(bundle.flights)) {
+              for (const f of bundle.flights) {
+                if (f.airline && f.flightNumber && f.scheduledDepartureDate) {
+                  const { id, ...data } = f;
+                  await smartUpsert(data);
+                  success++;
+                } else {
+                  failed++;
+                }
+              }
+            }
+            if (bundle.memberships && Array.isArray(bundle.memberships)) {
+              for (const m of bundle.memberships) {
+                if (m.airlineName && m.membershipNumber) {
+                  const { id, ...data } = m;
+                  await smartUpsertMembership(data);
+                  // We don't count these in the flight success count for now to keep UI simple, 
+                  // or we could combine. Let's combine for the "success" count.
+                  success++;
+                } else {
+                  failed++;
+                }
+              }
+            }
+          }
+        }
+        // Handle CSV (Flights only)
+        else if (file.name.endsWith('.csv')) {
           const lines = content.split('\n');
-          const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
-          flights = lines.slice(1).filter(l => l.trim()).map(line => {
+          const headers = lines[0].split(',').map((h: string) => h.replace(/"/g, '').trim());
+          const flights = lines.slice(1).filter((l: string) => l.trim()).map((line: string) => {
             const values = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
             const obj: any = {};
-            headers.forEach((h, i) => {
+            headers.forEach((h: string, i: number) => {
               let val = values[i]?.replace(/^"|"$/g, '').replace(/""/g, '"') || '';
               if (h === 'distanceKm') obj[h] = parseFloat(val);
               else obj[h] = val;
             });
             return obj;
           });
-        }
 
-        let success = 0;
-        let failed = 0;
-
-        for (const f of flights) {
-          try {
-            // Basic validation
+          for (const f of flights) {
             if (f.airline && f.flightNumber && f.scheduledDepartureDate) {
-              const { id, ...data } = f; // Remove existing ID if present to let DB/Upsert handle it
+              const { id, ...data } = f;
               await smartUpsert(data);
               success++;
             } else {
               failed++;
             }
-          } catch (err) {
-            console.error('Import row failed', err);
-            failed++;
           }
         }
+
         resolve({ success, failed });
       } catch (err) {
         reject(err);

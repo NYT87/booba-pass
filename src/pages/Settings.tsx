@@ -10,6 +10,7 @@ import { Moon, Sun, Monitor } from 'lucide-react';
 export default function Settings() {
   const navigate = useNavigate();
   const flights = useLiveQuery(() => db.flights.toArray());
+  const memberships = useLiveQuery(() => db.memberships.toArray());
   const [importing, setImporting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [theme, setTheme] = useTheme();
@@ -24,7 +25,7 @@ export default function Settings() {
       const result = await handleImportFile(file);
       setMessage({
         type: 'success',
-        text: `Import complete! ${result.success} flights upserted successfully. ${result.failed} rows skipped.`
+        text: `Import complete! ${result.success} items (Flights/Loyalty) upserted successfully. ${result.failed} rows skipped.`
       });
     } catch (err) {
       console.error(err);
@@ -74,8 +75,11 @@ export default function Settings() {
   };
 
   const clearData = async () => {
-    if (confirm('Are you ABSOLUTELY sure? This will delete all your flight data and photos from this device.')) {
-      await db.flights.clear();
+    if (confirm('Are you ABSOLUTELY sure? This will delete all your flights, memberships, and photos from this device.')) {
+      await Promise.all([
+        db.flights.clear(),
+        db.memberships.clear()
+      ]);
       alert('Local storage cleared.');
     }
   };
@@ -118,11 +122,11 @@ export default function Settings() {
         <div className="card" style={{ padding: 16 }}>
           <h4 style={{ marginBottom: 12, fontSize: '0.9rem' }}>Export Data</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <button className="btn-ghost" onClick={() => flights && exportToJSON(flights)} style={{ justifyContent: 'flex-start', padding: 12, background: 'var(--bg-input)' }}>
+            <button className="btn-ghost" onClick={() => (flights && memberships) && exportToJSON(flights, memberships)} style={{ justifyContent: 'flex-start', padding: 12, background: 'var(--bg-input)' }}>
               <FileJson size={18} style={{ marginRight: 10, color: 'var(--accent)' }} />
               <div>
                 <div style={{ fontSize: '0.9rem' }}>Full Backup (JSON)</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Includes all flight details and photos.</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Includes flights, boarding passes, and loyalty cards.</div>
               </div>
             </button>
 
