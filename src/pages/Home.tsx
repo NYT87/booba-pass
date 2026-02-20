@@ -1,7 +1,7 @@
 import StatCard from '../components/StatCard';
 import FlightCard from '../components/FlightCard';
 import { useFlights, useStats } from '../hooks/useFlights';
-import { Plane, MapPin, Clock, Plus, Settings as SettingsIcon } from 'lucide-react';
+import { Plane, MapPin, Clock, Settings as SettingsIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
@@ -53,10 +53,6 @@ export default function Home() {
           </div>
         )}
       </section>
-
-      <button className="fab" onClick={() => navigate('/flights/new')}>
-        <Plus size={28} />
-      </button>
     </div>
   );
 }
