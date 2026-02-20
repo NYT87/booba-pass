@@ -45,6 +45,20 @@ export interface Flight {
   departureTimeZone?: string;
   arrivalTimeZone?: string;
   photoDataUrls?: string[];
+  boardingPassDataUrl?: string;
+}
+
+export type MembershipCodeType = 'QR' | 'BARCODE' | 'NONE';
+
+export interface Membership {
+  id?: number;
+  airlineName: string;
+  programName: string;
+  memberName: string;
+  membershipNumber: string;
+  codeValue?: string;
+  codeType: MembershipCodeType;
+  notes?: string;
 }
 
 /** Returns duration in minutes from two date+time strings */

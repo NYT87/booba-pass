@@ -1,7 +1,7 @@
 import StatCard from '../components/StatCard';
 import FlightCard from '../components/FlightCard';
 import { useFlights, useStats } from '../hooks/useFlights';
-import { Plane, MapPin, Clock, Settings as SettingsIcon } from 'lucide-react';
+import { Plane, MapPin, Clock, Settings as SettingsIcon, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
@@ -15,7 +15,10 @@ export default function Home() {
     <div className="page animate-in">
       <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="logo">booba-pass</div>
-        <button className="btn-ghost" onClick={() => navigate('/settings')}><SettingsIcon size={20} /></button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn-ghost" style={{ color: 'var(--accent)' }} onClick={() => navigate('/flights/new')}><Plus size={24} /></button>
+          <button className="btn-ghost" onClick={() => navigate('/settings')}><SettingsIcon size={20} /></button>
+        </div>
       </header>
 
       <div className="stats-row">

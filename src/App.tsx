@@ -6,6 +6,8 @@ import FlightDetail from './pages/FlightDetail';
 import AddEditFlight from './pages/AddEditFlight';
 import MapView from './pages/MapView';
 import Stats from './pages/Stats';
+import Memberships from './pages/Memberships';
+import AddEditMembership from './pages/AddEditMembership';
 import Settings from './pages/Settings';
 import { useTheme } from './hooks/useTheme';
 
@@ -22,6 +24,9 @@ function App() {
           <Route path="/flights/:id/edit" element={<AddEditFlight />} />
           <Route path="/map" element={<MapView />} />
           <Route path="/stats" element={<Stats />} />
+          <Route path="/memberships" element={<Memberships />} />
+          <Route path="/memberships/new" element={<AddEditMembership />} />
+          <Route path="/memberships/:id/edit" element={<AddEditMembership />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </div>

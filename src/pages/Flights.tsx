@@ -1,10 +1,13 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFlights } from '../hooks/useFlights';
 import FlightCard from '../components/FlightCard';
+import { Plus } from 'lucide-react';
 
 type FilterType = 'all' | 'past' | 'upcoming';
 
 export default function Flights() {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<FilterType>('all');
   const flights = useFlights(filter);
 
@@ -19,9 +22,10 @@ export default function Flights() {
   const years = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
 
   return (
-    <div className="page">
-      <header className="page-header">
+    <div className="page animate-in">
+      <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>My Flights</h1>
+        <button className="btn-ghost" style={{ color: 'var(--accent)' }} onClick={() => navigate('/flights/new')}><Plus size={24} /></button>
       </header>
 
       <div className="filter-tabs">

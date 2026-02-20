@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useFlightById, deleteFlight, saveFlight } from '../hooks/useFlights';
 import { formatDuration, flightDurationMin } from '../types';
-import { ArrowLeft, Edit2, Trash2, ExternalLink, Plane, MapPin, Calendar, Clock, CreditCard, Camera, X } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, ExternalLink, Plane, MapPin, Calendar, Clock, CreditCard, Camera, X, Ticket, Maximize2 } from 'lucide-react';
 
 export default function FlightDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const flight = useFlightById(id ? parseInt(id) : undefined);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showBoardingPass, setShowBoardingPass] = useState(false);
 
   if (!flight) return <div className="page"><p>Loading...</p></div>;
 
@@ -129,6 +130,36 @@ export default function FlightDetail() {
         </a>
       )}
 
+      {flight.boardingPassDataUrl && (
+        <section className="form-section">
+          <div className="form-section-title">Boarding Pass</div>
+          <button
+            className="card"
+            onClick={() => setShowBoardingPass(true)}
+            style={{
+              width: '100%',
+              padding: 16,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 16,
+              background: 'linear-gradient(135deg, var(--accent) 0%, #1d88bb 100%)',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <div style={{ padding: 10, background: 'rgba(255,255,255,0.2)', borderRadius: 12 }}>
+              <Ticket size={24} />
+            </div>
+            <div style={{ textAlign: 'left', flex: 1 }}>
+              <div style={{ fontSize: '1rem', fontWeight: 700 }}>Travel Mode</div>
+              <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Open boarding pass for scanning</div>
+            </div>
+            <Maximize2 size={20} style={{ opacity: 0.7 }} />
+          </button>
+        </section>
+      )}
+
       <section className="form-section">
         <div className="form-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           Photos
@@ -165,6 +196,58 @@ export default function FlightDetail() {
         <div className="lightbox-overlay" onClick={() => setSelectedImage(null)}>
           <button className="lightbox-close"><X size={32} /></button>
           <img src={selectedImage} alt="Full size" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+
+      {/* Boarding Pass Travel Mode Modal */}
+      {showBoardingPass && flight.boardingPassDataUrl && (
+        <div className="travel-mode-overlay animate-in" onClick={() => setShowBoardingPass(false)}>
+          <div className="travel-mode-content" onClick={(e) => e.stopPropagation()}>
+            <header className="travel-mode-header">
+              <button className="btn-ghost" onClick={() => setShowBoardingPass(false)}><X size={28} /></button>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7 }}>Traveling to</div>
+                <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{flight.arrivalCity}</div>
+              </div>
+              <div style={{ width: 44 }} /> {/* Spacer */}
+            </header>
+
+            <div className="travel-pass-container">
+              {flight.boardingPassDataUrl.startsWith('data:application/pdf') ? (
+                <div className="pdf-fallback">
+                  <Ticket size={64} style={{ marginBottom: 16, opacity: 0.3 }} />
+                  <p>Boarding Pass (PDF)</p>
+                  <a href={flight.boardingPassDataUrl} download={`boarding-pass-${flight.flightNumber}.pdf`} className="btn-primary" style={{ marginTop: 16 }}>
+                    Download to Open
+                  </a>
+                </div>
+              ) : (
+                <div className="boarding-pass-image-wrap">
+                  <img src={flight.boardingPassDataUrl} alt="Boarding Pass" />
+                </div>
+              )}
+            </div>
+
+            <footer className="travel-mode-footer">
+              <div className="brightness-hint">
+                💡 Tip: Maximize your screen brightness for the airport scanner
+              </div>
+              <div className="flight-quick-info">
+                <div>
+                  <label>Flight</label>
+                  <span>{flight.flightNumber}</span>
+                </div>
+                <div>
+                  <label>Seat</label>
+                  <span>{flight.seat || '—'}</span>
+                </div>
+                <div>
+                  <label>Gate</label>
+                  <span>Check Screens</span>
+                </div>
+              </div>
+            </footer>
+          </div>
         </div>
       )}
 

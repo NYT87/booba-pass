@@ -4,7 +4,7 @@ import { useFlightById, saveFlight } from '../hooks/useFlights';
 import AirportSearch from '../components/AirportSearch';
 import type { Airport, Flight } from '../types';
 import { haversineKm, computeDurationMin, formatDuration } from '../types';
-import { ArrowLeftRight, Save, X, Camera, Trash2 } from 'lucide-react';
+import { ArrowLeftRight, Save, X, Camera, Trash2, Ticket } from 'lucide-react';
 
 export default function AddEditFlight() {
   const { id } = useParams();
@@ -32,6 +32,7 @@ export default function AddEditFlight() {
   const [notes, setNotes] = useState('');
   const [trackUrl, setTrackUrl] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
+  const [boardingPass, setBoardingPass] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (existingFlight) {
@@ -71,6 +72,7 @@ export default function AddEditFlight() {
       setNotes(existingFlight.notes ?? '');
       setTrackUrl(existingFlight.trackUrl ?? '');
       setPhotos(existingFlight.photoDataUrls ?? []);
+      setBoardingPass(existingFlight.boardingPassDataUrl);
     } else {
       // Defaults for new flight
       const now = new Date();
@@ -115,6 +117,7 @@ export default function AddEditFlight() {
       notes: notes || undefined,
       trackUrl: trackUrl || undefined,
       photoDataUrls: photos.length > 0 ? photos : undefined,
+      boardingPassDataUrl: boardingPass,
       distanceKm,
     };
 
@@ -143,6 +146,17 @@ export default function AddEditFlight() {
 
   const removePhoto = (index: number) => {
     setPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleBoardingPassUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setBoardingPass(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -288,6 +302,38 @@ export default function AddEditFlight() {
           </div>
         </div>
       )}
+
+      <div className="form-section">
+        <div className="form-section-title">Boarding Pass</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <label className="btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer' }}>
+            <input type="file" accept="image/*,application/pdf" onChange={handleBoardingPassUpload} hidden />
+            <Ticket size={18} />
+            <span>Add Boarding Pass</span>
+          </label>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textAlign: 'center', fontStyle: 'italic' }}>
+            Note: This purely stores the image/PDF for quick access. It does not auto-fill flight details (yet!).
+          </p>
+        </div>
+        {boardingPass && (
+          <div className="card" style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="boarding-pass-preview" style={{ width: 60, height: 60, borderRadius: 8, overflow: 'hidden', background: 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {boardingPass.startsWith('data:application/pdf') ? (
+                <Ticket size={24} style={{ opacity: 0.5 }} />
+              ) : (
+                <img src={boardingPass} alt="Boarding Pass" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Boarding Pass Attached</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Ready for your trip</div>
+            </div>
+            <button className="btn-ghost" style={{ color: 'var(--danger)' }} onClick={() => setBoardingPass(undefined)}>
+              <Trash2 size={18} />
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="form-section">
         <div className="form-section-title">Photos</div>
