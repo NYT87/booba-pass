@@ -3,13 +3,15 @@ import FlightCard from '../components/FlightCard';
 import { useFlights, useStats } from '../hooks/useFlights';
 import { Plane, MapPin, Clock, Settings as SettingsIcon, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { isUpcoming } from '../types';
 
 export default function Home() {
   const navigate = useNavigate();
   const flights = useFlights('all');
   const stats = useStats();
 
-  const recentFlights = flights?.slice(0, 5) ?? [];
+  const upcomingFlights = flights?.filter(isUpcoming) ?? [];
+  const pastFlights = flights?.filter(f => !isUpcoming(f)).slice(0, 3) ?? [];
 
   return (
     <div className="page animate-in">
@@ -39,10 +41,7 @@ export default function Home() {
         />
       </div>
 
-      <section style={{ marginTop: 28 }}>
-        <div className="section-header">
-          <h2>Global Footprint</h2>
-        </div>
+      <section>
         <div className="map-preview-card" onClick={() => navigate('/map')}>
           <div className="map-placeholder">
             <div className="map-dot" style={{ top: '30%', left: '30%' }}></div>
@@ -52,6 +51,7 @@ export default function Home() {
             </svg>
           </div>
           <div className="map-preview-info">
+            <h2>Global Footprint</h2>
             <p>Explore your travel history on an interactive world map.</p>
           </div>
           <div className="map-preview-arrow">
@@ -60,20 +60,29 @@ export default function Home() {
         </div>
       </section>
 
-      <section>
+      {upcomingFlights.length > 0 && (
+        <section style={{ marginTop: 12 }}>
+          <div className="section-header">
+            <h2>Upcoming Flights</h2>
+          </div>
+          {upcomingFlights.map(f => <FlightCard key={f.id} flight={f} />)}
+        </section>
+      )}
+
+      <section style={{ marginTop: 12 }}>
         <div className="section-header">
           <h2>Recent Flights</h2>
-          {flights && flights.length > 5 && (
+          {flights && flights.length > pastFlights.length && (
             <button onClick={() => navigate('/flights')}>View All</button>
           )}
         </div>
 
-        {recentFlights.length > 0 ? (
-          recentFlights.map(f => <FlightCard key={f.id} flight={f} />)
+        {pastFlights.length > 0 ? (
+          pastFlights.map(f => <FlightCard key={f.id} flight={f} />)
         ) : (
           <div className="empty-state">
             <div className="empty-icon">✈️</div>
-            <p>No flights tracked yet.<br />Tap the + button to add your first flight!</p>
+            <p>No completed flights found.</p>
           </div>
         )}
       </section>

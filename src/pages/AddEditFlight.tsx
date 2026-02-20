@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useFlightById, saveFlight } from '../hooks/useFlights';
+import { useFlightById, saveFlight, useStats } from '../hooks/useFlights';
 import AirportSearch from '../components/AirportSearch';
 import type { Airport, Flight } from '../types';
 import { haversineKm, computeDurationMin, formatDuration } from '../types';
@@ -10,6 +10,7 @@ export default function AddEditFlight() {
   const { id } = useParams();
   const navigate = useNavigate();
   const existingFlight = useFlightById(id ? parseInt(id) : undefined);
+  const stats = useStats(); // Get stats for all time for suggestions
 
   const [departure, setDeparture] = useState<Airport | null>(null);
   const [arrival, setArrival] = useState<Airport | null>(null);
@@ -74,7 +75,6 @@ export default function AddEditFlight() {
       setPhotos(existingFlight.photoDataUrls ?? []);
       setBoardingPass(existingFlight.boardingPassDataUrl);
     } else {
-      // Defaults for new flight
       const now = new Date();
       const today = now.toISOString().slice(0, 10);
       setScheduledDepartureDate(today);
@@ -82,9 +82,26 @@ export default function AddEditFlight() {
     }
   }, [existingFlight]);
 
+  const handleScheduledDepartureDateChange = (val: string) => {
+    const oldDepDate = scheduledDepartureDate;
+    setScheduledDepartureDate(val);
+    // If arrival was same as old departure, or arrival is now earlier than departure, move arrival to same day
+    if (scheduledArrivalDate === oldDepDate || scheduledArrivalDate < val) {
+      setScheduledArrivalDate(val);
+    }
+  };
+
   const handleSave = async () => {
     if (!departure || !arrival || !scheduledDepartureDate || !scheduledDepartureTime || !airline || !flightNumber) {
       alert('Please fill in required fields (Airports, Date/Time, Airline, Flight Number)');
+      return;
+    }
+
+    // Validation for arrival vs departure chronological order
+    const depDateTime = `${scheduledDepartureDate}T${scheduledDepartureTime}`;
+    const arrDateTime = `${scheduledArrivalDate}T${scheduledArrivalTime}`;
+    if (arrDateTime <= depDateTime) {
+      alert('Arrival must be later than departure. Please check dates and times.');
       return;
     }
 
@@ -110,7 +127,7 @@ export default function AddEditFlight() {
       departureTimeZone: departure.timezone,
       arrivalTimeZone: arrival.timezone,
       airline,
-      flightNumber,
+      flightNumber: flightNumber.toUpperCase(),
       seatClass,
       seat: seat || undefined,
       aircraft: aircraft || undefined,
@@ -181,7 +198,7 @@ export default function AddEditFlight() {
         <div className="form-row">
           <div className="form-field">
             <label>Departure Date</label>
-            <input type="date" value={scheduledDepartureDate} onChange={e => setScheduledDepartureDate(e.target.value)} />
+            <input type="date" value={scheduledDepartureDate} onChange={e => handleScheduledDepartureDateChange(e.target.value)} />
           </div>
           <div className="form-field">
             <label>Time</label>
@@ -229,11 +246,20 @@ export default function AddEditFlight() {
         <div className="form-row">
           <div className="form-field">
             <label>Airline</label>
-            <input type="text" value={airline} onChange={e => setAirline(e.target.value)} placeholder="e.g. Korean Air" />
+            <input
+              type="text"
+              list="airline-list"
+              value={airline}
+              onChange={e => setAirline(e.target.value)}
+              placeholder="e.g. Korean Air"
+            />
+            <datalist id="airline-list">
+              {stats?.airlines.map(a => <option key={a.airline} value={a.airline} />)}
+            </datalist>
           </div>
           <div className="form-field">
             <label>Flight #</label>
-            <input type="text" value={flightNumber} onChange={e => setFlightNumber(e.target.value)} placeholder="e.g. KE709" />
+            <input type="text" value={flightNumber} onChange={e => setFlightNumber(e.target.value.toUpperCase())} placeholder="e.g. KE709" />
           </div>
         </div>
 
@@ -259,7 +285,16 @@ export default function AddEditFlight() {
           </div>
           <div className="form-field">
             <label>Aircraft</label>
-            <input type="text" value={aircraft} onChange={e => setAircraft(e.target.value)} placeholder="e.g. A350-900" />
+            <input
+              type="text"
+              list="aircraft-list"
+              value={aircraft}
+              onChange={e => setAircraft(e.target.value)}
+              placeholder="e.g. A350-900"
+            />
+            <datalist id="aircraft-list">
+              {stats?.airplanes.map(a => <option key={a.aircraft} value={a.aircraft} />)}
+            </datalist>
           </div>
         </div>
       </div>

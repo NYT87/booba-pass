@@ -10,7 +10,8 @@ interface Props {
 let airportsCache: Airport[] | null = null;
 async function loadAirports(): Promise<Airport[]> {
   if (airportsCache) return airportsCache;
-  const res = await fetch('/airports.json');
+  const baseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+  const res = await fetch(`${baseUrl}airports.json`);
   airportsCache = await res.json();
   return airportsCache!;
 }
