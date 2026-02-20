@@ -21,7 +21,7 @@ export interface FlightStats {
   totalDistanceKm: number;
   totalDurationMin: number;
   flightsByMonth: { month: string; count: number }[];
-  topRoutes: { route: string; count: number }[];
+  airplanes: { aircraft: string; count: number }[];
   airlines: { airline: string; count: number }[];
 }
 
@@ -45,15 +45,16 @@ export function useStats(year?: number): FlightStats | undefined {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([month, count]) => ({ month, count }));
 
-    const routeMap: Record<string, number> = {};
+    const aircraftMap: Record<string, number> = {};
     for (const f of flights) {
-      const key = `${f.departureIata}→${f.arrivalIata}`;
-      routeMap[key] = (routeMap[key] ?? 0) + 1;
+      if (f.aircraft) {
+        aircraftMap[f.aircraft] = (aircraftMap[f.aircraft] ?? 0) + 1;
+      }
     }
-    const topRoutes = Object.entries(routeMap)
+    const airplanes = Object.entries(aircraftMap)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
-      .map(([route, count]) => ({ route, count }));
+      .map(([aircraft, count]) => ({ aircraft, count }));
 
     const airlineMap: Record<string, number> = {};
     for (const f of flights) {
@@ -63,7 +64,7 @@ export function useStats(year?: number): FlightStats | undefined {
       .sort(([, a], [, b]) => b - a)
       .map(([airline, count]) => ({ airline, count }));
 
-    return { totalFlights, totalDistanceKm, totalDurationMin, flightsByMonth, topRoutes, airlines };
+    return { totalFlights, totalDistanceKm, totalDurationMin, flightsByMonth, airplanes, airlines };
   }, [year]);
 }
 

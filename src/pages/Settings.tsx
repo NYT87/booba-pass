@@ -81,7 +81,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="page animate-in">
+    <div className="page animate-in" style={{ padding: '0 20px' }}>
       <header className="page-header">
         <button onClick={() => navigate(-1)} className="btn-ghost"><ArrowLeft size={24} /></button>
         <h1>Settings</h1>

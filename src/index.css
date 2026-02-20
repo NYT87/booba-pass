@@ -36,7 +36,7 @@
   --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
   --shadow-glow: 0 0 24px rgba(37, 175, 244, 0.2);
 
-  --nav-bg: rgba(10, 15, 30, 0.9);
+  --nav-bg: #0a0f1e;
 }
 
 [data-theme='light'] {
@@ -55,7 +55,7 @@
   --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.05);
   --shadow-glow: 0 0 12px rgba(37, 175, 244, 0.1);
 
-  --nav-bg: rgba(255, 255, 255, 0.9);
+  --nav-bg: #ffffff;
 }
 
 /* ── Reset ─────────────────────────────────────────────────── */
@@ -129,7 +129,7 @@ img {
 
 /* ── Page Wrapper ──────────────────────────────────────────── */
 .page {
-  padding: 16px 16px 24px;
+  padding: 0 0 24px;
   min-height: 100%;
 }
 
@@ -138,7 +138,7 @@ img {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 16px 8px;
+  padding: 16px 20px 12px;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -187,7 +187,7 @@ img {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  padding: 0 16px 16px;
+  padding: 0 20px 16px;
 }
 
 .stat-card {
@@ -226,7 +226,7 @@ img {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 16px 10px;
+  padding: 16px 20px 10px;
 }
 
 .section-header h2 {
@@ -249,7 +249,7 @@ img {
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  margin: 0 16px 10px;
+  margin: 0 20px 10px;
   cursor: pointer;
 }
 
@@ -404,7 +404,7 @@ img {
 .filter-tabs {
   display: flex;
   gap: 8px;
-  padding: 0 16px 16px;
+  padding: 0 20px 16px;
 }
 
 .filter-tab {
@@ -427,7 +427,7 @@ img {
 
 /* ── Year Groups ───────────────────────────────────────────── */
 .year-group-header {
-  padding: 8px 16px 6px;
+  padding: 8px 20px 8px;
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-muted);
@@ -441,13 +441,13 @@ img {
   height: 260px;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  margin: 0 16px;
-  width: calc(100% - 32px);
+  margin: 0 20px;
+  width: calc(100% - 40px);
   border: 1px solid var(--border);
 }
 
 .map-full {
-  height: calc(100dvh - var(--nav-height) - var(--safe-bottom));
+  height: calc(100dvh - var(--nav-height) - 60px - var(--safe-bottom));
 }
 
 .leaflet-container {
@@ -667,7 +667,7 @@ img {
 /* ── Empty State ───────────────────────────────────────────── */
 .empty-state {
   text-align: center;
-  padding: 60px 24px;
+  padding: 60px 20px;
   color: var(--text-muted);
 }
 
@@ -687,8 +687,8 @@ img {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 16px;
-  margin-bottom: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
 }
 
 .chart-card h3 {

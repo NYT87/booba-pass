@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStats } from '../hooks/useFlights';
-import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import StatCard from '../components/StatCard';
 import { Plane, MapPin, Clock } from 'lucide-react';
 
@@ -36,34 +36,14 @@ export default function Stats() {
         <StatCard icon={<Clock size={18} />} value={Math.round(stats.totalDurationMin / 60)} label="Hours" />
       </div>
 
-      <div className="chart-card">
-        <h3>Monthly Activity</h3>
-        <div style={{ width: '100%', height: 200 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={stats.flightsByMonth}>
-              <XAxis dataKey="month" hide />
-              <Tooltip
-                contentStyle={{ background: '#1a2236', border: '1px solid #374151', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', opacity: 1 }}
-                itemStyle={{ color: 'var(--accent)', fontWeight: 600 }}
-                labelStyle={{ color: 'var(--text-secondary)' }}
-                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-              />
-              <Bar dataKey="count" fill="#25aff4" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
 
       <div className="chart-card">
-        <h3>Top Routes</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {stats.topRoutes.map((r, i) => (
-            <div key={r.route} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 80, fontSize: '0.8rem', fontWeight: 600 }}>{r.route}</div>
-              <div style={{ flex: 1, height: 8, background: 'var(--bg-input)', borderRadius: 4, overflow: 'hidden' }}>
-                <div style={{ width: `${(r.count / stats.topRoutes[0].count) * 100}%`, height: '100%', background: COLORS[i % COLORS.length] }} />
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{r.count}</div>
+        <h3>Airplanes</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {stats.airplanes.map((a) => (
+            <div key={a.aircraft} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{a.aircraft}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--accent)', fontWeight: 700 }}>{a.count}</div>
             </div>
           ))}
         </div>
