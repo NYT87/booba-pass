@@ -1,9 +1,25 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { execSync } from 'child_process';
+import { readFileSync } from 'fs';
+
+const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'));
+const version = packageJson.version || '0.0.0';
+let commitHash = 'dev';
+
+try {
+  commitHash = execSync('git rev-parse --short HEAD').toString().trim();
+} catch (e) {
+  console.warn('Could not get git commit hash, falling back to "dev"');
+}
 
 export default defineConfig({
   base: '/booba-pass/',
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+    __COMMIT_HASH__: JSON.stringify(commitHash),
+  },
   plugins: [
     react(),
     VitePWA({

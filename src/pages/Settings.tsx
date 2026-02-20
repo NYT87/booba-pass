@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { db } from '../db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ArrowLeft, Upload, FileJson, FileSpreadsheet, Trash2 } from 'lucide-react';
+import { ArrowLeft, Upload, FileJson, FileSpreadsheet, Trash2, Info } from 'lucide-react';
 import { exportToJSON, exportToCSV, handleImportFile } from '../utils/dataTransfer';
 import { useState } from 'react';
 
@@ -146,6 +146,10 @@ export default function Settings() {
       <div className="form-section" style={{ marginTop: 24 }}>
         <div className="form-section-title" style={{ color: 'var(--danger)' }}>Danger Zone</div>
         <div className="card" style={{ padding: 16, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+          <button className="btn-ghost" onClick={() => navigate('/debug')} style={{ width: '100%', justifyContent: 'center', marginBottom: 12 }}>
+            <Info size={18} style={{ marginRight: 8, color: 'var(--accent)' }} />
+            System Debug Info
+          </button>
           <button className="btn-ghost" onClick={clearData} style={{ color: 'var(--danger)', width: '100%', justifyContent: 'center' }}>
             <Trash2 size={18} style={{ marginRight: 8 }} />
             Clear All App Data
