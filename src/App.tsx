@@ -7,8 +7,10 @@ import AddEditFlight from './pages/AddEditFlight';
 import MapView from './pages/MapView';
 import Stats from './pages/Stats';
 import Settings from './pages/Settings';
+import { useTheme } from './hooks/useTheme';
 
 function App() {
+  useTheme();
   return (
     <Router>
       <div className="app-content">

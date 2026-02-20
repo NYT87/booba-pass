@@ -4,12 +4,15 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { ArrowLeft, Upload, FileJson, FileSpreadsheet, Trash2, Info, Cpu, GitBranch } from 'lucide-react';
 import { exportToJSON, exportToCSV, handleImportFile } from '../utils/dataTransfer';
 import { useState } from 'react';
+import { useTheme } from '../hooks/useTheme';
+import { Moon, Sun, Monitor } from 'lucide-react';
 
 export default function Settings() {
   const navigate = useNavigate();
   const flights = useLiveQuery(() => db.flights.toArray());
   const [importing, setImporting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [theme, setTheme] = useTheme();
 
   const onImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -141,6 +144,27 @@ export default function Settings() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="form-section" style={{ marginTop: 24 }}>
+        <div className="form-section-title">Appearance</div>
+        <div className="card" style={{ padding: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            {(['light', 'dark', 'system'] as const).map((t) => (
+              <button
+                key={t}
+                className={`class-btn ${theme === t ? 'active' : ''}`}
+                onClick={() => setTheme(t)}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 8px' }}
+              >
+                {t === 'light' && <Sun size={18} />}
+                {t === 'dark' && <Moon size={18} />}
+                {t === 'system' && <Monitor size={18} />}
+                <span style={{ fontSize: '0.7rem' }}>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="form-section" style={{ marginTop: 24 }}>
