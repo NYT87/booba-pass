@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/booba-pass/sw.js', { scope: '/booba-pass/' })})}
