@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { db } from '../db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ArrowLeft, Upload, FileJson, FileSpreadsheet, Trash2, Info } from 'lucide-react';
+import { ArrowLeft, Upload, FileJson, FileSpreadsheet, Trash2, Info, Cpu, GitBranch } from 'lucide-react';
 import { exportToJSON, exportToCSV, handleImportFile } from '../utils/dataTransfer';
 import { useState } from 'react';
 
@@ -146,14 +146,51 @@ export default function Settings() {
       <div className="form-section" style={{ marginTop: 24 }}>
         <div className="form-section-title" style={{ color: 'var(--danger)' }}>Danger Zone</div>
         <div className="card" style={{ padding: 16, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-          <button className="btn-ghost" onClick={() => navigate('/debug')} style={{ width: '100%', justifyContent: 'center', marginBottom: 12 }}>
-            <Info size={18} style={{ marginRight: 8, color: 'var(--accent)' }} />
-            System Debug Info
-          </button>
           <button className="btn-ghost" onClick={clearData} style={{ color: 'var(--danger)', width: '100%', justifyContent: 'center' }}>
             <Trash2 size={18} style={{ marginRight: 8 }} />
             Clear All App Data
           </button>
+        </div>
+      </div>
+
+      <div className="form-section" style={{ marginTop: 24 }}>
+        <div className="form-section-title">About booba-pass</div>
+        <div className="card" style={{ padding: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 8, borderRadius: 10, background: 'rgba(37, 175, 244, 0.1)', color: 'var(--accent)' }}>
+                <Info size={18} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Version</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{__APP_VERSION__}</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 8, borderRadius: 10, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                <GitBranch size={18} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Commit</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600, fontFamily: 'monospace' }}>{__COMMIT_HASH__}</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 8, borderRadius: 10, background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }}>
+                <Cpu size={18} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Environment</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{import.meta.env.MODE}</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--bg-input)', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+            <strong>System:</strong> {navigator.userAgent.slice(0, 50)}...
+          </div>
         </div>
       </div>
 

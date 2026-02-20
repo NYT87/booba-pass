@@ -7,7 +7,6 @@ import AddEditFlight from './pages/AddEditFlight';
 import MapView from './pages/MapView';
 import Stats from './pages/Stats';
 import Settings from './pages/Settings';
-import Debug from './pages/Debug';
 
 function App() {
   return (
@@ -22,7 +21,6 @@ function App() {
           <Route path="/map" element={<MapView />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/debug" element={<Debug />} />
         </Routes>
       </div>
       <BottomNav />
