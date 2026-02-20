@@ -39,6 +39,27 @@ export default function Home() {
         />
       </div>
 
+      <section style={{ marginTop: 28 }}>
+        <div className="section-header">
+          <h2>Global Footprint</h2>
+        </div>
+        <div className="map-preview-card" onClick={() => navigate('/map')}>
+          <div className="map-placeholder">
+            <div className="map-dot" style={{ top: '30%', left: '30%' }}></div>
+            <div className="map-dot" style={{ top: '60%', left: '70%' }}></div>
+            <svg className="map-line" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <path d="M 33 33 Q 50 45 67 57" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="3,3" />
+            </svg>
+          </div>
+          <div className="map-preview-info">
+            <p>Explore your travel history on an interactive world map.</p>
+          </div>
+          <div className="map-preview-arrow">
+            <MapPin size={20} />
+          </div>
+        </div>
+      </section>
+
       <section>
         <div className="section-header">
           <h2>Recent Flights</h2>

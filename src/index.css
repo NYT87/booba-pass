@@ -1010,6 +1010,76 @@ img {
   color: var(--text-primary);
 }
 
+/* ── Map Preview Card (Home) ───────────────────────────────── */
+.map-preview-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  gap: 16px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--bg-card);
+  min-height: 100px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin: 0 20px 20px;
+}
+
+.map-preview-card:hover {
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+.map-placeholder {
+  width: 80px;
+  height: 80px;
+  background: var(--bg-input);
+  border-radius: 12px;
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.map-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.map-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--accent);
+  opacity: 0.3;
+}
+
+.map-preview-info {
+  flex: 1;
+}
+
+.map-preview-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.map-preview-arrow {
+  color: var(--accent);
+  opacity: 0.7;
+}
+
 /* ── Lightbox ──────────────────────────────────────────────── */
 .lightbox-overlay {
   position: fixed;
