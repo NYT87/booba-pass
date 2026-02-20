@@ -1,0 +1,80 @@
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db/db';
+import { flightDurationMin, isUpcoming } from '../types';
+import type { Flight } from '../types';
+
+export function useFlights(filter: 'all' | 'past' | 'upcoming' = 'all') {
+  return useLiveQuery(async () => {
+    const all = await db.flights.orderBy('scheduledDepartureDate').reverse().toArray();
+    if (filter === 'past') return all.filter(f => !isUpcoming(f));
+    if (filter === 'upcoming') return all.filter(f => isUpcoming(f));
+    return all;
+  }, [filter]);
+}
+
+export function useFlightById(id: number | undefined) {
+  return useLiveQuery(() => (id !== undefined ? db.flights.get(id) : undefined), [id]);
+}
+
+export interface FlightStats {
+  totalFlights: number;
+  totalDistanceKm: number;
+  totalDurationMin: number;
+  flightsByMonth: { month: string; count: number }[];
+  topRoutes: { route: string; count: number }[];
+  airlines: { airline: string; count: number }[];
+}
+
+export function useStats(year?: number): FlightStats | undefined {
+  return useLiveQuery(async () => {
+    let flights = await db.flights.toArray();
+    if (year) {
+      flights = flights.filter(f => f.scheduledDepartureDate.startsWith(String(year)));
+    }
+
+    const totalFlights = flights.length;
+    const totalDistanceKm = Math.round(flights.reduce((s, f) => s + f.distanceKm, 0));
+    const totalDurationMin = flights.reduce((s, f) => s + flightDurationMin(f), 0);
+
+    const monthMap: Record<string, number> = {};
+    for (const f of flights) {
+      const m = f.scheduledDepartureDate.slice(0, 7); // "YYYY-MM"
+      monthMap[m] = (monthMap[m] ?? 0) + 1;
+    }
+    const flightsByMonth = Object.entries(monthMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, count]) => ({ month, count }));
+
+    const routeMap: Record<string, number> = {};
+    for (const f of flights) {
+      const key = `${f.departureIata}→${f.arrivalIata}`;
+      routeMap[key] = (routeMap[key] ?? 0) + 1;
+    }
+    const topRoutes = Object.entries(routeMap)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([route, count]) => ({ route, count }));
+
+    const airlineMap: Record<string, number> = {};
+    for (const f of flights) {
+      airlineMap[f.airline] = (airlineMap[f.airline] ?? 0) + 1;
+    }
+    const airlines = Object.entries(airlineMap)
+      .sort(([, a], [, b]) => b - a)
+      .map(([airline, count]) => ({ airline, count }));
+
+    return { totalFlights, totalDistanceKm, totalDurationMin, flightsByMonth, topRoutes, airlines };
+  }, [year]);
+}
+
+export async function saveFlight(flight: Omit<Flight, 'id'> & { id?: number }) {
+  if (flight.id !== undefined) {
+    await db.flights.put(flight as Flight);
+    return flight.id;
+  }
+  return db.flights.add(flight as Flight);
+}
+
+export async function deleteFlight(id: number) {
+  await db.flights.delete(id);
+}
