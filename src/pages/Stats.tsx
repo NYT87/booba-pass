@@ -23,7 +23,7 @@ export default function Stats() {
         <select
           value={year || ''}
           onChange={e => setYear(e.target.value ? parseInt(e.target.value) : undefined)}
-          style={{ background: 'var(--bg-input)', color: '#fff', border: 'none', borderRadius: 8, padding: '4px 8px' }}
+          style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', border: 'none', borderRadius: 8, padding: '4px 8px' }}
         >
           <option value="">All Time</option>
           {years.map(y => <option key={y} value={y}>{y}</option>)}
@@ -69,8 +69,8 @@ export default function Stats() {
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{ background: '#1a2236', border: '1px solid #374151', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', opacity: 1 }}
-                itemStyle={{ color: '#fff', fontWeight: 600 }}
+                contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, boxShadow: 'var(--shadow-card)', opacity: 1 }}
+                itemStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
               />
             </PieChart>
           </ResponsiveContainer>

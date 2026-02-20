@@ -16,30 +16,33 @@ export default function BottomNav() {
     <nav className="bottom-nav">
       <div className="nav-items">
         {NAV_ITEMS.slice(0, 2).map(({ path, label, Icon }) => (
-          <button
-            key={path}
-            className={`nav-item ${pathname === path ? 'active' : ''}`}
-            onClick={() => navigate(path)}
-          >
-            <Icon />
-            <span>{label}</span>
-          </button>
+          <div key={path} className="nav-item-wrap">
+            <button
+              className={`nav-item ${pathname === path ? 'active' : ''}`}
+              onClick={() => navigate(path)}
+            >
+              <Icon />
+              <span>{label}</span>
+            </button>
+          </div>
         ))}
 
-        {/* FAB in the middle */}
-        <button className="fab" onClick={() => navigate('/flights/new')} style={{ position: 'relative', bottom: 'auto', right: 'auto', width: 48, height: 48, fontSize: '1.4rem' }}>
-          <Plus size={22} />
-        </button>
+        <div className="nav-item-wrap">
+          <button className="fab" onClick={() => navigate('/flights/new')}>
+            <Plus size={22} />
+          </button>
+        </div>
 
         {NAV_ITEMS.slice(2).map(({ path, label, Icon }) => (
-          <button
-            key={path}
-            className={`nav-item ${pathname === path ? 'active' : ''}`}
-            onClick={() => navigate(path)}
-          >
-            <Icon />
-            <span>{label}</span>
-          </button>
+          <div key={path} className="nav-item-wrap">
+            <button
+              className={`nav-item ${pathname === path ? 'active' : ''}`}
+              onClick={() => navigate(path)}
+            >
+              <Icon />
+              <span>{label}</span>
+            </button>
+          </div>
         ))}
       </div>
     </nav>

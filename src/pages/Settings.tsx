@@ -81,7 +81,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="page animate-in" style={{ padding: '0 20px' }}>
+    <div className="page animate-in">
       <header className="page-header">
         <button onClick={() => navigate(-1)} className="btn-ghost"><ArrowLeft size={24} /></button>
         <h1>Settings</h1>
@@ -89,6 +89,27 @@ export default function Settings() {
       </header>
 
       <div className="form-section">
+        <div className="form-section-title">Appearance</div>
+        <div className="card" style={{ padding: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            {(['light', 'dark', 'system'] as const).map((t) => (
+              <button
+                key={t}
+                className={`class-btn ${theme === t ? 'active' : ''}`}
+                onClick={() => setTheme(t)}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 8px' }}
+              >
+                {t === 'light' && <Sun size={18} />}
+                {t === 'dark' && <Moon size={18} />}
+                {t === 'system' && <Monitor size={18} />}
+                <span style={{ fontSize: '0.7rem' }}>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="form-section" style={{ marginTop: 24 }}>
         <div className="form-section-title">Data & Privacy</div>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 20 }}>
           Your data is stored locally in your browser. Use the tools below to backup or restore your flight history.
@@ -147,37 +168,6 @@ export default function Settings() {
       </div>
 
       <div className="form-section" style={{ marginTop: 24 }}>
-        <div className="form-section-title">Appearance</div>
-        <div className="card" style={{ padding: 16 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-            {(['light', 'dark', 'system'] as const).map((t) => (
-              <button
-                key={t}
-                className={`class-btn ${theme === t ? 'active' : ''}`}
-                onClick={() => setTheme(t)}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 8px' }}
-              >
-                {t === 'light' && <Sun size={18} />}
-                {t === 'dark' && <Moon size={18} />}
-                {t === 'system' && <Monitor size={18} />}
-                <span style={{ fontSize: '0.7rem' }}>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="form-section" style={{ marginTop: 24 }}>
-        <div className="form-section-title" style={{ color: 'var(--danger)' }}>Danger Zone</div>
-        <div className="card" style={{ padding: 16, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-          <button className="btn-ghost" onClick={clearData} style={{ color: 'var(--danger)', width: '100%', justifyContent: 'center' }}>
-            <Trash2 size={18} style={{ marginRight: 8 }} />
-            Clear All App Data
-          </button>
-        </div>
-      </div>
-
-      <div className="form-section" style={{ marginTop: 24 }}>
         <div className="form-section-title">About booba-pass</div>
         <div className="card" style={{ padding: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -215,6 +205,16 @@ export default function Settings() {
           <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--bg-input)', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
             <strong>System:</strong> {navigator.userAgent.slice(0, 50)}...
           </div>
+        </div>
+      </div>
+
+      <div className="form-section" style={{ marginTop: 24 }}>
+        <div className="form-section-title" style={{ color: 'var(--danger)' }}>Danger Zone</div>
+        <div className="card" style={{ padding: 16, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+          <button className="btn-ghost" onClick={clearData} style={{ color: 'var(--danger)', width: '100%', justifyContent: 'center' }}>
+            <Trash2 size={18} style={{ marginRight: 8 }} />
+            Clear All App Data
+          </button>
         </div>
       </div>
 
