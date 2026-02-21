@@ -51,7 +51,13 @@ export default function Flights() {
         ))
       ) : (
         <div className="empty-state">
+          <div className="empty-icon">✈️</div>
           <p>No {filter !== 'all' ? filter : ''} flights found.</p>
+          {filter === 'all' && (
+            <button className="btn-primary" onClick={() => navigate('/flights/new')}>
+              Add Your First Flight
+            </button>
+          )}
         </div>
       )}
     </div>

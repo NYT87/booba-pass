@@ -69,23 +69,20 @@ export default function Home() {
         </section>
       )}
 
-      <section style={{ marginTop: 12 }}>
-        <div className="section-header">
-          <h2>Recent Flights</h2>
-          {flights && flights.length > pastFlights.length && (
-            <button onClick={() => navigate('/flights')}>View All</button>
-          )}
-        </div>
-
-        {pastFlights.length > 0 ? (
-          pastFlights.map(f => <FlightCard key={f.id} flight={f} />)
-        ) : (
-          <div className="empty-state">
-            <div className="empty-icon">✈️</div>
-            <p>No completed flights found.</p>
+      {pastFlights.length > 0 && (
+        <section style={{ marginTop: 12 }}>
+          <div className="section-header">
+            <h2>Recent Flights</h2>
+            {flights && flights.length > pastFlights.length && (
+              <button onClick={() => navigate('/flights')}>View All</button>
+            )}
           </div>
-        )}
-      </section>
+
+          {
+            pastFlights.map(f => <FlightCard key={f.id} flight={f} />)
+          }
+        </section>
+      )}
     </div>
   );
 }

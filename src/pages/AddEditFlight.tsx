@@ -250,7 +250,7 @@ export default function AddEditFlight() {
               type="text"
               list="airline-list"
               value={airline}
-              onChange={e => setAirline(e.target.value)}
+              onChange={e => setAirline(e.target.value.toUpperCase())}
               placeholder="e.g. Korean Air"
             />
             <datalist id="airline-list">
@@ -281,7 +281,7 @@ export default function AddEditFlight() {
         <div className="form-row" style={{ marginTop: 12 }}>
           <div className="form-field">
             <label>Seat</label>
-            <input type="text" value={seat} onChange={e => setSeat(e.target.value)} placeholder="e.g. 12A" />
+            <input type="text" value={seat} onChange={e => setSeat(e.target.value.toUpperCase())} placeholder="e.g. 12A" />
           </div>
           <div className="form-field">
             <label>Aircraft</label>
@@ -289,7 +289,7 @@ export default function AddEditFlight() {
               type="text"
               list="aircraft-list"
               value={aircraft}
-              onChange={e => setAircraft(e.target.value)}
+              onChange={e => setAircraft(e.target.value.toUpperCase())}
               placeholder="e.g. A350-900"
             />
             <datalist id="aircraft-list">
