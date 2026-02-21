@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from 'react'
 
 interface Props {
-  icon: string | ReactNode;
-  value: string | number;
-  label: string;
+  icon: string | ReactNode
+  value: string | number
+  label: string
 }
 
 export default function StatCard({ icon, value, label }: Props) {
@@ -13,5 +13,5 @@ export default function StatCard({ icon, value, label }: Props) {
       <div className="stat-value">{value}</div>
       <div className="stat-label">{label}</div>
     </div>
-  );
+  )
 }

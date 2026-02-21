@@ -170,7 +170,9 @@ img {
   border-radius: var(--radius-md);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  transition: background 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    transform 0.15s;
 }
 
 .card:active {
@@ -321,7 +323,9 @@ img {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px var(--accent-glow);
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
   z-index: 20;
   border: none;
   cursor: pointer;
@@ -512,7 +516,9 @@ img {
   padding: 10px 12px;
   font-size: 0.9rem;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
   width: 100%;
 }
 
@@ -635,7 +641,9 @@ img {
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s;
+  transition:
+    opacity 0.15s,
+    transform 0.1s;
   width: 100%;
   margin-top: 8px;
 }
@@ -656,7 +664,9 @@ img {
   border: none;
   padding: 8px;
   border-radius: var(--radius-sm);
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 }
 
 .btn-ghost:hover {
@@ -1019,7 +1029,9 @@ img {
   padding: 16px;
   gap: 16px;
   cursor: pointer;
-  transition: transform 0.2s, background 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    transform 0.2s,
+    background 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--bg-card);
   min-height: 100px;
   border: 1px solid var(--border);

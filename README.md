@@ -31,11 +31,13 @@ A premium, mobile-first flight history tracker built as a **Progressive Web App 
 ### Installation
 
 1. Install dependencies:
+
    ```bash
    npm install
    ```
 
 2. Generate the airport database:
+
    ```bash
    node scripts/build-airports.mjs
    ```
@@ -48,6 +50,7 @@ A premium, mobile-first flight history tracker built as a **Progressive Web App 
 ### Building for Production
 
 To test the PWA features (offline, splash screens, etc.), run:
+
 ```bash
 npm run build
 npm run preview
@@ -59,4 +62,5 @@ npm run preview
 - **Android Chrome**: Tap the three-dot menu -> "Install App".
 
 ---
-*Created with ❤️ for travelers.*
+
+_Created with ❤️ for travelers._

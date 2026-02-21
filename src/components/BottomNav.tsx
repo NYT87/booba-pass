@@ -1,16 +1,16 @@
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, List, BarChart2, CreditCard } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom'
+import { Home, List, BarChart2, CreditCard } from 'lucide-react'
 
 const NAV_ITEMS = [
   { path: '/', label: 'Home', Icon: Home },
   { path: '/flights', label: 'Flights', Icon: List },
   { path: '/memberships', label: 'Loyalty', Icon: CreditCard },
   { path: '/stats', label: 'Stats', Icon: BarChart2 },
-];
+]
 
 export default function BottomNav() {
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
 
   return (
     <nav className="bottom-nav">
@@ -28,5 +28,5 @@ export default function BottomNav() {
         ))}
       </div>
     </nav>
-  );
+  )
 }

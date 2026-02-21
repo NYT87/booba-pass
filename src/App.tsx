@@ -1,18 +1,18 @@
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
-import BottomNav from './components/BottomNav';
-import Home from './pages/Home';
-import Flights from './pages/Flights';
-import FlightDetail from './pages/FlightDetail';
-import AddEditFlight from './pages/AddEditFlight';
-import MapView from './pages/MapView';
-import Stats from './pages/Stats';
-import Memberships from './pages/Memberships';
-import AddEditMembership from './pages/AddEditMembership';
-import Settings from './pages/Settings';
-import { useTheme } from './hooks/useTheme';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom'
+import BottomNav from './components/BottomNav'
+import Home from './pages/Home'
+import Flights from './pages/Flights'
+import FlightDetail from './pages/FlightDetail'
+import AddEditFlight from './pages/AddEditFlight'
+import MapView from './pages/MapView'
+import Stats from './pages/Stats'
+import Memberships from './pages/Memberships'
+import AddEditMembership from './pages/AddEditMembership'
+import Settings from './pages/Settings'
+import { useTheme } from './hooks/useTheme'
 
 function App() {
-  useTheme();
+  useTheme()
   return (
     <Router>
       <div className="app-content">
@@ -32,7 +32,7 @@ function App() {
       </div>
       <BottomNav />
     </Router>
-  );
+  )
 }
 
-export default App;
+export default App

@@ -1,19 +1,20 @@
-import { MapContainer, TileLayer, Polyline, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import { useFlights } from '../hooks/useFlights';
-import type { Flight } from '../types';
-import { useTheme } from '../hooks/useTheme';
-
+import { MapContainer, TileLayer, Polyline, Popup } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
+import { useFlights } from '../hooks/useFlights'
+import type { Flight } from '../types'
+import { useTheme } from '../hooks/useTheme'
 
 export default function MapView() {
-  const flights = useFlights('all');
-  const [theme] = useTheme();
+  const flights = useFlights('all')
+  const [theme] = useTheme()
 
   // Determine actual theme for map tiles
-  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDark =
+    theme === 'dark' ||
+    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   const tileUrl = isDark
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
 
   return (
     <div className="page animate-in">
@@ -36,18 +37,25 @@ export default function MapView() {
           {flights?.map((f: Flight) => (
             <Polyline
               key={f.id}
-              positions={[[f.departureLat, f.departureLon], [f.arrivalLat, f.arrivalLon]]}
+              positions={[
+                [f.departureLat, f.departureLon],
+                [f.arrivalLat, f.arrivalLon],
+              ]}
               pathOptions={{
                 color: 'var(--accent)',
                 weight: 2,
                 opacity: 0.6,
-                dashArray: '5, 5'
+                dashArray: '5, 5',
               }}
             >
               <Popup>
                 <div style={{ color: '#000' }}>
-                  <strong>{f.departureIata} → {f.arrivalIata}</strong><br />
-                  {f.airline} {f.flightNumber}<br />
+                  <strong>
+                    {f.departureIata} → {f.arrivalIata}
+                  </strong>
+                  <br />
+                  {f.airline} {f.flightNumber}
+                  <br />
                   {f.scheduledDepartureDate}
                 </div>
               </Popup>
@@ -56,5 +64,5 @@ export default function MapView() {
         </MapContainer>
       </div>
     </div>
-  );
+  )
 }

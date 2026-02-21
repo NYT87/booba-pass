@@ -1,34 +1,41 @@
-import StatCard from '../components/StatCard';
-import FlightCard from '../components/FlightCard';
-import { useFlights, useStats } from '../hooks/useFlights';
-import { Plane, MapPin, Clock, Settings as SettingsIcon, Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { isUpcoming } from '../types';
+import StatCard from '../components/StatCard'
+import FlightCard from '../components/FlightCard'
+import { useFlights, useStats } from '../hooks/useFlights'
+import { Plane, MapPin, Clock, Settings as SettingsIcon, Plus } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { isUpcoming } from '../types'
 
 export default function Home() {
-  const navigate = useNavigate();
-  const flights = useFlights('all');
-  const stats = useStats();
+  const navigate = useNavigate()
+  const flights = useFlights('all')
+  const stats = useStats()
 
-  const upcomingFlights = flights?.filter(isUpcoming) ?? [];
-  const pastFlights = flights?.filter(f => !isUpcoming(f)).slice(0, 3) ?? [];
+  const upcomingFlights = flights?.filter(isUpcoming) ?? []
+  const pastFlights = flights?.filter((f) => !isUpcoming(f)).slice(0, 3) ?? []
 
   return (
     <div className="page animate-in">
-      <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header
+        className="page-header"
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+      >
         <div className="logo">booba-pass</div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-ghost" style={{ color: 'var(--accent)' }} onClick={() => navigate('/flights/new')}><Plus size={24} /></button>
-          <button className="btn-ghost" onClick={() => navigate('/settings')}><SettingsIcon size={20} /></button>
+          <button
+            className="btn-ghost"
+            style={{ color: 'var(--accent)' }}
+            onClick={() => navigate('/flights/new')}
+          >
+            <Plus size={24} />
+          </button>
+          <button className="btn-ghost" onClick={() => navigate('/settings')}>
+            <SettingsIcon size={20} />
+          </button>
         </div>
       </header>
 
       <div className="stats-row">
-        <StatCard
-          icon={<Plane size={18} />}
-          value={stats?.totalFlights ?? 0}
-          label="Flights"
-        />
+        <StatCard icon={<Plane size={18} />} value={stats?.totalFlights ?? 0} label="Flights" />
         <StatCard
           icon={<MapPin size={18} />}
           value={((stats?.totalDistanceKm ?? 0) / 1000).toFixed(1) + 'k'}
@@ -47,7 +54,13 @@ export default function Home() {
             <div className="map-dot" style={{ top: '30%', left: '30%' }}></div>
             <div className="map-dot" style={{ top: '60%', left: '70%' }}></div>
             <svg className="map-line" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <path d="M 33 33 Q 50 45 67 57" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="3,3" />
+              <path
+                d="M 33 33 Q 50 45 67 57"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+                strokeDasharray="3,3"
+              />
             </svg>
           </div>
           <div className="map-preview-info">
@@ -65,7 +78,9 @@ export default function Home() {
           <div className="section-header">
             <h2>Upcoming Flights</h2>
           </div>
-          {upcomingFlights.map(f => <FlightCard key={f.id} flight={f} />)}
+          {upcomingFlights.map((f) => (
+            <FlightCard key={f.id} flight={f} />
+          ))}
         </section>
       )}
 
@@ -78,11 +93,11 @@ export default function Home() {
             )}
           </div>
 
-          {
-            pastFlights.map(f => <FlightCard key={f.id} flight={f} />)
-          }
+          {pastFlights.map((f) => (
+            <FlightCard key={f.id} flight={f} />
+          ))}
         </section>
       )}
     </div>
-  );
+  )
 }
