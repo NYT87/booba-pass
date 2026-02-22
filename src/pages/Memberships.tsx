@@ -1,18 +1,34 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMemberships, deleteMembership } from '../hooks/useMemberships'
-import { CreditCard, Plus, Trash2 } from 'lucide-react'
+import { Copy, CreditCard, Pencil, Plus, QrCode, Trash2 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import Barcode from 'react-barcode'
 
 export default function Memberships() {
   const navigate = useNavigate()
   const memberships = useMemberships() || []
+  const [visibleCodeId, setVisibleCodeId] = useState<number | null>(null)
+  const [copiedId, setCopiedId] = useState<number | null>(null)
 
-  const handleDelete = async (e: React.MouseEvent, id: number) => {
-    e.stopPropagation()
+  const handleDelete = async (id: number) => {
     if (confirm('Delete this membership?')) {
       await deleteMembership(id)
     }
+  }
+
+  const handleCopyMembershipNumber = async (id: number, membershipNumber: string) => {
+    try {
+      await navigator.clipboard.writeText(membershipNumber)
+      setCopiedId(id)
+      setTimeout(() => setCopiedId(null), 1500)
+    } catch {
+      alert('Could not copy membership number')
+    }
+  }
+
+  const toggleCode = (membershipId: number) => {
+    setVisibleCodeId((currentId) => (currentId === membershipId ? null : membershipId))
   }
 
   return (
@@ -30,8 +46,7 @@ export default function Memberships() {
             <div
               key={m.id}
               className="card membership-card"
-              onClick={() => navigate(`/memberships/${m.id}/edit`)}
-              style={{ padding: 0, overflow: 'hidden', marginBottom: 16 }}
+              style={{ padding: 0, marginBottom: 16 }}
             >
               <div
                 className="membership-header"
@@ -47,17 +62,27 @@ export default function Memberships() {
                   <div className="airline-name" style={{ fontWeight: 700, fontSize: '1.1rem' }}>
                     {m.airlineName}
                   </div>
-                  <div className="program-name" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                    {m.programName}
-                  </div>
+                  {m.programName && (
+                    <div className="program-name" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                      {m.programName}
+                    </div>
+                  )}
+                  {m.allianceGroup && (
+                    <div style={{ marginTop: 6 }}>
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '2px 8px',
+                          borderRadius: 9999,
+                          border: '1px solid var(--border)',
+                          background: 'var(--bg-card)',
+                        }}
+                      >
+                        {m.allianceGroup}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <button
-                  className="btn-ghost"
-                  onClick={(e) => handleDelete(e, m.id!)}
-                  style={{ color: 'var(--danger)', padding: 4 }}
-                >
-                  <Trash2 size={16} />
-                </button>
               </div>
 
               <div className="membership-body" style={{ padding: 16 }}>
@@ -66,12 +91,75 @@ export default function Memberships() {
                     Member
                   </div>
                   <div style={{ fontWeight: 600 }}>{m.memberName}</div>
-                  <div style={{ fontSize: '0.9rem', marginTop: 4, letterSpacing: 1 }}>
+                  <div
+                    style={{
+                      fontSize: '0.9rem',
+                      marginTop: 4,
+                      letterSpacing: 1,
+                      wordBreak: 'break-all',
+                    }}
+                  >
                     {m.membershipNumber}
                   </div>
                 </div>
 
-                {m.codeValue && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                  <button
+                    className="btn-ghost"
+                    onClick={() => navigate(`/memberships/${m.id}/edit`)}
+                    style={{
+                      border: '1px solid var(--border)',
+                      borderRadius: 9999,
+                      padding: '8px 12px',
+                    }}
+                  >
+                    <Pencil size={14} style={{ marginRight: 6 }} />
+                    Edit
+                  </button>
+                  <button
+                    className="btn-ghost"
+                    onClick={() => void handleCopyMembershipNumber(m.id!, m.membershipNumber)}
+                    style={{
+                      border: '1px solid var(--border)',
+                      borderRadius: 9999,
+                      padding: '8px 12px',
+                    }}
+                  >
+                    <Copy size={14} style={{ marginRight: 6 }} />
+                    {copiedId === m.id ? 'Copied' : 'Copy number'}
+                  </button>
+                  {m.codeValue && m.codeType !== 'NONE' && (
+                    <button
+                      className="btn-ghost"
+                      onClick={() => toggleCode(m.id!)}
+                      style={{
+                        border: '1px solid var(--border)',
+                        borderRadius: 9999,
+                        padding: '8px 12px',
+                      }}
+                    >
+                      <QrCode size={14} style={{ marginRight: 6 }} />
+                      {visibleCodeId === m.id
+                        ? 'Hide code'
+                        : `Show ${m.codeType === 'QR' ? 'QR' : 'barcode'}`}
+                    </button>
+                  )}
+                  <button
+                    className="btn-ghost"
+                    onClick={() => void handleDelete(m.id!)}
+                    style={{
+                      border: '1px solid var(--danger)',
+                      color: 'var(--danger)',
+                      borderRadius: 9999,
+                      padding: '8px 12px',
+                    }}
+                  >
+                    <Trash2 size={14} style={{ marginRight: 6 }} />
+                    Delete
+                  </button>
+                </div>
+
+                {m.codeValue && visibleCodeId === m.id && (
                   <div
                     className="code-display"
                     style={{
@@ -82,6 +170,7 @@ export default function Memberships() {
                       justifyContent: 'center',
                       alignItems: 'center',
                       minHeight: 100,
+                      overflowX: 'auto',
                     }}
                   >
                     {m.codeType === 'QR' ? (

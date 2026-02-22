@@ -12,6 +12,7 @@ export default function AddEditMembership() {
 
   const [airlineName, setAirlineName] = useState('')
   const [programName, setProgramName] = useState('')
+  const [allianceGroup, setAllianceGroup] = useState('')
   const [memberName, setMemberName] = useState('')
   const [membershipNumber, setMembershipNumber] = useState('')
   const [codeValue, setCodeValue] = useState('')
@@ -22,6 +23,7 @@ export default function AddEditMembership() {
     if (existingMembership) {
       setAirlineName(existingMembership.airlineName)
       setProgramName(existingMembership.programName)
+      setAllianceGroup(existingMembership.allianceGroup ?? '')
       setMemberName(existingMembership.memberName)
       setMembershipNumber(existingMembership.membershipNumber)
       setCodeValue(existingMembership.codeValue ?? '')
@@ -39,6 +41,7 @@ export default function AddEditMembership() {
     const membershipData: Omit<Membership, 'id'> = {
       airlineName,
       programName,
+      allianceGroup: allianceGroup || undefined,
       memberName,
       membershipNumber,
       codeValue: codeValue || undefined,
@@ -80,6 +83,15 @@ export default function AddEditMembership() {
             value={programName}
             onChange={(e) => setProgramName(e.target.value)}
             placeholder="e.g. Iberia Plus, Miles & More"
+          />
+        </div>
+        <div className="form-field" style={{ marginTop: 12 }}>
+          <label>Alliance / Group (Optional)</label>
+          <input
+            type="text"
+            value={allianceGroup}
+            onChange={(e) => setAllianceGroup(e.target.value)}
+            placeholder="e.g. Star Alliance, SkyTeam, Oneworld"
           />
         </div>
       </div>

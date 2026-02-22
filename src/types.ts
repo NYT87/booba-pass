@@ -54,6 +54,7 @@ export interface Membership {
   id?: number
   airlineName: string
   programName: string
+  allianceGroup?: string
   memberName: string
   membershipNumber: string
   codeValue?: string
