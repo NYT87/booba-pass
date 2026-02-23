@@ -1,66 +1,87 @@
-# ✈️ booba-pass
+# booba-pass
 
-A premium, mobile-first flight history tracker built as a **Progressive Web App (PWA)**.
+A mobile-first flight and loyalty tracker built as a Progressive Web App (PWA).
 
-## 🚀 Features
+Version: `0.1.0`
 
-- **Dashboard**: Track your total flights, distance (km), and time in the air.
-- **Flight History**: Beautifully organized list of past and upcoming flights, grouped by year.
-- **Detailed View**: Full information for every flight, including airline, aircraft, seat, and notes.
-- **Global Map**: Visualize all your flight routes on an interactive world map.
-- **Analytics**: Monthly activity charts, top routes, and airline distribution.
-- **PWA**: Install it on your phone for a native-like experience.
-- **Local First**: All data is stored securely in your browser's IndexedDB. No accounts, no tracking.
+## What it does
 
-## 🛠️ Technology Stack
+- Track flights with route, schedule, aircraft, seat, notes, photos, and boarding pass.
+- Organize flights by `all`, `past`, and `upcoming`.
+- View an interactive map of your routes.
+- Track loyalty memberships with QR/barcode support.
+- Show loyalty alliance/group tags (for example: Star Alliance, SkyTeam, Oneworld).
+- Copy membership numbers and quickly open/edit card codes.
+- View personal travel stats (flights, distance, hours, aircraft, airlines).
+- Import/export backups from the Settings page.
+- Run fully local-first using IndexedDB (no account required).
 
-- **Framework**: React 19 + TypeScript
-- **Build Tool**: Vite 7
-- **Storage**: Dexie.js (IndexedDB)
-- **Maps**: Leaflet
-- **Charts**: Recharts
-- **Icons**: Lucide React
-- **Airport Data**: Static data from OurAirports
+## PWA behavior
 
-## 🏁 Getting Started
+- Installable on mobile and desktop.
+- Startup splash screen for native app feel.
+- In-app update prompt when a new version is available (`Update now` / `Later`).
+- Offline-capable service worker with cached app shell/assets.
+
+## Tech stack
+
+- React 19 + TypeScript
+- Vite 7
+- `vite-plugin-pwa` + Workbox
+- Dexie (IndexedDB)
+- React Router
+- Leaflet + React Leaflet
+- Recharts
+
+## Getting started
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18+)
+- [Node.js](https://nodejs.org/) `20.19+` or `22.12+`
+- npm
 
-### Installation
+### Install
 
-1. Install dependencies:
+```bash
+npm install
+```
 
-   ```bash
-   npm install
-   ```
+### Run dev server
 
-2. Generate the airport database:
+```bash
+npm run dev
+```
 
-   ```bash
-   node scripts/build-airports.mjs
-   ```
-
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
-
-### Building for Production
-
-To test the PWA features (offline, splash screens, etc.), run:
+### Build
 
 ```bash
 npm run build
+```
+
+Then preview:
+
+```bash
 npm run preview
 ```
 
-## 📱 Mobile Installation
+Note: `npm run build` runs `scripts/build-airports.mjs` first, which fetches airport source data from GitHub.
 
-- **iOS Safari**: Tap the "Share" icon -> "Add to Home Screen".
-- **Android Chrome**: Tap the three-dot menu -> "Install App".
+## Scripts
 
----
+- `npm run dev`: start Vite dev server
+- `npm run build`: generate airport data + typecheck + production build
+- `npm run preview`: preview production build
+- `npm run lint`: run ESLint
+- `npm run lint:fix`: auto-fix lint issues
+- `npm run format`: run Prettier write
+- `npm run format:check`: check formatting
 
-_Created with ❤️ for travelers._
+## Usage docs
+
+- End-user guide: [`docs/USAGE.md`](./docs/USAGE.md)
+- Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
+
+## Mobile install
+
+- iOS Safari: Share -> Add to Home Screen
+- Android Chrome: Menu -> Install app
