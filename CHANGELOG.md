@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-02-23
+
+### Added
+
+- Flight-to-membership linking with optional `mileage granted` on each flight.
+- New membership mileage history page showing recent flight mileage entries.
+- Quick add (`+`) from membership mileage page to create a pre-linked flight.
+- Full-screen modal preview for membership QR/barcode, including member name and number.
+- Image-based membership code detection now supports separate QR and barcode targets.
+
+### Changed
+
+- Membership data now stores QR and barcode values in separate fields.
+- Membership cards now include a mileage history shortcut action.
+- Membership card delete action moved to edit page with confirm/cancel modal.
+- Membership form now enforces uppercase for airline, program, alliance, and member name.
+- Settings import result now appears in a modal instead of inline message box.
+- CSV/JSON import-export updated for new flight and membership fields (`membershipId`, `mileageGranted`, `qrCodeValue`, `barcodeValue`) with backward compatibility.
+- Mileage list layout simplified by removing the `Earned` column.
+
 ## [0.1.0] - 2026-02-23
 
 ### Added

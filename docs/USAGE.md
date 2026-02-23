@@ -25,7 +25,8 @@ This guide explains the main workflows inside the app.
    - Airline
    - Flight number
 4. Add optional fields such as seat, aircraft, notes, photos, boarding pass, and tracking URL.
-5. Save.
+5. Optionally link a loyalty membership and add mileage granted for that flight.
+6. Save.
 
 ### Edit or delete a flight
 
@@ -64,17 +65,32 @@ This guide explains the main workflows inside the app.
    - Alliance/group (optional)
    - Member full name
    - Membership number
-   - Code value and code type (QR, BARCODE, or NONE)
-4. Save.
+   - QR code value (optional)
+   - Barcode value (optional)
+4. Optionally upload an image of the QR/barcode; the app auto-detects and fills the corresponding field.
+5. Save.
 
 ### Membership card actions
 
 Each loyalty card includes explicit buttons:
 
+- `Mileage history`: open list of recent flights and mileage linked to that membership
 - `Edit`: open edit form
 - `Copy number`: copy membership number to clipboard
-- `Show QR` / `Show barcode`: reveal scan code
-- `Delete`: remove the card
+- `Show QR` / `Show barcode`: open full-screen scan code preview
+
+### Delete a membership
+
+- Open the membership `Edit` page.
+- Tap `Delete Membership` at the bottom.
+- Confirm in the modal.
+
+### Membership mileage history
+
+- Open `Loyalty` and tap the mileage history icon on a card.
+- The list is ordered by most recent flights first.
+- Each row shows flight code, route, date, and granted mileage.
+- Tap `+` on that page to create a new flight already linked to that membership.
 
 ## 6. Backup, restore, and maintenance
 
@@ -83,7 +99,7 @@ Go to `Settings` -> `Data & Privacy`.
 ### Export
 
 - `Full Backup (JSON)`: exports flights + loyalty + media metadata fields.
-- `Flights Data (CSV)`: exports flights in CSV format.
+- `Flights Data (CSV)`: exports flights in CSV format, including membership link and mileage fields.
 
 ### Import
 
@@ -91,6 +107,7 @@ Go to `Settings` -> `Data & Privacy`.
 - Import uses smart upsert:
   - existing matching records are updated
   - new records are added
+- Import supports old and new membership code structures (legacy `codeValue/codeType` and split `qrCodeValue/barcodeValue`).
 
 ### Maintenance
 
@@ -120,6 +137,10 @@ In `Settings` -> `Appearance`, choose:
 - When a new app version is available, a banner appears.
 - Tap `Update now` to reload with latest assets.
 - Tap `Later` to dismiss temporarily.
+
+### Settings feedback
+
+- Import completion results are shown in a modal dialog (success or failure).
 
 ### Splash screen behavior
 

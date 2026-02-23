@@ -2,16 +2,19 @@
 
 A mobile-first flight and loyalty tracker built as a Progressive Web App (PWA).
 
-Version: `0.1.0`
+Version: `0.1.1`
 
 ## What it does
 
 - Track flights with route, schedule, aircraft, seat, notes, photos, and boarding pass.
+- Link each flight to a loyalty membership and record granted mileage.
 - Organize flights by `all`, `past`, and `upcoming`.
 - View an interactive map of your routes.
-- Track loyalty memberships with QR/barcode support.
+- Track loyalty memberships with separate QR and barcode values.
+- Auto-detect QR/barcode data from uploaded membership card images.
 - Show loyalty alliance/group tags (for example: Star Alliance, SkyTeam, Oneworld).
-- Copy membership numbers and quickly open/edit card codes.
+- View full-screen membership code previews with member name and number.
+- Open membership mileage history with recent linked flights and earned mileage.
 - View personal travel stats (flights, distance, hours, aircraft, airlines).
 - Import/export backups from the Settings page.
 - Run fully local-first using IndexedDB (no account required).
