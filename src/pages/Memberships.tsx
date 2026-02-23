@@ -35,7 +35,11 @@ export default function Memberships() {
     <div className="page animate-in">
       <header className="page-header">
         <h1>Memberships</h1>
-        <button className="btn-ghost" onClick={() => navigate('/memberships/new')}>
+        <button
+          className="btn-ghost"
+          style={{ color: 'var(--accent)' }}
+          onClick={() => navigate('/memberships/new')}
+        >
           <Plus size={24} />
         </button>
       </header>

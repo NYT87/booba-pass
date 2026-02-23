@@ -21,6 +21,9 @@ export default function Stats() {
       </div>
     )
 
+  const hasAirplanes = stats.airplanes.length > 0
+  const hasAirlines = stats.airlines.length > 0
+
   return (
     <div className="page animate-in">
       <header className="page-header">
@@ -59,82 +62,86 @@ export default function Stats() {
         />
       </div>
 
-      <div className="chart-card">
-        <h3>Airplanes</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {stats.airplanes.map((a) => (
-            <div
-              key={a.aircraft}
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-            >
-              <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{a.aircraft}</div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--accent)', fontWeight: 700 }}>
-                {a.count}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="chart-card">
-        <h3>Airlines</h3>
-        <div style={{ width: '100%', height: 200 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={stats.airlines}
-                dataKey="count"
-                nameKey="airline"
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-              >
-                {stats.airlines.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 8,
-                  boxShadow: 'var(--shadow-card)',
-                  opacity: 1,
-                }}
-                itemStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 8,
-            marginTop: 10,
-            justifyContent: 'center',
-          }}
-        >
-          {stats.airlines.slice(0, 5).map((a, i) => (
-            <div
-              key={a.airline}
-              style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: 4 }}
-            >
+      {hasAirplanes && (
+        <div className="chart-card">
+          <h3>Airplanes</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {stats.airplanes.map((a) => (
               <div
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: COLORS[i % COLORS.length],
-                }}
-              />
-              <span style={{ color: 'var(--text-secondary)' }}>{a.airline}</span>
-            </div>
-          ))}
+                key={a.aircraft}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{a.aircraft}</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--accent)', fontWeight: 700 }}>
+                  {a.count}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {hasAirlines && (
+        <div className="chart-card">
+          <h3>Airlines</h3>
+          <div style={{ width: '100%', height: 200 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={stats.airlines}
+                  dataKey="count"
+                  nameKey="airline"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                >
+                  {stats.airlines.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 8,
+                    boxShadow: 'var(--shadow-card)',
+                    opacity: 1,
+                  }}
+                  itemStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 8,
+              marginTop: 10,
+              justifyContent: 'center',
+            }}
+          >
+            {stats.airlines.slice(0, 5).map((a, i) => (
+              <div
+                key={a.airline}
+                style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                <div
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: COLORS[i % COLORS.length],
+                  }}
+                />
+                <span style={{ color: 'var(--text-secondary)' }}>{a.airline}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={{ height: 40 }} />
     </div>
