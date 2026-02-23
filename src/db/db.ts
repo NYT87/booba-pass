@@ -11,6 +11,11 @@ class BoobaPassDB extends Dexie {
       flights: '++id, scheduledDepartureDate, departureIata, arrivalIata, airline, flightNumber',
       memberships: '++id, airlineName, programName, membershipNumber',
     })
+    this.version(4).stores({
+      flights:
+        '++id, scheduledDepartureDate, departureIata, arrivalIata, airline, flightNumber, membershipId, mileageGranted',
+      memberships: '++id, airlineName, programName, membershipNumber',
+    })
   }
 }
 

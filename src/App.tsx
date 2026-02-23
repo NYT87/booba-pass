@@ -11,6 +11,7 @@ import MapView from './pages/MapView'
 import Stats from './pages/Stats'
 import Memberships from './pages/Memberships'
 import AddEditMembership from './pages/AddEditMembership'
+import MembershipMileage from './pages/MembershipMileage'
 import Settings from './pages/Settings'
 import { db } from './db/db'
 import { useTheme } from './hooks/useTheme'
@@ -87,6 +88,7 @@ function App() {
           <Route path="/memberships" element={<Memberships />} />
           <Route path="/memberships/new" element={<AddEditMembership />} />
           <Route path="/memberships/:id/edit" element={<AddEditMembership />} />
+          <Route path="/memberships/:id/mileage" element={<MembershipMileage />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </div>

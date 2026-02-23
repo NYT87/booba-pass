@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useFlightById, saveFlight, useStats } from '../hooks/useFlights'
+import { useMemberships } from '../hooks/useMemberships'
 import AirportSearch from '../components/AirportSearch'
 import type { Airport, Flight } from '../types'
 import { haversineKm, computeDurationMin, formatDuration } from '../types'
@@ -9,8 +10,14 @@ import { ArrowLeftRight, Save, X, Camera, Trash2, Ticket } from 'lucide-react'
 export default function AddEditFlight() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const existingFlight = useFlightById(id ? parseInt(id) : undefined)
+  const memberships = useMemberships() || []
   const stats = useStats() // Get stats for all time for suggestions
+  const prefilledMembershipId =
+    typeof (location.state as { membershipId?: unknown } | null)?.membershipId === 'number'
+      ? ((location.state as { membershipId: number }).membershipId ?? null)
+      : null
 
   const [departure, setDeparture] = useState<Airport | null>(null)
   const [arrival, setArrival] = useState<Airport | null>(null)
@@ -34,6 +41,8 @@ export default function AddEditFlight() {
   const [trackUrl, setTrackUrl] = useState('')
   const [photos, setPhotos] = useState<string[]>([])
   const [boardingPass, setBoardingPass] = useState<string | undefined>(undefined)
+  const [membershipId, setMembershipId] = useState<number | ''>('')
+  const [mileageGranted, setMileageGranted] = useState('')
 
   useEffect(() => {
     if (existingFlight) {
@@ -75,13 +84,17 @@ export default function AddEditFlight() {
       setTrackUrl(existingFlight.trackUrl ?? '')
       setPhotos(existingFlight.photoDataUrls ?? [])
       setBoardingPass(existingFlight.boardingPassDataUrl)
+      setMembershipId(existingFlight.membershipId ?? '')
+      setMileageGranted(existingFlight.mileageGranted !== undefined ? String(existingFlight.mileageGranted) : '')
     } else {
       const now = new Date()
       const today = now.toISOString().slice(0, 10)
       setScheduledDepartureDate(today)
       setScheduledArrivalDate(today)
+      setMembershipId(prefilledMembershipId ?? '')
+      setMileageGranted('')
     }
-  }, [existingFlight])
+  }, [existingFlight, prefilledMembershipId])
 
   const handleScheduledDepartureDateChange = (val: string) => {
     const oldDepDate = scheduledDepartureDate
@@ -114,6 +127,12 @@ export default function AddEditFlight() {
     }
 
     const distanceKm = haversineKm(departure.lat, departure.lon, arrival.lat, arrival.lon)
+    const parsedMileage = mileageGranted.trim() ? Number.parseInt(mileageGranted.trim(), 10) : undefined
+
+    if (mileageGranted.trim() && Number.isNaN(parsedMileage)) {
+      alert('Mileage granted must be a valid number.')
+      return
+    }
 
     const flightData: Omit<Flight, 'id'> = {
       departureIata: departure.iata,
@@ -144,6 +163,8 @@ export default function AddEditFlight() {
       photoDataUrls: photos.length > 0 ? photos : undefined,
       boardingPassDataUrl: boardingPass,
       distanceKm,
+      membershipId: membershipId === '' ? undefined : membershipId,
+      mileageGranted: parsedMileage,
     }
 
     const savedId = await saveFlight(id ? { ...flightData, id: parseInt(id) } : flightData)
@@ -361,6 +382,34 @@ export default function AddEditFlight() {
 
       <div className="form-section">
         <div className="form-section-title">Other</div>
+        <div className="form-row">
+          <div className="form-field">
+            <label>Loyalty Membership (Optional)</label>
+            <select
+              value={membershipId}
+              onChange={(e) => setMembershipId(e.target.value ? Number.parseInt(e.target.value, 10) : '')}
+            >
+              <option value="">None</option>
+              {memberships.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.airlineName}
+                  {m.programName ? ` - ${m.programName}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-field">
+            <label>Mileage Granted (Optional)</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              min="0"
+              value={mileageGranted}
+              onChange={(e) => setMileageGranted(e.target.value)}
+              placeholder="e.g. 2286"
+            />
+          </div>
+        </div>
         <div className="form-field">
           <label>Track URL</label>
           <input

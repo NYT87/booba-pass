@@ -22,9 +22,10 @@ export default function Settings() {
   const flights = useLiveQuery(() => db.flights.toArray())
   const memberships = useLiveQuery(() => db.memberships.toArray())
   const [importing, setImporting] = useState(false)
-  const [importResult, setImportResult] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  )
+  const [importResult, setImportResult] = useState<{
+    type: 'success' | 'error'
+    text: string
+  } | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [theme, setTheme] = useTheme()
 
@@ -367,7 +368,9 @@ export default function Settings() {
             </h3>
             <p
               className={`settings-modal-text ${
-                importResult.type === 'success' ? 'settings-modal-text-success' : 'settings-modal-text-error'
+                importResult.type === 'success'
+                  ? 'settings-modal-text-success'
+                  : 'settings-modal-text-error'
               }`}
             >
               {importResult.text}

@@ -46,6 +46,8 @@ export interface Flight {
   arrivalTimeZone?: string
   photoDataUrls?: string[]
   boardingPassDataUrl?: string
+  membershipId?: number
+  mileageGranted?: number
 }
 
 export type MembershipCodeType = 'QR' | 'BARCODE' | 'NONE'

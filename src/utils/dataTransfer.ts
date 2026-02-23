@@ -1,6 +1,48 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Flight, Membership } from '../types'
 import { db } from '../db/db'
+
+const toIntOrUndefined = (value: unknown): number | undefined => {
+  if (value === '' || value === null || value === undefined) return undefined
+  const parsed = Number.parseInt(String(value), 10)
+  return Number.isNaN(parsed) ? undefined : parsed
+}
+
+const toNumberOrUndefined = (value: unknown): number | undefined => {
+  if (value === '' || value === null || value === undefined) return undefined
+  const parsed = Number.parseFloat(String(value))
+  return Number.isNaN(parsed) ? undefined : parsed
+}
+
+function normalizeImportedFlight(raw: Record<string, unknown>): Omit<Flight, 'id'> {
+  const normalized = { ...raw } as Omit<Flight, 'id'>
+  normalized.distanceKm = toNumberOrUndefined(raw.distanceKm) ?? 0
+  normalized.membershipId = toIntOrUndefined(raw.membershipId)
+  normalized.mileageGranted = toIntOrUndefined(raw.mileageGranted)
+  return normalized
+}
+
+function normalizeImportedMembership(raw: Record<string, unknown>): Omit<Membership, 'id'> {
+  const normalized = { ...raw } as Omit<Membership, 'id'>
+  const legacyValue = typeof raw.codeValue === 'string' ? raw.codeValue : undefined
+  const legacyType = raw.codeType
+
+  if (!normalized.qrCodeValue && legacyType === 'QR') {
+    normalized.qrCodeValue = legacyValue
+  }
+  if (!normalized.barcodeValue && legacyType === 'BARCODE') {
+    normalized.barcodeValue = legacyValue
+  }
+
+  // Keep legacy fields synced for backward compatibility.
+  normalized.codeValue = normalized.qrCodeValue ?? normalized.barcodeValue
+  normalized.codeType = normalized.qrCodeValue
+    ? 'QR'
+    : normalized.barcodeValue
+      ? 'BARCODE'
+      : 'NONE'
+
+  return normalized
+}
 
 /**
  * Smart Upsert: Update if matching flight exists, otherwise add.
@@ -42,7 +84,7 @@ async function smartUpsertMembership(membership: Omit<Membership, 'id'>) {
 
 export const exportToJSON = (flights: Flight[], memberships: Membership[]) => {
   const bundle = {
-    version: 3,
+    version: 4,
     exportedAt: new Date().toISOString(),
     flights,
     memberships,
@@ -77,6 +119,8 @@ export const exportToCSV = (flights: Flight[]) => {
     'aircraft',
     'notes',
     'distanceKm',
+    'membershipId',
+    'mileageGranted',
     'boardingPassDataUrl',
   ]
 
@@ -118,8 +162,9 @@ export const handleImportFile = async (
           if (Array.isArray(bundle)) {
             for (const f of bundle) {
               if (f.airline && f.flightNumber && f.scheduledDepartureDate) {
-                const { id, ...data } = f
-                await smartUpsert(data)
+                const data = { ...(f as Record<string, unknown>) }
+                delete data.id
+                await smartUpsert(normalizeImportedFlight(data))
                 success++
               } else {
                 failed++
@@ -131,8 +176,9 @@ export const handleImportFile = async (
             if (bundle.flights && Array.isArray(bundle.flights)) {
               for (const f of bundle.flights) {
                 if (f.airline && f.flightNumber && f.scheduledDepartureDate) {
-                  const { id, ...data } = f
-                  await smartUpsert(data)
+                  const data = { ...(f as Record<string, unknown>) }
+                  delete data.id
+                  await smartUpsert(normalizeImportedFlight(data))
                   success++
                 } else {
                   failed++
@@ -142,8 +188,9 @@ export const handleImportFile = async (
             if (bundle.memberships && Array.isArray(bundle.memberships)) {
               for (const m of bundle.memberships) {
                 if (m.airlineName && m.membershipNumber) {
-                  const { id, ...data } = m
-                  await smartUpsertMembership(data)
+                  const data = { ...(m as Record<string, unknown>) }
+                  delete data.id
+                  await smartUpsertMembership(normalizeImportedMembership(data))
                   // We don't count these in the flight success count for now to keep UI simple,
                   // or we could combine. Let's combine for the "success" count.
                   success++
@@ -166,7 +213,8 @@ export const handleImportFile = async (
               const obj: Record<string, unknown> = {}
               headers.forEach((h: string, i: number) => {
                 const val = values[i]?.replace(/^"|"$/g, '').replace(/""/g, '"') || ''
-                if (h === 'distanceKm') obj[h] = parseFloat(val)
+                if (h === 'distanceKm') obj[h] = toNumberOrUndefined(val)
+                else if (h === 'membershipId' || h === 'mileageGranted') obj[h] = toIntOrUndefined(val)
                 else obj[h] = val
               })
               return obj
@@ -174,8 +222,9 @@ export const handleImportFile = async (
 
           for (const f of flights) {
             if (f.airline && f.flightNumber && f.scheduledDepartureDate) {
-              const { id, ...data } = f as unknown as Flight
-              await smartUpsert(data)
+              const data = { ...(f as Record<string, unknown>) }
+              delete data.id
+              await smartUpsert(normalizeImportedFlight(data))
               success++
             } else {
               failed++

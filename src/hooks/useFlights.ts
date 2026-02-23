@@ -16,6 +16,18 @@ export function useFlightById(id: number | undefined) {
   return useLiveQuery(() => (id !== undefined ? db.flights.get(id) : undefined), [id])
 }
 
+export function useFlightsByMembership(membershipId: number | undefined) {
+  return useLiveQuery(async () => {
+    if (membershipId === undefined) return []
+    const flights = await db.flights.where('membershipId').equals(membershipId).toArray()
+    return flights.sort((a, b) => {
+      const aDate = `${a.scheduledDepartureDate}T${a.scheduledDepartureTime ?? '00:00'}`
+      const bDate = `${b.scheduledDepartureDate}T${b.scheduledDepartureTime ?? '00:00'}`
+      return bDate.localeCompare(aDate)
+    })
+  }, [membershipId])
+}
+
 export interface FlightStats {
   totalFlights: number
   totalDistanceKm: number

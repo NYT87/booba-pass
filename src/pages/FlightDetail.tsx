@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useFlightById, deleteFlight, saveFlight } from '../hooks/useFlights'
+import { useMembershipById } from '../hooks/useMemberships'
 import { formatDuration, flightDurationMin } from '../types'
 import {
   ArrowLeft,
@@ -22,6 +23,7 @@ export default function FlightDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const flight = useFlightById(id ? parseInt(id) : undefined)
+  const linkedMembership = useMembershipById(flight?.membershipId)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [showBoardingPass, setShowBoardingPass] = useState(false)
 
@@ -124,6 +126,24 @@ export default function FlightDetail() {
             <CreditCard size={12} style={{ marginBottom: -2, marginRight: 4 }} /> Aircraft
           </div>
           <div className="detail-info-value">{flight.aircraft || '—'}</div>
+        </div>
+        <div className="detail-info-card">
+          <div className="detail-info-label">
+            <CreditCard size={12} style={{ marginBottom: -2, marginRight: 4 }} /> Membership
+          </div>
+          <div className="detail-info-value">
+            {linkedMembership
+              ? `${linkedMembership.airlineName}${linkedMembership.programName ? ` (${linkedMembership.programName})` : ''}`
+              : '—'}
+          </div>
+        </div>
+        <div className="detail-info-card">
+          <div className="detail-info-label">
+            <CreditCard size={12} style={{ marginBottom: -2, marginRight: 4 }} /> Mileage
+          </div>
+          <div className="detail-info-value">
+            {flight.mileageGranted !== undefined ? `+${flight.mileageGranted.toLocaleString()}` : '—'}
+          </div>
         </div>
       </div>
 
