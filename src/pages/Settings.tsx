@@ -10,6 +10,7 @@ import {
   Info,
   Cpu,
   GitBranch,
+  X,
 } from 'lucide-react'
 import { exportToJSON, exportToCSV, handleImportFile } from '../utils/dataTransfer'
 import { useState } from 'react'
@@ -21,6 +22,9 @@ export default function Settings() {
   const flights = useLiveQuery(() => db.flights.toArray())
   const memberships = useLiveQuery(() => db.memberships.toArray())
   const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<{ type: 'success' | 'error'; text: string } | null>(
+    null
+  )
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [theme, setTheme] = useTheme()
 
@@ -30,15 +34,16 @@ export default function Settings() {
 
     setImporting(true)
     setMessage(null)
+    setImportResult(null)
     try {
       const result = await handleImportFile(file)
-      setMessage({
+      setImportResult({
         type: 'success',
         text: `Import complete! ${result.success} items (Flights/Loyalty) upserted successfully. ${result.failed} rows skipped.`,
       })
     } catch (err) {
       console.error(err)
-      setMessage({ type: 'error', text: 'Failed to import file. Please check format.' })
+      setImportResult({ type: 'error', text: 'Failed to import file. Please check format.' })
     } finally {
       setImporting(false)
       // Clear input
@@ -339,6 +344,40 @@ export default function Settings() {
       </div>
 
       <div style={{ height: 40 }} />
+
+      {importResult && (
+        <div className="settings-modal-overlay" onClick={() => setImportResult(null)}>
+          <div
+            className="settings-modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="import-result-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="settings-modal-close"
+              type="button"
+              onClick={() => setImportResult(null)}
+              aria-label="Close import result"
+            >
+              <X size={18} />
+            </button>
+            <h3 id="import-result-title" className="settings-modal-title">
+              {importResult.type === 'success' ? 'Import completed' : 'Import failed'}
+            </h3>
+            <p
+              className={`settings-modal-text ${
+                importResult.type === 'success' ? 'settings-modal-text-success' : 'settings-modal-text-error'
+              }`}
+            >
+              {importResult.text}
+            </p>
+            <button className="btn-primary" type="button" onClick={() => setImportResult(null)}>
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

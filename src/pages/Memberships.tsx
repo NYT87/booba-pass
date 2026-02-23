@@ -1,21 +1,23 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useMemberships, deleteMembership } from '../hooks/useMemberships'
-import { Copy, CreditCard, Pencil, Plus, QrCode, Trash2 } from 'lucide-react'
+import { useMemberships } from '../hooks/useMemberships'
+import { Barcode as BarcodeIcon, Check, Copy, CreditCard, Pencil, Plus, QrCode, X } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import Barcode from 'react-barcode'
 
 export default function Memberships() {
   const navigate = useNavigate()
   const memberships = useMemberships() || []
-  const [visibleCodeId, setVisibleCodeId] = useState<number | null>(null)
+  const [visibleCode, setVisibleCode] = useState<{
+    membershipId: number
+    kind: 'QR' | 'BARCODE'
+    value: string
+    airlineName: string
+    programName?: string
+    memberName: string
+    membershipNumber: string
+  } | null>(null)
   const [copiedId, setCopiedId] = useState<number | null>(null)
-
-  const handleDelete = async (id: number) => {
-    if (confirm('Delete this membership?')) {
-      await deleteMembership(id)
-    }
-  }
 
   const handleCopyMembershipNumber = async (id: number, membershipNumber: string) => {
     try {
@@ -27,8 +29,29 @@ export default function Memberships() {
     }
   }
 
-  const toggleCode = (membershipId: number) => {
-    setVisibleCodeId((currentId) => (currentId === membershipId ? null : membershipId))
+  const toggleCode = (
+    membershipId: number,
+    kind: 'QR' | 'BARCODE',
+    value: string,
+    airlineName: string,
+    programName?: string,
+    memberName?: string,
+    membershipNumber?: string
+  ) => {
+    setVisibleCode((current) => {
+      if (current?.membershipId === membershipId && current.kind === kind) {
+        return null
+      }
+      return {
+        membershipId,
+        kind,
+        value,
+        airlineName,
+        programName,
+        memberName: memberName ?? '',
+        membershipNumber: membershipNumber ?? '',
+      }
+    })
   }
 
   return (
@@ -46,153 +69,142 @@ export default function Memberships() {
 
       <div className="memberships-list">
         {memberships.length > 0 ? (
-          memberships.map((m) => (
-            <div
-              key={m.id}
-              className="card membership-card"
-              style={{ padding: 0, marginBottom: 16 }}
-            >
+          memberships.map((m) => {
+            const qrValue = m.qrCodeValue ?? (m.codeType === 'QR' ? m.codeValue : undefined)
+            const barcodeValue = m.barcodeValue ?? (m.codeType === 'BARCODE' ? m.codeValue : undefined)
+            const isQrVisible = visibleCode?.membershipId === m.id && visibleCode?.kind === 'QR'
+            const isBarcodeVisible = visibleCode?.membershipId === m.id && visibleCode?.kind === 'BARCODE'
+
+            return (
               <div
-                className="membership-header"
-                style={{
-                  padding: '16px 16px 8px 16px',
-                  background: 'rgba(37, 175, 244, 0.05)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                key={m.id}
+                className="card membership-card"
+                style={{ padding: 0, marginBottom: 16, overflow: 'hidden' }}
               >
-                <div>
-                  <div className="airline-name" style={{ fontWeight: 700, fontSize: '1.1rem' }}>
-                    {m.airlineName}
-                  </div>
-                  {m.programName && (
-                    <div className="program-name" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                      {m.programName}
-                    </div>
-                  )}
-                  {m.allianceGroup && (
-                    <div style={{ marginTop: 6 }}>
-                      <span
-                        style={{
-                          fontSize: '0.7rem',
-                          padding: '2px 8px',
-                          borderRadius: 9999,
-                          border: '1px solid var(--border)',
-                          background: 'var(--bg-card)',
-                        }}
-                      >
-                        {m.allianceGroup}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="membership-body" style={{ padding: 16 }}>
-                <div className="member-info" style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.5 }}>
-                    Member
-                  </div>
-                  <div style={{ fontWeight: 600 }}>{m.memberName}</div>
                   <div
+                    className="membership-header"
                     style={{
-                      fontSize: '0.9rem',
-                      marginTop: 4,
-                      letterSpacing: 1,
-                      wordBreak: 'break-all',
-                    }}
-                  >
-                    {m.membershipNumber}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                  <button
-                    className="btn-ghost"
-                    onClick={() => navigate(`/memberships/${m.id}/edit`)}
-                    style={{
-                      border: '1px solid var(--border)',
-                      borderRadius: 9999,
-                      padding: '8px 12px',
-                    }}
-                  >
-                    <Pencil size={14} style={{ marginRight: 6 }} />
-                    Edit
-                  </button>
-                  <button
-                    className="btn-ghost"
-                    onClick={() => void handleCopyMembershipNumber(m.id!, m.membershipNumber)}
-                    style={{
-                      border: '1px solid var(--border)',
-                      borderRadius: 9999,
-                      padding: '8px 12px',
-                    }}
-                  >
-                    <Copy size={14} style={{ marginRight: 6 }} />
-                    {copiedId === m.id ? 'Copied' : 'Copy number'}
-                  </button>
-                  {m.codeValue && m.codeType !== 'NONE' && (
-                    <button
-                      className="btn-ghost"
-                      onClick={() => toggleCode(m.id!)}
-                      style={{
-                        border: '1px solid var(--border)',
-                        borderRadius: 9999,
-                        padding: '8px 12px',
-                      }}
-                    >
-                      <QrCode size={14} style={{ marginRight: 6 }} />
-                      {visibleCodeId === m.id
-                        ? 'Hide code'
-                        : `Show ${m.codeType === 'QR' ? 'QR' : 'barcode'}`}
-                    </button>
-                  )}
-                  <button
-                    className="btn-ghost"
-                    onClick={() => void handleDelete(m.id!)}
-                    style={{
-                      border: '1px solid var(--danger)',
-                      color: 'var(--danger)',
-                      borderRadius: 9999,
-                      padding: '8px 12px',
-                    }}
-                  >
-                    <Trash2 size={14} style={{ marginRight: 6 }} />
-                    Delete
-                  </button>
-                </div>
-
-                {m.codeValue && visibleCodeId === m.id && (
-                  <div
-                    className="code-display"
-                    style={{
-                      background: 'white',
-                      padding: 12,
-                      borderRadius: 8,
+                      padding: '16px 16px 8px 16px',
+                      background: 'rgba(37, 175, 244, 0.05)',
                       display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      minHeight: 100,
-                      overflowX: 'auto',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
                     }}
                   >
-                    {m.codeType === 'QR' ? (
-                      <QRCodeSVG value={m.codeValue} size={128} />
-                    ) : m.codeType === 'BARCODE' ? (
-                      <Barcode
-                        value={m.codeValue}
-                        width={1.5}
-                        height={50}
-                        displayValue={false}
-                        background="white"
-                      />
-                    ) : null}
+                    <div>
+                      <div className="airline-name" style={{ fontWeight: 700, fontSize: '1.1rem' }}>
+                        {m.airlineName}
+                      </div>
+                      {m.programName && (
+                        <div className="program-name" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                          {m.programName}
+                        </div>
+                      )}
+                      {m.allianceGroup && (
+                        <div style={{ marginTop: 6 }}>
+                          <span
+                            style={{
+                              fontSize: '0.7rem',
+                              padding: '2px 8px',
+                              borderRadius: 9999,
+                              border: '1px solid var(--border)',
+                              background: 'var(--bg-card)',
+                            }}
+                          >
+                            {m.allianceGroup}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="membership-header-actions">
+                      <button
+                        type="button"
+                        className="membership-icon-btn"
+                        onClick={() => navigate(`/memberships/${m.id}/edit`)}
+                        title="Edit membership"
+                        aria-label="Edit membership"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                    </div>
                   </div>
-                )}
+
+                  <div className="membership-body" style={{ padding: 16 }}>
+                    <div className="membership-body-top">
+                      <div className="member-info">
+                        <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.5 }}>
+                          Member
+                        </div>
+                        <div style={{ fontWeight: 600 }}>{m.memberName}</div>
+                        <div
+                          style={{
+                            fontSize: '0.9rem',
+                            marginTop: 4,
+                            letterSpacing: 1,
+                            wordBreak: 'break-all',
+                          }}
+                        >
+                          {m.membershipNumber}
+                        </div>
+                      </div>
+                      <div className="membership-body-actions">
+                        <button
+                          type="button"
+                          className="membership-icon-btn"
+                          onClick={() => void handleCopyMembershipNumber(m.id!, m.membershipNumber)}
+                          title={copiedId === m.id ? 'Copied' : 'Copy membership number'}
+                          aria-label={copiedId === m.id ? 'Copied' : 'Copy membership number'}
+                        >
+                          {copiedId === m.id ? <Check size={15} /> : <Copy size={15} />}
+                        </button>
+                        {qrValue && (
+                          <button
+                            type="button"
+                            className="membership-icon-btn"
+                            onClick={() =>
+                              toggleCode(
+                                m.id!,
+                                'QR',
+                                qrValue,
+                                m.airlineName,
+                                m.programName,
+                                m.memberName,
+                                m.membershipNumber
+                              )
+                            }
+                            title={isQrVisible ? 'Hide QR code' : 'Show QR code'}
+                            aria-label={isQrVisible ? 'Hide QR code' : 'Show QR code'}
+                          >
+                            <QrCode size={15} />
+                          </button>
+                        )}
+                        {barcodeValue && (
+                          <button
+                            type="button"
+                            className="membership-icon-btn"
+                            onClick={() =>
+                              toggleCode(
+                                m.id!,
+                                'BARCODE',
+                                barcodeValue,
+                                m.airlineName,
+                                m.programName,
+                                m.memberName,
+                                m.membershipNumber
+                              )
+                            }
+                            title={isBarcodeVisible ? 'Hide barcode' : 'Show barcode'}
+                            aria-label={isBarcodeVisible ? 'Hide barcode' : 'Show barcode'}
+                          >
+                            <BarcodeIcon size={15} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
               </div>
-            </div>
-          ))
+            )
+          })
         ) : (
           <div className="empty-state">
             <div className="empty-icon">
@@ -214,6 +226,49 @@ export default function Memberships() {
         )}
       </div>
       <div style={{ height: 80 }} />
+
+      {visibleCode && (
+        <div className="membership-code-overlay" onClick={() => setVisibleCode(null)}>
+          <div className="membership-code-content" onClick={(e) => e.stopPropagation()}>
+            <div className="membership-code-header">
+              <div>
+                <div className="membership-code-title">{visibleCode.airlineName}</div>
+                {visibleCode.programName && (
+                  <div className="membership-code-subtitle">{visibleCode.programName}</div>
+                )}
+              </div>
+              <button
+                type="button"
+                className="membership-code-close"
+                onClick={() => setVisibleCode(null)}
+                aria-label="Close code preview"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="membership-code-canvas">
+              <div className="membership-code-stack">
+                {visibleCode.kind === 'QR' ? (
+                  <QRCodeSVG value={visibleCode.value} size={320} />
+                ) : (
+                  <Barcode
+                    value={visibleCode.value}
+                    width={2}
+                    height={120}
+                    displayValue={false}
+                    background="white"
+                  />
+                )}
+                <div className="membership-code-meta">
+                  <div className="membership-code-member">{visibleCode.memberName}</div>
+                  <div className="membership-code-number">{visibleCode.membershipNumber}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

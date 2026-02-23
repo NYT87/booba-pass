@@ -57,8 +57,11 @@ export interface Membership {
   allianceGroup?: string
   memberName: string
   membershipNumber: string
+  qrCodeValue?: string
+  barcodeValue?: string
+  // Legacy fields kept for backward compatibility with existing stored/imported records.
   codeValue?: string
-  codeType: MembershipCodeType
+  codeType?: MembershipCodeType
   notes?: string
 }
 

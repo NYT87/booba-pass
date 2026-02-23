@@ -314,6 +314,56 @@ img {
   background: var(--bg-card-hover);
 }
 
+.membership-card:active {
+  transform: none;
+}
+
+.membership-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.membership-body-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.membership-body-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.membership-icon-btn {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  transition:
+    color 0.15s,
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.membership-icon-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
+.membership-icon-btn-danger {
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
 /* ── Stat Cards ────────────────────────────────────────────── */
 .stats-row {
   display: grid;
@@ -1260,6 +1310,184 @@ img {
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(10px);
+}
+
+.membership-code-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.membership-code-content {
+  width: min(900px, 100%);
+  height: 100%;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+}
+
+.membership-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.membership-code-title {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.membership-code-subtitle {
+  margin-top: 2px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.membership-code-close {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.membership-code-canvas {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: auto;
+  background: #fff;
+}
+
+.membership-code-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.membership-code-meta {
+  text-align: center;
+  color: #0f172a;
+}
+
+.membership-code-member {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.membership-code-number {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  word-break: break-all;
+}
+
+.settings-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(2px);
+}
+
+.settings-modal-card {
+  width: min(420px, 100%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 18px 16px 16px;
+  position: relative;
+}
+
+.settings-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+}
+
+.settings-modal-title {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.settings-modal-text {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+
+.settings-modal-text-success {
+  color: #10b981;
+}
+
+.settings-modal-text-error {
+  color: var(--danger);
+}
+
+.confirm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.confirm-modal-card {
+  width: min(420px, 100%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 18px 16px;
+}
+
+.confirm-modal-title {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.confirm-modal-text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.confirm-modal-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 @keyframes fadeIn {

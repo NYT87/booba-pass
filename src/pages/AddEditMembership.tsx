@@ -1,9 +1,9 @@
-/* eslint-disable react-hooks/set-state-in-effect */
+ 
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useMembershipById, saveMembership } from '../hooks/useMemberships'
-import type { Membership, MembershipCodeType } from '../types'
-import { Save, X, QrCode, Barcode as BarcodeIcon, Ban } from 'lucide-react'
+import { deleteMembership, useMembershipById, saveMembership } from '../hooks/useMemberships'
+import type { Membership } from '../types'
+import { Save, X, ScanLine, Trash2 } from 'lucide-react'
 
 export default function AddEditMembership() {
   const { id } = useParams()
@@ -15,9 +15,42 @@ export default function AddEditMembership() {
   const [allianceGroup, setAllianceGroup] = useState('')
   const [memberName, setMemberName] = useState('')
   const [membershipNumber, setMembershipNumber] = useState('')
-  const [codeValue, setCodeValue] = useState('')
-  const [codeType, setCodeType] = useState<MembershipCodeType>('QR')
+  const [qrCodeValue, setQrCodeValue] = useState('')
+  const [barcodeValue, setBarcodeValue] = useState('')
+  const [analyzingCodeImage, setAnalyzingCodeImage] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletingMembership, setDeletingMembership] = useState(false)
   const [notes, setNotes] = useState('')
+
+  const detectCodeFromImage = async (file: File): Promise<{ value: string; type: 'QR' | 'BARCODE' } | null> => {
+    const BarcodeDetectorApi = (
+      window as Window & {
+        BarcodeDetector?: new (options?: { formats?: string[] }) => {
+          detect: (source: ImageBitmap) => Promise<Array<{ rawValue?: string; format?: string }>>
+        }
+      }
+    ).BarcodeDetector
+
+    if (!BarcodeDetectorApi) return null
+
+    const detector = new BarcodeDetectorApi({
+      formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf'],
+    })
+
+    const bitmap = await createImageBitmap(file)
+    try {
+      const detections = await detector.detect(bitmap)
+      const first = detections.find((d) => Boolean(d.rawValue?.trim()))
+      if (!first?.rawValue?.trim()) return null
+
+      return {
+        value: first.rawValue.trim(),
+        type: first.format === 'qr_code' ? 'QR' : 'BARCODE',
+      }
+    } finally {
+      bitmap.close()
+    }
+  }
 
   useEffect(() => {
     if (existingMembership) {
@@ -26,8 +59,14 @@ export default function AddEditMembership() {
       setAllianceGroup(existingMembership.allianceGroup ?? '')
       setMemberName(existingMembership.memberName)
       setMembershipNumber(existingMembership.membershipNumber)
-      setCodeValue(existingMembership.codeValue ?? '')
-      setCodeType(existingMembership.codeType)
+      setQrCodeValue(
+        existingMembership.qrCodeValue ??
+          (existingMembership.codeType === 'QR' ? existingMembership.codeValue ?? '' : '')
+      )
+      setBarcodeValue(
+        existingMembership.barcodeValue ??
+          (existingMembership.codeType === 'BARCODE' ? existingMembership.codeValue ?? '' : '')
+      )
       setNotes(existingMembership.notes ?? '')
     }
   }, [existingMembership])
@@ -39,18 +78,62 @@ export default function AddEditMembership() {
     }
 
     const membershipData: Omit<Membership, 'id'> = {
-      airlineName,
-      programName,
-      allianceGroup: allianceGroup || undefined,
-      memberName,
+      airlineName: airlineName.toUpperCase(),
+      programName: programName.toUpperCase(),
+      allianceGroup: allianceGroup ? allianceGroup.toUpperCase() : undefined,
+      memberName: memberName.toUpperCase(),
       membershipNumber,
-      codeValue: codeValue || undefined,
-      codeType,
+      qrCodeValue: qrCodeValue || undefined,
+      barcodeValue: barcodeValue || undefined,
+      // Keep legacy fields for compatibility with older data consumers.
+      codeValue: qrCodeValue || barcodeValue || undefined,
+      codeType: qrCodeValue ? 'QR' : barcodeValue ? 'BARCODE' : 'NONE',
       notes: notes || undefined,
     }
 
     await saveMembership(id ? { ...membershipData, id: parseInt(id) } : membershipData)
     navigate('/memberships')
+  }
+
+  const handleCodeImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setAnalyzingCodeImage(true)
+    try {
+      const result = await detectCodeFromImage(file)
+      if (!result) {
+        alert(
+          'No readable QR/barcode found, or your browser does not support automatic detection. Please enter the code manually.'
+        )
+        return
+      }
+
+      if (result.type === 'QR') {
+        setQrCodeValue(result.value)
+      } else {
+        setBarcodeValue(result.value)
+      }
+      alert(`Code detected successfully as ${result.type}. Updated corresponding field.`)
+    } catch (err) {
+      console.error(err)
+      alert('Could not analyze the image. Please try a clearer image or enter the code manually.')
+    } finally {
+      setAnalyzingCodeImage(false)
+      e.target.value = ''
+    }
+  }
+
+  const handleDeleteMembership = async () => {
+    if (!id) return
+    setDeletingMembership(true)
+    try {
+      await deleteMembership(parseInt(id))
+      navigate('/memberships')
+    } finally {
+      setDeletingMembership(false)
+      setShowDeleteModal(false)
+    }
   }
 
   return (
@@ -72,7 +155,7 @@ export default function AddEditMembership() {
           <input
             type="text"
             value={airlineName}
-            onChange={(e) => setAirlineName(e.target.value)}
+            onChange={(e) => setAirlineName(e.target.value.toUpperCase())}
             placeholder="e.g. Iberia, Lufthansa, Delta"
           />
         </div>
@@ -81,7 +164,7 @@ export default function AddEditMembership() {
           <input
             type="text"
             value={programName}
-            onChange={(e) => setProgramName(e.target.value)}
+            onChange={(e) => setProgramName(e.target.value.toUpperCase())}
             placeholder="e.g. Iberia Plus, Miles & More"
           />
         </div>
@@ -90,7 +173,7 @@ export default function AddEditMembership() {
           <input
             type="text"
             value={allianceGroup}
-            onChange={(e) => setAllianceGroup(e.target.value)}
+            onChange={(e) => setAllianceGroup(e.target.value.toUpperCase())}
             placeholder="e.g. Star Alliance, SkyTeam, Oneworld"
           />
         </div>
@@ -103,7 +186,7 @@ export default function AddEditMembership() {
           <input
             type="text"
             value={memberName}
-            onChange={(e) => setMemberName(e.target.value)}
+            onChange={(e) => setMemberName(e.target.value.toUpperCase())}
             placeholder="As it appears on your card"
           />
         </div>
@@ -121,46 +204,53 @@ export default function AddEditMembership() {
       <div className="form-section">
         <div className="form-section-title">Scannable Code</div>
         <div className="form-field">
-          <label>Code Value (QR / Barcode Content)</label>
+          <label>Scan from Image</label>
+          <label
+            className={`btn-ghost ${analyzingCodeImage ? 'disabled' : ''}`}
+            style={{
+              width: '100%',
+              marginTop: 6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              padding: 12,
+              background: 'var(--bg-input)',
+              border: '1px dashed var(--border)',
+              borderRadius: 10,
+              cursor: analyzingCodeImage ? 'not-allowed' : 'pointer',
+              opacity: analyzingCodeImage ? 0.6 : 1,
+            }}
+          >
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleCodeImageUpload}
+              disabled={analyzingCodeImage}
+              hidden
+            />
+            <ScanLine size={18} />
+            {analyzingCodeImage ? 'Analyzing image...' : 'Upload QR/Barcode image'}
+          </label>
+        </div>
+        <div className="form-field" style={{ marginTop: 12 }}>
+          <label>QR Code Value (Optional)</label>
           <input
             type="text"
-            value={codeValue}
-            onChange={(e) => setCodeValue(e.target.value)}
-            placeholder="The text/number inside the QR/Barcode"
+            value={qrCodeValue}
+            onChange={(e) => setQrCodeValue(e.target.value)}
+            placeholder="Decoded text for QR code"
           />
         </div>
 
         <div className="form-field" style={{ marginTop: 12 }}>
-          <label>Code Type</label>
-          <div
-            className="class-selector"
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}
-          >
-            <button
-              className={`class-btn ${codeType === 'QR' ? 'active' : ''}`}
-              onClick={() => setCodeType('QR')}
-              style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '12px 8px' }}
-            >
-              <QrCode size={20} />
-              <span style={{ fontSize: '0.7rem' }}>QR Code</span>
-            </button>
-            <button
-              className={`class-btn ${codeType === 'BARCODE' ? 'active' : ''}`}
-              onClick={() => setCodeType('BARCODE')}
-              style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '12px 8px' }}
-            >
-              <BarcodeIcon size={20} />
-              <span style={{ fontSize: '0.7rem' }}>Barcode</span>
-            </button>
-            <button
-              className={`class-btn ${codeType === 'NONE' ? 'active' : ''}`}
-              onClick={() => setCodeType('NONE')}
-              style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '12px 8px' }}
-            >
-              <Ban size={20} />
-              <span style={{ fontSize: '0.7rem' }}>None</span>
-            </button>
-          </div>
+          <label>Barcode Value (Optional)</label>
+          <input
+            type="text"
+            value={barcodeValue}
+            onChange={(e) => setBarcodeValue(e.target.value)}
+            placeholder="Decoded value for barcode"
+          />
         </div>
       </div>
 
@@ -179,7 +269,38 @@ export default function AddEditMembership() {
         {id ? 'Update Membership' : 'Save Membership'}
       </button>
 
+      {id && (
+        <button
+          className="btn-danger"
+          type="button"
+          onClick={() => setShowDeleteModal(true)}
+          style={{ width: '100%', marginTop: 12 }}
+        >
+          <Trash2 size={16} style={{ marginRight: 8 }} />
+          Delete Membership
+        </button>
+      )}
+
       <div style={{ height: 40 }} />
+
+      {showDeleteModal && (
+        <div className="confirm-modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="confirm-modal-card" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <h3 className="confirm-modal-title">Delete membership?</h3>
+            <p className="confirm-modal-text">
+              This membership card will be permanently removed from this device.
+            </p>
+            <div className="confirm-modal-actions">
+              <button className="btn-ghost" type="button" onClick={() => setShowDeleteModal(false)}>
+                Cancel
+              </button>
+              <button className="btn-danger" type="button" onClick={() => void handleDeleteMembership()}>
+                {deletingMembership ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
