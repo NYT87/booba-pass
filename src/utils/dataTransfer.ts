@@ -35,11 +35,7 @@ function normalizeImportedMembership(raw: Record<string, unknown>): Omit<Members
 
   // Keep legacy fields synced for backward compatibility.
   normalized.codeValue = normalized.qrCodeValue ?? normalized.barcodeValue
-  normalized.codeType = normalized.qrCodeValue
-    ? 'QR'
-    : normalized.barcodeValue
-      ? 'BARCODE'
-      : 'NONE'
+  normalized.codeType = normalized.qrCodeValue ? 'QR' : normalized.barcodeValue ? 'BARCODE' : 'NONE'
 
   return normalized
 }
@@ -214,7 +210,8 @@ export const handleImportFile = async (
               headers.forEach((h: string, i: number) => {
                 const val = values[i]?.replace(/^"|"$/g, '').replace(/""/g, '"') || ''
                 if (h === 'distanceKm') obj[h] = toNumberOrUndefined(val)
-                else if (h === 'membershipId' || h === 'mileageGranted') obj[h] = toIntOrUndefined(val)
+                else if (h === 'membershipId' || h === 'mileageGranted')
+                  obj[h] = toIntOrUndefined(val)
                 else obj[h] = val
               })
               return obj

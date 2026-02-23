@@ -142,7 +142,9 @@ export default function FlightDetail() {
             <CreditCard size={12} style={{ marginBottom: -2, marginRight: 4 }} /> Mileage
           </div>
           <div className="detail-info-value">
-            {flight.mileageGranted !== undefined ? `+${flight.mileageGranted.toLocaleString()}` : '—'}
+            {flight.mileageGranted !== undefined
+              ? `+${flight.mileageGranted.toLocaleString()}`
+              : '—'}
           </div>
         </div>
       </div>

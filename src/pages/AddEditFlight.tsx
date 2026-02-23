@@ -85,7 +85,9 @@ export default function AddEditFlight() {
       setPhotos(existingFlight.photoDataUrls ?? [])
       setBoardingPass(existingFlight.boardingPassDataUrl)
       setMembershipId(existingFlight.membershipId ?? '')
-      setMileageGranted(existingFlight.mileageGranted !== undefined ? String(existingFlight.mileageGranted) : '')
+      setMileageGranted(
+        existingFlight.mileageGranted !== undefined ? String(existingFlight.mileageGranted) : ''
+      )
     } else {
       const now = new Date()
       const today = now.toISOString().slice(0, 10)
@@ -127,7 +129,9 @@ export default function AddEditFlight() {
     }
 
     const distanceKm = haversineKm(departure.lat, departure.lon, arrival.lat, arrival.lon)
-    const parsedMileage = mileageGranted.trim() ? Number.parseInt(mileageGranted.trim(), 10) : undefined
+    const parsedMileage = mileageGranted.trim()
+      ? Number.parseInt(mileageGranted.trim(), 10)
+      : undefined
 
     if (mileageGranted.trim() && Number.isNaN(parsedMileage)) {
       alert('Mileage granted must be a valid number.')
@@ -387,7 +391,9 @@ export default function AddEditFlight() {
             <label>Loyalty Membership (Optional)</label>
             <select
               value={membershipId}
-              onChange={(e) => setMembershipId(e.target.value ? Number.parseInt(e.target.value, 10) : '')}
+              onChange={(e) =>
+                setMembershipId(e.target.value ? Number.parseInt(e.target.value, 10) : '')
+              }
             >
               <option value="">None</option>
               {memberships.map((m) => (
