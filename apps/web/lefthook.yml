@@ -1,0 +1,6 @@
+pre-commit:
+  commands:
+    format:
+      run: npm run format
+    lint_fix:
+      run: npm run lint:fix

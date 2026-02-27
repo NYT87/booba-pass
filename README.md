@@ -1,90 +1,54 @@
 # booba-pass
 
-A mobile-first flight and loyalty tracker built as a Progressive Web App (PWA).
+A fully local, offline-first progressive web application (PWA) for tracking, analyzing, and storing your flight history and digital boarding passes.
 
-Version: `0.1.1`
+This project is currently structured as a **monorepo** using [npm workspaces](https://docs.npmjs.com/cli/v10/using-npm/workspaces). 
 
-## What it does
+## Project Structure
 
-- Track flights with route, schedule, aircraft, seat, notes, photos, and boarding pass.
-- Link each flight to a loyalty membership and record granted mileage.
-- Organize flights by `all`, `past`, and `upcoming`.
-- View an interactive map of your routes.
-- Track loyalty memberships with separate QR and barcode values.
-- Auto-detect QR/barcode data from uploaded membership card images.
-- Show loyalty alliance/group tags (for example: Star Alliance, SkyTeam, Oneworld).
-- View full-screen membership code previews with member name and number.
-- Open membership mileage history with recent linked flights and earned mileage.
-- View personal travel stats (flights, distance, hours, aircraft, airlines).
-- Import/export backups from the Settings page.
-- Run fully local-first using IndexedDB (no account required).
+- `apps/web`: The core React frontend PWA (built with Vite).
+- `apps/backend` (Planned): A lightweight Node proxy for external data retrieval.
 
-## PWA behavior
+## Getting Started
 
-- Installable on mobile and desktop.
-- Startup splash screen for native app feel.
-- In-app update prompt when a new version is available (`Update now` / `Later`).
-- Offline-capable service worker with cached app shell/assets.
+Because this is a monorepo utilizing `npm workspaces`, all commands can be run from this root directory.
 
-## Tech stack
+### Installation
 
-- React 19 + TypeScript
-- Vite 7
-- `vite-plugin-pwa` + Workbox
-- Dexie (IndexedDB)
-- React Router
-- Leaflet + React Leaflet
-- Recharts
-
-## Getting started
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) `20.19+` or `22.12+`
-- npm
-
-### Install
-
+Install all dependencies for the workspace from the root directory:
 ```bash
 npm install
 ```
 
-### Run dev server
+### Development
 
+Start the local development server for the web application:
 ```bash
-npm run dev
+npm run dev:web
 ```
 
-### Build
+This will run the frontend at `http://localhost:5173`.
 
+### Building
+
+To build the web bundle for production:
 ```bash
-npm run build
+npm run build:web
+```
+The output will be generated inside `apps/web/dist`.
+
+### Linting and Formatting
+
+To lint across the entire monorepo workspace:
+```bash
+npm run lint
 ```
 
-Then preview:
-
+To format code using Prettier:
 ```bash
-npm run preview
+npm run format
 ```
 
-Note: `npm run build` runs `scripts/build-airports.mjs` first, which fetches airport source data from GitHub.
+## Deployment
 
-## Scripts
-
-- `npm run dev`: start Vite dev server
-- `npm run build`: generate airport data + typecheck + production build
-- `npm run preview`: preview production build
-- `npm run lint`: run ESLint
-- `npm run lint:fix`: auto-fix lint issues
-- `npm run format`: run Prettier write
-- `npm run format:check`: check formatting
-
-## Usage docs
-
-- End-user guide: [`docs/USAGE.md`](./docs/USAGE.md)
-- Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
-
-## Mobile install
-
-- iOS Safari: Share -> Add to Home Screen
-- Android Chrome: Menu -> Install app
+The current GitHub Actions workflow automatically builds and deploys the `apps/web` package to GitHub Pages on every push to the `main` branch.
