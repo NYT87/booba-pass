@@ -56,11 +56,7 @@ export default function Stats() {
           value={(stats.totalDistanceKm / 1000).toFixed(1) + 'k'}
           label="Dist (k)"
         />
-        <StatCard
-          icon={<Clock size={18} />}
-          value={Math.round(stats.totalDurationMin / 60)}
-          label="Hours"
-        />
+        <StatCard icon={<Clock size={18} />} value={Math.round(stats.totalDurationMin / 60)} label="Hours" />
       </div>
 
       {hasAirplanes && (
@@ -68,14 +64,9 @@ export default function Stats() {
           <h3>Airplanes</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {stats.airplanes.map((a) => (
-              <div
-                key={a.aircraft}
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-              >
+              <div key={a.aircraft} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{a.aircraft}</div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--accent)', fontWeight: 700 }}>
-                  {a.count}
-                </div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--accent)', fontWeight: 700 }}>{a.count}</div>
               </div>
             ))}
           </div>
@@ -125,10 +116,7 @@ export default function Stats() {
             }}
           >
             {stats.airlines.slice(0, 5).map((a, i) => (
-              <div
-                key={a.airline}
-                style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: 4 }}
-              >
+              <div key={a.airline} style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <div
                   style={{
                     width: 8,

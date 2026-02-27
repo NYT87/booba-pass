@@ -14,10 +14,7 @@ export default function FlightCard({ flight }: Props) {
   const duration = formatDuration(flightDurationMin(flight))
 
   return (
-    <div
-      className="card card-hover flight-card animate-in"
-      onClick={() => navigate(`/flights/${flight.id}`)}
-    >
+    <div className="card card-hover flight-card animate-in" onClick={() => navigate(`/flights/${flight.id}`)}>
       <div style={{ flex: 1 }}>
         <div className="flight-card-route">
           <span className="iata-code">{flight.departureIata}</span>
@@ -27,8 +24,8 @@ export default function FlightCard({ flight }: Props) {
           <span className="iata-code">{flight.arrivalIata}</span>
         </div>
         <div className="flight-card-meta">
-          <AirlineLabel name={flight.airline} className="flight-airline-label" />·{' '}
-          {flight.flightNumber} · {duration} · {Math.round(flight.distanceKm).toLocaleString()} km
+          <AirlineLabel name={flight.airline} className="flight-airline-label" />· {flight.flightNumber} · {duration} ·{' '}
+          {Math.round(flight.distanceKm).toLocaleString()} km
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>

@@ -120,9 +120,7 @@ export default function FlightDetail() {
           <div className="detail-info-label">
             <MapPin size={12} style={{ marginBottom: -2, marginRight: 4 }} /> Distance
           </div>
-          <div className="detail-info-value">
-            {Math.round(flight.distanceKm).toLocaleString()} km
-          </div>
+          <div className="detail-info-value">{Math.round(flight.distanceKm).toLocaleString()} km</div>
         </div>
         <div className="detail-info-card">
           <div className="detail-info-label">
@@ -145,9 +143,7 @@ export default function FlightDetail() {
             <CreditCard size={12} style={{ marginBottom: -2, marginRight: 4 }} /> Mileage
           </div>
           <div className="detail-info-value">
-            {flight.mileageGranted !== undefined
-              ? `+${flight.mileageGranted.toLocaleString()}`
-              : '—'}
+            {flight.mileageGranted !== undefined ? `+${flight.mileageGranted.toLocaleString()}` : '—'}
           </div>
         </div>
       </div>
@@ -172,17 +168,13 @@ export default function FlightDetail() {
           <div className="card" style={{ padding: 16, borderLeft: '4px solid var(--warning)' }}>
             {flight.actualDepartureTime && (
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                  Actual Dep.
-                </span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Actual Dep.</span>
                 <span style={{ fontWeight: 600 }}>{flight.actualDepartureTime}</span>
               </div>
             )}
             {flight.actualArrivalTime && (
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                  Actual Arr.
-                </span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Actual Arr.</span>
                 <span style={{ fontWeight: 600 }}>{flight.actualArrivalTime}</span>
               </div>
             )}
@@ -231,9 +223,7 @@ export default function FlightDetail() {
             </div>
             <div style={{ textAlign: 'left', flex: 1 }}>
               <div style={{ fontSize: '1rem', fontWeight: 700 }}>Travel Mode</div>
-              <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
-                Open boarding pass for scanning
-              </div>
+              <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Open boarding pass for scanning</div>
             </div>
             <Maximize2 size={20} style={{ opacity: 0.7 }} />
           </button>
@@ -356,9 +346,7 @@ export default function FlightDetail() {
             </div>
 
             <footer className="travel-mode-footer">
-              <div className="brightness-hint">
-                💡 Tip: Maximize your screen brightness for the airport scanner
-              </div>
+              <div className="brightness-hint">💡 Tip: Maximize your screen brightness for the airport scanner</div>
               <div className="flight-quick-info">
                 <div>
                   <label>Flight</label>

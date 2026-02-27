@@ -10,10 +10,7 @@ export default function AirlineLabel({ name, size = 16, className }: Props) {
   const airline = useAirlineByName(name)
 
   return (
-    <span
-      className={className}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}
-    >
+    <span className={className} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
       {airline?.image && (
         <img
           src={airline.image}
@@ -27,11 +24,7 @@ export default function AirlineLabel({ name, size = 16, className }: Props) {
           }}
         />
       )}
-      <span
-        style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-      >
-        {name}
-      </span>
+      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
     </span>
   )
 }

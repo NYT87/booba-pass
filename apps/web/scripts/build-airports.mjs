@@ -20,9 +20,7 @@ function fetch(url) {
 }
 
 // OpenFlights Airports data includes timezones
-const csv = await fetch(
-  'https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat'
-)
+const csv = await fetch('https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat')
 const lines = csv.split('\n')
 // header: id,ident,type,name,latitude_deg,longitude_deg,elevation_ft,continent,iso_country,iso_region,municipality,scheduled_service,icao_code,iata_code,...
 const airports = []

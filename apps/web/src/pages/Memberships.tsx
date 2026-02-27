@@ -1,17 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMemberships } from '../hooks/useMemberships'
-import {
-  Barcode as BarcodeIcon,
-  Check,
-  Copy,
-  CreditCard,
-  List,
-  Pencil,
-  Plus,
-  QrCode,
-  X,
-} from 'lucide-react'
+import { Barcode as BarcodeIcon, Check, Copy, CreditCard, List, Pencil, Plus, QrCode, X } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import Barcode from 'react-barcode'
 
@@ -68,11 +58,7 @@ export default function Memberships() {
     <div className="page animate-in">
       <header className="page-header">
         <h1>Memberships</h1>
-        <button
-          className="btn-ghost"
-          style={{ color: 'var(--accent)' }}
-          onClick={() => navigate('/memberships/new')}
-        >
+        <button className="btn-ghost" style={{ color: 'var(--accent)' }} onClick={() => navigate('/memberships/new')}>
           <Plus size={24} />
         </button>
       </header>
@@ -81,11 +67,9 @@ export default function Memberships() {
         {memberships.length > 0 ? (
           memberships.map((m) => {
             const qrValue = m.qrCodeValue ?? (m.codeType === 'QR' ? m.codeValue : undefined)
-            const barcodeValue =
-              m.barcodeValue ?? (m.codeType === 'BARCODE' ? m.codeValue : undefined)
+            const barcodeValue = m.barcodeValue ?? (m.codeType === 'BARCODE' ? m.codeValue : undefined)
             const isQrVisible = visibleCode?.membershipId === m.id && visibleCode?.kind === 'QR'
-            const isBarcodeVisible =
-              visibleCode?.membershipId === m.id && visibleCode?.kind === 'BARCODE'
+            const isBarcodeVisible = visibleCode?.membershipId === m.id && visibleCode?.kind === 'BARCODE'
 
             return (
               <div
@@ -153,9 +137,7 @@ export default function Memberships() {
                 <div className="membership-body" style={{ padding: 16 }}>
                   <div className="membership-body-top">
                     <div className="member-info">
-                      <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.5 }}>
-                        Member
-                      </div>
+                      <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.5 }}>Member</div>
                       <div style={{ fontWeight: 600 }}>{m.memberName}</div>
                       <div
                         style={{
@@ -236,11 +218,7 @@ export default function Memberships() {
               <br />
               Keep all your loyalty codes in one place!
             </p>
-            <button
-              className="btn-primary"
-              onClick={() => navigate('/memberships/new')}
-              style={{ marginTop: 16 }}
-            >
+            <button className="btn-primary" onClick={() => navigate('/memberships/new')} style={{ marginTop: 16 }}>
               Add Your First Membership
             </button>
           </div>
@@ -254,9 +232,7 @@ export default function Memberships() {
             <div className="membership-code-header">
               <div>
                 <div className="membership-code-title">{visibleCode.airlineName}</div>
-                {visibleCode.programName && (
-                  <div className="membership-code-subtitle">{visibleCode.programName}</div>
-                )}
+                {visibleCode.programName && <div className="membership-code-subtitle">{visibleCode.programName}</div>}
               </div>
               <button
                 type="button"
@@ -273,13 +249,7 @@ export default function Memberships() {
                 {visibleCode.kind === 'QR' ? (
                   <QRCodeSVG value={visibleCode.value} size={320} />
                 ) : (
-                  <Barcode
-                    value={visibleCode.value}
-                    width={2}
-                    height={120}
-                    displayValue={false}
-                    background="white"
-                  />
+                  <Barcode value={visibleCode.value} width={2} height={120} displayValue={false} background="white" />
                 )}
                 <div className="membership-code-meta">
                   <div className="membership-code-member">{visibleCode.memberName}</div>

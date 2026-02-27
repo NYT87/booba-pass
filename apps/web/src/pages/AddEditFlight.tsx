@@ -104,9 +104,7 @@ export default function AddEditFlight() {
       setPhotos(existingFlight.photoDataUrls ?? [])
       setBoardingPass(existingFlight.boardingPassDataUrl)
       setMembershipId(existingFlight.membershipId ?? '')
-      setMileageGranted(
-        existingFlight.mileageGranted !== undefined ? String(existingFlight.mileageGranted) : ''
-      )
+      setMileageGranted(existingFlight.mileageGranted !== undefined ? String(existingFlight.mileageGranted) : '')
     } else {
       const now = new Date()
       const today = now.toISOString().slice(0, 10)
@@ -127,14 +125,7 @@ export default function AddEditFlight() {
   }
 
   const handleSave = async () => {
-    if (
-      !departure ||
-      !arrival ||
-      !scheduledDepartureDate ||
-      !scheduledDepartureTime ||
-      !airline ||
-      !flightNumber
-    ) {
+    if (!departure || !arrival || !scheduledDepartureDate || !scheduledDepartureTime || !airline || !flightNumber) {
       alert('Please fill in required fields (Airports, Date/Time, Airline, Flight Number)')
       return
     }
@@ -148,9 +139,7 @@ export default function AddEditFlight() {
     }
 
     const distanceKm = haversineKm(departure.lat, departure.lon, arrival.lat, arrival.lon)
-    const parsedMileage = mileageGranted.trim()
-      ? Number.parseInt(mileageGranted.trim(), 10)
-      : undefined
+    const parsedMileage = mileageGranted.trim() ? Number.parseInt(mileageGranted.trim(), 10) : undefined
 
     if (mileageGranted.trim() && Number.isNaN(parsedMileage)) {
       alert('Mileage granted must be a valid number.')
@@ -233,9 +222,7 @@ export default function AddEditFlight() {
 
         const scannedPayload = await detectCodeFromImageFile(file)
         if (!scannedPayload) {
-          setBoardingPassExtractMessage(
-            'Boarding pass image added. No readable QR/barcode detected.'
-          )
+          setBoardingPassExtractMessage('Boarding pass image added. No readable QR/barcode detected.')
           return
         }
 
@@ -250,9 +237,7 @@ export default function AddEditFlight() {
     const reader = new FileReader()
     reader.onloadend = () => {
       setBoardingPass(reader.result as string)
-      setBoardingPassExtractMessage(
-        'Boarding pass attached. QR/barcode extraction works with images.'
-      )
+      setBoardingPassExtractMessage('Boarding pass attached. QR/barcode extraction works with images.')
     }
     reader.readAsDataURL(file)
   }
@@ -269,17 +254,7 @@ export default function AddEditFlight() {
     if (!BarcodeDetectorApi) return null
 
     const detector = new BarcodeDetectorApi({
-      formats: [
-        'qr_code',
-        'code_128',
-        'code_39',
-        'ean_13',
-        'ean_8',
-        'upc_a',
-        'upc_e',
-        'itf',
-        'pdf417',
-      ],
+      formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf', 'pdf417'],
     })
 
     const bitmap = await createImageBitmap(file)
@@ -299,11 +274,7 @@ export default function AddEditFlight() {
     if (Number.isNaN(dayOfYear) || dayOfYear < 1 || dayOfYear > 366) return undefined
 
     const now = new Date()
-    const candidateYears = [
-      now.getUTCFullYear() - 1,
-      now.getUTCFullYear(),
-      now.getUTCFullYear() + 1,
-    ]
+    const candidateYears = [now.getUTCFullYear() - 1, now.getUTCFullYear(), now.getUTCFullYear() + 1]
     let bestIso = ''
     let bestDiff = Number.MAX_SAFE_INTEGER
 
@@ -403,9 +374,7 @@ export default function AddEditFlight() {
         `Boarding pass data extracted: ${extractedFields.join(', ')}. Review and save if correct.`
       )
     } else {
-      setBoardingPassExtractMessage(
-        'Boarding pass image added. QR/barcode detected but no known fields extracted.'
-      )
+      setBoardingPassExtractMessage('Boarding pass image added. QR/barcode detected but no known fields extracted.')
     }
   }
 
@@ -452,12 +421,8 @@ export default function AddEditFlight() {
         await saveAirlineLogo(extracted.airline, imageToStore)
       }
 
-      const depAirportForTime = extracted.departureIata
-        ? await getAirportByIata(extracted.departureIata)
-        : undefined
-      const arrAirportForTime = extracted.arrivalIata
-        ? await getAirportByIata(extracted.arrivalIata)
-        : undefined
+      const depAirportForTime = extracted.departureIata ? await getAirportByIata(extracted.departureIata) : undefined
+      const arrAirportForTime = extracted.arrivalIata ? await getAirportByIata(extracted.arrivalIata) : undefined
       const depTimeZone = depAirportForTime?.timezone
       const arrTimeZone = arrAirportForTime?.timezone
 
@@ -668,19 +633,11 @@ export default function AddEditFlight() {
         <div className="form-row" style={{ marginTop: 10 }}>
           <div className="form-field">
             <label>Arrival Date</label>
-            <input
-              type="date"
-              value={scheduledArrivalDate}
-              onChange={(e) => setScheduledArrivalDate(e.target.value)}
-            />
+            <input type="date" value={scheduledArrivalDate} onChange={(e) => setScheduledArrivalDate(e.target.value)} />
           </div>
           <div className="form-field">
             <label>Time</label>
-            <input
-              type="time"
-              value={scheduledArrivalTime}
-              onChange={(e) => setScheduledArrivalTime(e.target.value)}
-            />
+            <input type="time" value={scheduledArrivalTime} onChange={(e) => setScheduledArrivalTime(e.target.value)} />
           </div>
         </div>
       </div>
@@ -690,37 +647,21 @@ export default function AddEditFlight() {
         <div className="form-row">
           <div className="form-field">
             <label>Actual Dep. Date</label>
-            <input
-              type="date"
-              value={actualDepartureDate}
-              onChange={(e) => setActualDepartureDate(e.target.value)}
-            />
+            <input type="date" value={actualDepartureDate} onChange={(e) => setActualDepartureDate(e.target.value)} />
           </div>
           <div className="form-field">
             <label>Time</label>
-            <input
-              type="time"
-              value={actualDepartureTime}
-              onChange={(e) => setActualDepartureTime(e.target.value)}
-            />
+            <input type="time" value={actualDepartureTime} onChange={(e) => setActualDepartureTime(e.target.value)} />
           </div>
         </div>
         <div className="form-row" style={{ marginTop: 10 }}>
           <div className="form-field">
             <label>Actual Arr. Date</label>
-            <input
-              type="date"
-              value={actualArrivalDate}
-              onChange={(e) => setActualArrivalDate(e.target.value)}
-            />
+            <input type="date" value={actualArrivalDate} onChange={(e) => setActualArrivalDate(e.target.value)} />
           </div>
           <div className="form-field">
             <label>Time</label>
-            <input
-              type="time"
-              value={actualArrivalTime}
-              onChange={(e) => setActualArrivalTime(e.target.value)}
-            />
+            <input type="time" value={actualArrivalTime} onChange={(e) => setActualArrivalTime(e.target.value)} />
           </div>
         </div>
       </div>
@@ -804,9 +745,7 @@ export default function AddEditFlight() {
             <label>Loyalty Membership (Optional)</label>
             <select
               value={membershipId}
-              onChange={(e) =>
-                setMembershipId(e.target.value ? Number.parseInt(e.target.value, 10) : '')
-              }
+              onChange={(e) => setMembershipId(e.target.value ? Number.parseInt(e.target.value, 10) : '')}
             >
               <option value="">None</option>
               {memberships.map((m) => (
@@ -855,9 +794,7 @@ export default function AddEditFlight() {
                 border: '1px solid rgba(37, 175, 244, 0.2)',
               }}
             >
-              <div style={{ color: 'var(--accent)', fontSize: '0.8rem', marginBottom: 4 }}>
-                Calculated Duration
-              </div>
+              <div style={{ color: 'var(--accent)', fontSize: '0.8rem', marginBottom: 4 }}>Calculated Duration</div>
               <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>
                 {formatDuration(
                   computeDurationMin(
@@ -872,8 +809,7 @@ export default function AddEditFlight() {
               </div>
               {departure.timezone && arrival.timezone ? (
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: 4 }}>
-                  Timezone aware: {departure.iata} ({departure.timezone}) → {arrival.iata} (
-                  {arrival.timezone})
+                  Timezone aware: {departure.iata} ({departure.timezone}) → {arrival.iata} ({arrival.timezone})
                 </div>
               ) : (
                 <div style={{ fontSize: '0.7rem', color: 'var(--warning)', marginTop: 4 }}>
@@ -897,12 +833,7 @@ export default function AddEditFlight() {
               cursor: 'pointer',
             }}
           >
-            <input
-              type="file"
-              accept="image/*,application/pdf"
-              onChange={handleBoardingPassUpload}
-              hidden
-            />
+            <input type="file" accept="image/*,application/pdf" onChange={handleBoardingPassUpload} hidden />
             <Ticket size={18} />
             <span>Add Boarding Pass</span>
           </label>
@@ -914,15 +845,11 @@ export default function AddEditFlight() {
               fontStyle: 'italic',
             }}
           >
-            Note: This purely stores the image/PDF for quick access. It does not auto-fill flight
-            details (yet!).
+            Note: This purely stores the image/PDF for quick access. It does not auto-fill flight details (yet!).
           </p>
         </div>
         {boardingPass && (
-          <div
-            className="card"
-            style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}
-          >
+          <div className="card" style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
             <div
               className="boarding-pass-preview"
               style={{
@@ -948,15 +875,9 @@ export default function AddEditFlight() {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Boarding Pass Attached</div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                Ready for your trip
-              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Ready for your trip</div>
             </div>
-            <button
-              className="btn-ghost"
-              style={{ color: 'var(--danger)' }}
-              onClick={() => setBoardingPass(undefined)}
-            >
+            <button className="btn-ghost" style={{ color: 'var(--danger)' }} onClick={() => setBoardingPass(undefined)}>
               <Trash2 size={18} />
             </button>
           </div>

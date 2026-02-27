@@ -21,11 +21,7 @@ export default function Home() {
       >
         <div className="logo">booba-pass</div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            className="btn-ghost"
-            style={{ color: 'var(--accent)' }}
-            onClick={() => navigate('/flights/new')}
-          >
+          <button className="btn-ghost" style={{ color: 'var(--accent)' }} onClick={() => navigate('/flights/new')}>
             <Plus size={24} />
           </button>
           <button className="btn-ghost" onClick={() => navigate('/settings')}>
@@ -41,11 +37,7 @@ export default function Home() {
           value={((stats?.totalDistanceKm ?? 0) / 1000).toFixed(1) + 'k'}
           label="Dist (km)"
         />
-        <StatCard
-          icon={<Clock size={18} />}
-          value={Math.round((stats?.totalDurationMin ?? 0) / 60)}
-          label="Hours"
-        />
+        <StatCard icon={<Clock size={18} />} value={Math.round((stats?.totalDurationMin ?? 0) / 60)} label="Hours" />
       </div>
 
       <section>
@@ -54,13 +46,7 @@ export default function Home() {
             <div className="map-dot" style={{ top: '30%', left: '30%' }}></div>
             <div className="map-dot" style={{ top: '60%', left: '70%' }}></div>
             <svg className="map-line" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <path
-                d="M 33 33 Q 50 45 67 57"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1"
-                strokeDasharray="3,3"
-              />
+              <path d="M 33 33 Q 50 45 67 57" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="3,3" />
             </svg>
           </div>
           <div className="map-preview-info">

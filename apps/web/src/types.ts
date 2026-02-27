@@ -109,12 +109,7 @@ export function computeDurationMin(
 
 /** Returns effective duration in minutes (actual if available, else scheduled) */
 export function flightDurationMin(f: Flight): number {
-  if (
-    f.actualDepartureDate &&
-    f.actualDepartureTime &&
-    f.actualArrivalDate &&
-    f.actualArrivalTime
-  ) {
+  if (f.actualDepartureDate && f.actualDepartureTime && f.actualArrivalDate && f.actualArrivalTime) {
     return computeDurationMin(
       f.actualDepartureDate,
       f.actualDepartureTime,

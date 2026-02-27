@@ -21,9 +21,7 @@ export default function AddEditMembership() {
   const [deletingMembership, setDeletingMembership] = useState(false)
   const [notes, setNotes] = useState('')
 
-  const detectCodeFromImage = async (
-    file: File
-  ): Promise<{ value: string; type: 'QR' | 'BARCODE' } | null> => {
+  const detectCodeFromImage = async (file: File): Promise<{ value: string; type: 'QR' | 'BARCODE' } | null> => {
     const BarcodeDetectorApi = (
       window as Window & {
         BarcodeDetector?: new (options?: { formats?: string[] }) => {
@@ -223,13 +221,7 @@ export default function AddEditMembership() {
               opacity: analyzingCodeImage ? 0.6 : 1,
             }}
           >
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleCodeImageUpload}
-              disabled={analyzingCodeImage}
-              hidden
-            />
+            <input type="file" accept="image/*" onChange={handleCodeImageUpload} disabled={analyzingCodeImage} hidden />
             <ScanLine size={18} />
             {analyzingCodeImage ? 'Analyzing image...' : 'Upload QR/Barcode image'}
           </label>
@@ -286,25 +278,14 @@ export default function AddEditMembership() {
 
       {showDeleteModal && (
         <div className="confirm-modal-overlay" onClick={() => setShowDeleteModal(false)}>
-          <div
-            className="confirm-modal-card"
-            role="dialog"
-            aria-modal="true"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="confirm-modal-card" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <h3 className="confirm-modal-title">Delete membership?</h3>
-            <p className="confirm-modal-text">
-              This membership card will be permanently removed from this device.
-            </p>
+            <p className="confirm-modal-text">This membership card will be permanently removed from this device.</p>
             <div className="confirm-modal-actions">
               <button className="btn-ghost" type="button" onClick={() => setShowDeleteModal(false)}>
                 Cancel
               </button>
-              <button
-                className="btn-danger"
-                type="button"
-                onClick={() => void handleDeleteMembership()}
-              >
+              <button className="btn-danger" type="button" onClick={() => void handleDeleteMembership()}>
                 {deletingMembership ? 'Deleting...' : 'Delete'}
               </button>
             </div>

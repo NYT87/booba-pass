@@ -32,22 +32,14 @@ export default function Flights() {
         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
       >
         <h1>My Flights</h1>
-        <button
-          className="btn-ghost"
-          style={{ color: 'var(--accent)' }}
-          onClick={() => navigate('/flights/new')}
-        >
+        <button className="btn-ghost" style={{ color: 'var(--accent)' }} onClick={() => navigate('/flights/new')}>
           <Plus size={24} />
         </button>
       </header>
 
       <div className="filter-tabs">
         {(['all', 'past', 'upcoming'] as const).map((f) => (
-          <button
-            key={f}
-            className={`filter-tab ${filter === f ? 'active' : ''}`}
-            onClick={() => setFilter(f)}
-          >
+          <button key={f} className={`filter-tab ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
             {f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
         ))}

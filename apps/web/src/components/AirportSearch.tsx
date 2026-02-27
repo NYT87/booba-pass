@@ -10,9 +10,7 @@ interface Props {
 let airportsCache: Airport[] | null = null
 async function loadAirports(): Promise<Airport[]> {
   if (airportsCache) return airportsCache
-  const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-    ? import.meta.env.BASE_URL
-    : `${import.meta.env.BASE_URL}/`
+  const baseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`
   const res = await fetch(`${baseUrl}airports.json`)
   airportsCache = await res.json()
   return airportsCache!
@@ -40,12 +38,7 @@ export default function AirportSearch({ label, value, onChange }: Props) {
     const airports = await loadAirports()
     const qU = q.toUpperCase()
     const filtered = airports
-      .filter(
-        (a) =>
-          a.iata.startsWith(qU) ||
-          a.city.toUpperCase().includes(qU) ||
-          a.name.toUpperCase().includes(qU)
-      )
+      .filter((a) => a.iata.startsWith(qU) || a.city.toUpperCase().includes(qU) || a.name.toUpperCase().includes(qU))
       .slice(0, 8)
     setResults(filtered)
     setOpen(filtered.length > 0)

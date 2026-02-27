@@ -17,10 +17,7 @@ export default function BottomNav() {
       <div className="nav-items">
         {NAV_ITEMS.map(({ path, label, Icon }) => (
           <div key={path} className="nav-item-wrap">
-            <button
-              className={`nav-item ${pathname === path ? 'active' : ''}`}
-              onClick={() => navigate(path)}
-            >
+            <button className={`nav-item ${pathname === path ? 'active' : ''}`} onClick={() => navigate(path)}>
               <Icon />
               <span>{label}</span>
             </button>

@@ -78,9 +78,7 @@ async function smartUpsertMembership(membership: Omit<Membership, 'id'>) {
   }
 }
 
-async function upsertMembershipAndGetId(
-  membership: Omit<Membership, 'id'>
-): Promise<number | undefined> {
+async function upsertMembershipAndGetId(membership: Omit<Membership, 'id'>): Promise<number | undefined> {
   await smartUpsertMembership(membership)
   const stored = await db.memberships
     .where({
@@ -113,9 +111,7 @@ async function smartUpsertAirline(airline: Omit<Airline, 'id'>) {
   const normalizedName = airline.name.trim().toUpperCase()
   if (!normalizedName || !airline.image) return
 
-  const existing = await db.airlines
-    .filter((a) => a.name.trim().toUpperCase() === normalizedName)
-    .first()
+  const existing = await db.airlines.filter((a) => a.name.trim().toUpperCase() === normalizedName).first()
   if (existing?.id !== undefined) {
     return db.airlines.update(existing.id, { name: normalizedName, image: airline.image })
   }
@@ -166,9 +162,7 @@ export const exportToCSV = (flights: Flight[]) => {
   URL.revokeObjectURL(url)
 }
 
-export const handleImportFile = async (
-  file: File
-): Promise<{ success: number; failed: number }> => {
+export const handleImportFile = async (file: File): Promise<{ success: number; failed: number }> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = async (event) => {
@@ -230,9 +224,7 @@ export const handleImportFile = async (
                     normalizedFlight.membershipId !== undefined &&
                     membershipIdRemap.has(normalizedFlight.membershipId)
                   ) {
-                    normalizedFlight.membershipId = membershipIdRemap.get(
-                      normalizedFlight.membershipId
-                    )
+                    normalizedFlight.membershipId = membershipIdRemap.get(normalizedFlight.membershipId)
                   }
 
                   await smartUpsert(normalizedFlight)
@@ -272,8 +264,7 @@ export const handleImportFile = async (
               headers.forEach((h: string, i: number) => {
                 const val = values[i]?.replace(/^"|"$/g, '').replace(/""/g, '"') || ''
                 if (h === 'distanceKm') obj[h] = toNumberOrUndefined(val)
-                else if (h === 'membershipId' || h === 'mileageGranted')
-                  obj[h] = toIntOrUndefined(val)
+                else if (h === 'membershipId' || h === 'mileageGranted') obj[h] = toIntOrUndefined(val)
                 else obj[h] = val
               })
               return obj

@@ -1,17 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { db } from '../db/db'
 import { useLiveQuery } from 'dexie-react-hooks'
-import {
-  ArrowLeft,
-  Upload,
-  FileJson,
-  FileSpreadsheet,
-  Trash2,
-  Info,
-  Cpu,
-  GitBranch,
-  X,
-} from 'lucide-react'
+import { ArrowLeft, Upload, FileJson, FileSpreadsheet, Trash2, Info, Cpu, GitBranch, X } from 'lucide-react'
 import { exportToJSON, exportToCSV, handleImportFile } from '../utils/dataTransfer'
 import { useState } from 'react'
 import { useTheme } from '../hooks/useTheme'
@@ -95,9 +85,7 @@ export default function Settings() {
 
   const clearData = async () => {
     if (
-      confirm(
-        'Are you ABSOLUTELY sure? This will delete all your flights, memberships, and photos from this device.'
-      )
+      confirm('Are you ABSOLUTELY sure? This will delete all your flights, memberships, and photos from this device.')
     ) {
       await Promise.all([db.flights.clear(), db.memberships.clear()])
       alert('Local storage cleared.')
@@ -144,8 +132,7 @@ export default function Settings() {
       <div className="form-section" style={{ marginTop: 24 }}>
         <div className="form-section-title">Data & Privacy</div>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 20 }}>
-          Your data is stored locally in your browser. Use the tools below to backup or restore your
-          flight history.
+          Your data is stored locally in your browser. Use the tools below to backup or restore your flight history.
         </p>
 
         <div className="card" style={{ padding: 16 }}>
@@ -153,9 +140,7 @@ export default function Settings() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button
               className="btn-ghost"
-              onClick={() =>
-                flights && memberships && airlines && exportToJSON(flights, memberships, airlines)
-              }
+              onClick={() => flights && memberships && airlines && exportToJSON(flights, memberships, airlines)}
               style={{ justifyContent: 'flex-start', padding: 12, background: 'var(--bg-input)' }}
             >
               <FileJson size={18} style={{ marginRight: 10, color: 'var(--accent)' }} />
@@ -195,13 +180,7 @@ export default function Settings() {
               gap: 8,
             }}
           >
-            <input
-              type="file"
-              accept=".json,.csv"
-              onChange={onImport}
-              disabled={importing}
-              hidden
-            />
+            <input type="file" accept=".json,.csv" onChange={onImport} disabled={importing} hidden />
             <Upload size={18} />
             {importing ? 'Importing...' : 'Restore from Backup / CSV'}
           </label>
@@ -290,9 +269,7 @@ export default function Settings() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Commit</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 600, fontFamily: 'monospace' }}>
-                  {__COMMIT_HASH__}
-                </div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600, fontFamily: 'monospace' }}>{__COMMIT_HASH__}</div>
               </div>
             </div>
 
@@ -308,9 +285,7 @@ export default function Settings() {
                 <Cpu size={18} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                  Environment
-                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Environment</div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{import.meta.env.MODE}</div>
               </div>
             </div>
@@ -371,9 +346,7 @@ export default function Settings() {
             </h3>
             <p
               className={`settings-modal-text ${
-                importResult.type === 'success'
-                  ? 'settings-modal-text-success'
-                  : 'settings-modal-text-error'
+                importResult.type === 'success' ? 'settings-modal-text-success' : 'settings-modal-text-error'
               }`}
             >
               {importResult.text}
