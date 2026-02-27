@@ -48,7 +48,21 @@ export default function AddEditFlight() {
   const [boardingPass, setBoardingPass] = useState<string | undefined>(undefined)
   const [membershipId, setMembershipId] = useState<number | ''>('')
   const [mileageGranted, setMileageGranted] = useState('')
+  const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const airportsByIataRef = useRef<Map<string, Airport> | null>(null)
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false)
+    const handleOffline = () => setIsOffline(true)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
 
   useEffect(() => {
     if (existingFlight) {
@@ -578,9 +592,9 @@ export default function AddEditFlight() {
             />
             <button
               type="button"
-              className="btn-ghost"
+              className={`btn-ghost ${isOffline ? 'disabled' : ''}`}
               onClick={() => void handleFetchTrackingData()}
-              disabled={fetchingTrackData}
+              disabled={fetchingTrackData || isOffline}
               style={{
                 minWidth: 124,
                 padding: '0 12px',
@@ -595,7 +609,19 @@ export default function AddEditFlight() {
             </button>
           </div>
         </div>
-        {trackFetchMessage && (
+        {isOffline && (
+          <div
+            style={{
+              marginTop: 8,
+              fontSize: '0.75rem',
+              color: 'var(--warning)',
+              fontWeight: 600,
+            }}
+          >
+            Tracking extraction requires an internet connection.
+          </div>
+        )}
+        {trackFetchMessage && !fetchingTrackData && !isOffline && (
           <div
             style={{
               marginTop: 8,
