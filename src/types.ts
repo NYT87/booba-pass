@@ -8,6 +8,12 @@ export interface Airport {
   timezone?: string
 }
 
+export interface Airline {
+  id?: number
+  name: string
+  image: string
+}
+
 export interface Flight {
   id?: number
 

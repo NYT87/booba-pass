@@ -21,6 +21,7 @@ export default function Settings() {
   const navigate = useNavigate()
   const flights = useLiveQuery(() => db.flights.toArray())
   const memberships = useLiveQuery(() => db.memberships.toArray())
+  const airlines = useLiveQuery(() => db.airlines.toArray())
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<{
     type: 'success' | 'error'
@@ -152,7 +153,9 @@ export default function Settings() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button
               className="btn-ghost"
-              onClick={() => flights && memberships && exportToJSON(flights, memberships)}
+              onClick={() =>
+                flights && memberships && airlines && exportToJSON(flights, memberships, airlines)
+              }
               style={{ justifyContent: 'flex-start', padding: 12, background: 'var(--bg-input)' }}
             >
               <FileJson size={18} style={{ marginRight: 10, color: 'var(--accent)' }} />

@@ -9,6 +9,8 @@
     "build": "node scripts/build-airports.mjs && tsc -b && vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "test:tracking": "node --experimental-strip-types --test tests/trackingExtraction.test.mjs",
+    "inspect:tracking": "node --experimental-strip-types scripts/inspect-tracking-url.mjs",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "preview": "vite preview"

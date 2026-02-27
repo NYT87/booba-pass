@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useFlightById, saveFlight, useStats } from '../hooks/useFlights'
 import { useMemberships } from '../hooks/useMemberships'
+import { saveAirlineLogo } from '../hooks/useAirlines'
 import AirportSearch from '../components/AirportSearch'
 import type { Airport, Flight } from '../types'
 import { haversineKm, computeDurationMin, formatDuration } from '../types'
 import { ArrowLeftRight, Save, X, Camera, Trash2, Ticket } from 'lucide-react'
+import { fetchAndExtractTrackingFlightData } from '../utils/trackingExtraction'
 
 export default function AddEditFlight() {
   const { id } = useParams()
@@ -39,14 +41,17 @@ export default function AddEditFlight() {
   const [aircraft, setAircraft] = useState('')
   const [notes, setNotes] = useState('')
   const [trackUrl, setTrackUrl] = useState('')
+  const [fetchingTrackData, setFetchingTrackData] = useState(false)
+  const [trackFetchMessage, setTrackFetchMessage] = useState<string | null>(null)
+  const [boardingPassExtractMessage, setBoardingPassExtractMessage] = useState<string | null>(null)
   const [photos, setPhotos] = useState<string[]>([])
   const [boardingPass, setBoardingPass] = useState<string | undefined>(undefined)
   const [membershipId, setMembershipId] = useState<number | ''>('')
   const [mileageGranted, setMileageGranted] = useState('')
+  const airportsByIataRef = useRef<Map<string, Airport> | null>(null)
 
   useEffect(() => {
     if (existingFlight) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDeparture({
         iata: existingFlight.departureIata,
         name: existingFlight.departureCity, // approximation for loading back
@@ -201,12 +206,351 @@ export default function AddEditFlight() {
   const handleBoardingPassUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    setBoardingPassExtractMessage(null)
 
+    const isImage = file.type.startsWith('image/')
+
+    if (isImage) {
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        const dataUrl = reader.result as string
+        setBoardingPass(dataUrl)
+        setPhotos((prev) => (prev.includes(dataUrl) ? prev : [...prev, dataUrl]))
+
+        const scannedPayload = await detectCodeFromImageFile(file)
+        if (!scannedPayload) {
+          setBoardingPassExtractMessage(
+            'Boarding pass image added. No readable QR/barcode detected.'
+          )
+          return
+        }
+
+        const extracted = parseBoardingPassPayload(scannedPayload)
+        applyExtractedBoardingPassData(extracted)
+      }
+      reader.readAsDataURL(file)
+      return
+    }
+
+    // Non-image files (e.g. PDF): keep existing behavior for boarding pass storage.
     const reader = new FileReader()
     reader.onloadend = () => {
       setBoardingPass(reader.result as string)
+      setBoardingPassExtractMessage(
+        'Boarding pass attached. QR/barcode extraction works with images.'
+      )
     }
     reader.readAsDataURL(file)
+  }
+
+  const detectCodeFromImageFile = async (file: File): Promise<string | null> => {
+    const BarcodeDetectorApi = (
+      window as Window & {
+        BarcodeDetector?: new (options?: { formats?: string[] }) => {
+          detect: (source: ImageBitmap) => Promise<Array<{ rawValue?: string }>>
+        }
+      }
+    ).BarcodeDetector
+
+    if (!BarcodeDetectorApi) return null
+
+    const detector = new BarcodeDetectorApi({
+      formats: [
+        'qr_code',
+        'code_128',
+        'code_39',
+        'ean_13',
+        'ean_8',
+        'upc_a',
+        'upc_e',
+        'itf',
+        'pdf417',
+      ],
+    })
+
+    const bitmap = await createImageBitmap(file)
+    try {
+      const detections = await detector.detect(bitmap)
+      const first = detections.find((d) => Boolean(d.rawValue?.trim()))
+      return first?.rawValue?.trim() ?? null
+    } catch {
+      return null
+    } finally {
+      bitmap.close()
+    }
+  }
+
+  const parseJulianDateToIso = (julianDate: string): string | undefined => {
+    const dayOfYear = Number.parseInt(julianDate, 10)
+    if (Number.isNaN(dayOfYear) || dayOfYear < 1 || dayOfYear > 366) return undefined
+
+    const now = new Date()
+    const candidateYears = [
+      now.getUTCFullYear() - 1,
+      now.getUTCFullYear(),
+      now.getUTCFullYear() + 1,
+    ]
+    let bestIso = ''
+    let bestDiff = Number.MAX_SAFE_INTEGER
+
+    for (const year of candidateYears) {
+      const date = new Date(Date.UTC(year, 0, dayOfYear))
+      const iso = date.toISOString().slice(0, 10)
+      const diff = Math.abs(date.getTime() - now.getTime())
+      if (diff < bestDiff) {
+        bestDiff = diff
+        bestIso = iso
+      }
+    }
+
+    return bestIso || undefined
+  }
+
+  const parseBoardingPassPayload = (payload: string) => {
+    const extracted: {
+      departureIata?: string
+      arrivalIata?: string
+      flightNumber?: string
+      seat?: string
+      scheduledDepartureDate?: string
+    } = {}
+
+    const text = payload.toUpperCase()
+
+    // IATA BCBP parser (best effort)
+    if (text.startsWith('M') && text.length >= 50) {
+      const departureIata = text.slice(30, 33).trim()
+      const arrivalIata = text.slice(33, 36).trim()
+      const carrier = text.slice(36, 39).trim()
+      const flightNumRaw = text.slice(39, 44).replaceAll(' ', '')
+      const julianDate = text.slice(44, 47).trim()
+      const seatRaw = text.slice(48, 52).trim()
+
+      if (/^[A-Z]{3}$/.test(departureIata)) extracted.departureIata = departureIata
+      if (/^[A-Z]{3}$/.test(arrivalIata)) extracted.arrivalIata = arrivalIata
+      if (carrier && flightNumRaw) extracted.flightNumber = `${carrier}${flightNumRaw}`
+      if (seatRaw) extracted.seat = seatRaw
+      const parsedDate = parseJulianDateToIso(julianDate)
+      if (parsedDate) extracted.scheduledDepartureDate = parsedDate
+    }
+
+    // Generic fallback extraction
+    if (!extracted.flightNumber) {
+      const flightMatch = text.match(/\b([A-Z0-9]{2,3}\s?\d{1,4}[A-Z]?)\b/)
+      if (flightMatch?.[1]) extracted.flightNumber = flightMatch[1].replace(/\s+/g, '')
+    }
+    if (!extracted.departureIata || !extracted.arrivalIata) {
+      const routeMatch = text.match(/\b([A-Z]{3})\s*(?:\/|->|→|-| TO )\s*([A-Z]{3})\b/)
+      if (routeMatch) {
+        extracted.departureIata = extracted.departureIata ?? routeMatch[1]
+        extracted.arrivalIata = extracted.arrivalIata ?? routeMatch[2]
+      }
+    }
+    if (!extracted.seat) {
+      const seatMatch = text.match(/\b(\d{1,2}[A-Z])\b/)
+      if (seatMatch?.[1]) extracted.seat = seatMatch[1]
+    }
+
+    return extracted
+  }
+
+  const applyExtractedBoardingPassData = async (extracted: {
+    departureIata?: string
+    arrivalIata?: string
+    flightNumber?: string
+    seat?: string
+    scheduledDepartureDate?: string
+  }) => {
+    if (extracted.flightNumber) setFlightNumber(extracted.flightNumber.toUpperCase())
+    if (extracted.seat) setSeat(extracted.seat.toUpperCase())
+    if (extracted.scheduledDepartureDate) {
+      setScheduledDepartureDate((current) => current || extracted.scheduledDepartureDate!)
+      setScheduledArrivalDate((current) => current || extracted.scheduledDepartureDate!)
+    }
+
+    if (extracted.departureIata) {
+      const depAirport = await getAirportByIata(extracted.departureIata)
+      if (depAirport) setDeparture(depAirport)
+    }
+    if (extracted.arrivalIata) {
+      const arrAirport = await getAirportByIata(extracted.arrivalIata)
+      if (arrAirport) setArrival(arrAirport)
+    }
+
+    const extractedFields = [
+      extracted.flightNumber && 'flight number',
+      extracted.departureIata && extracted.arrivalIata && 'route',
+      extracted.scheduledDepartureDate && 'date',
+      extracted.seat && 'seat',
+    ].filter(Boolean)
+
+    if (extractedFields.length > 0) {
+      setBoardingPassExtractMessage(
+        `Boarding pass data extracted: ${extractedFields.join(', ')}. Review and save if correct.`
+      )
+    } else {
+      setBoardingPassExtractMessage(
+        'Boarding pass image added. QR/barcode detected but no known fields extracted.'
+      )
+    }
+  }
+
+  const getAirportByIata = async (iata: string): Promise<Airport | undefined> => {
+    const normalized = iata.toUpperCase()
+    if (!airportsByIataRef.current) {
+      const res = await fetch('/airports.json')
+      const airports = (await res.json()) as Airport[]
+      airportsByIataRef.current = new Map(airports.map((a) => [a.iata.toUpperCase(), a]))
+    }
+    return airportsByIataRef.current.get(normalized)
+  }
+
+  const handleFetchTrackingData = async () => {
+    if (!trackUrl.trim()) {
+      alert('Please provide a tracking URL first.')
+      return
+    }
+
+    setFetchingTrackData(true)
+    setTrackFetchMessage(null)
+    try {
+      const extracted = await fetchAndExtractTrackingFlightData(trackUrl.trim())
+      if (!extracted) {
+        setTrackFetchMessage('No structured flight details could be extracted from that link.')
+        return
+      }
+
+      if (extracted.airline) setAirline(extracted.airline.toUpperCase())
+      if (extracted.flightNumber) setFlightNumber(extracted.flightNumber.toUpperCase())
+      if (extracted.aircraft) setAircraft(extracted.aircraft.toUpperCase())
+
+      if (extracted.departureIata) {
+        const depAirport = await getAirportByIata(extracted.departureIata)
+        if (depAirport) setDeparture(depAirport)
+      }
+      if (extracted.arrivalIata) {
+        const arrAirport = await getAirportByIata(extracted.arrivalIata)
+        if (arrAirport) setArrival(arrAirport)
+      }
+
+      if (extracted.airline && extracted.airlineImage) {
+        const imageToStore = await toDataUrlIfPossible(extracted.airlineImage)
+        await saveAirlineLogo(extracted.airline, imageToStore)
+      }
+
+      const depAirportForTime = extracted.departureIata
+        ? await getAirportByIata(extracted.departureIata)
+        : undefined
+      const arrAirportForTime = extracted.arrivalIata
+        ? await getAirportByIata(extracted.arrivalIata)
+        : undefined
+      const depTimeZone = depAirportForTime?.timezone
+      const arrTimeZone = arrAirportForTime?.timezone
+
+      const scheduleDep = convertExtractedDateTime(
+        extracted.scheduledDepartureDate,
+        extracted.scheduledDepartureTime,
+        extracted.timesInUtc,
+        depTimeZone
+      )
+      const scheduleArr = convertExtractedDateTime(
+        extracted.scheduledArrivalDate,
+        extracted.scheduledArrivalTime,
+        extracted.timesInUtc,
+        arrTimeZone ?? depTimeZone
+      )
+      const actualDep = convertExtractedDateTime(
+        extracted.actualDepartureDate,
+        extracted.actualDepartureTime,
+        extracted.timesInUtc,
+        depTimeZone
+      )
+      const actualArr = convertExtractedDateTime(
+        extracted.actualArrivalDate,
+        extracted.actualArrivalTime,
+        extracted.timesInUtc,
+        arrTimeZone ?? depTimeZone
+      )
+
+      if (scheduleDep.date) setScheduledDepartureDate(scheduleDep.date)
+      if (scheduleDep.time) setScheduledDepartureTime(scheduleDep.time)
+      if (scheduleArr.date) setScheduledArrivalDate(scheduleArr.date)
+      if (scheduleArr.time) setScheduledArrivalTime(scheduleArr.time)
+      if (actualDep.date) setActualDepartureDate(actualDep.date)
+      if (actualDep.time) setActualDepartureTime(actualDep.time)
+      if (actualArr.date) setActualArrivalDate(actualArr.date)
+      if (actualArr.time) setActualArrivalTime(actualArr.time)
+
+      const extractedFields = [
+        extracted.flightNumber && 'flight number',
+        extracted.departureIata && extracted.arrivalIata && 'route',
+        (extracted.scheduledDepartureDate || extracted.scheduledDepartureTime) && 'schedule',
+        (extracted.actualDepartureDate ||
+          extracted.actualDepartureTime ||
+          extracted.actualArrivalDate ||
+          extracted.actualArrivalTime) &&
+          'actual delay times',
+        extracted.aircraft && 'aircraft',
+      ].filter(Boolean)
+
+      setTrackFetchMessage(
+        extractedFields.length > 0
+          ? `Tracking data extracted: ${extractedFields.join(', ')}. Review and save if correct.`
+          : 'Tracking data fetched but no known fields were extracted.'
+      )
+    } catch (err) {
+      console.error(err)
+      setTrackFetchMessage('Could not fetch or parse that tracking link.')
+    } finally {
+      setFetchingTrackData(false)
+    }
+  }
+
+  const toDataUrlIfPossible = async (url: string): Promise<string> => {
+    try {
+      const res = await fetch(url)
+      if (!res.ok) return url
+      const blob = await res.blob()
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.onerror = () => reject(reader.error)
+        reader.readAsDataURL(blob)
+      })
+    } catch {
+      return url
+    }
+  }
+
+  const convertExtractedDateTime = (
+    date: string | undefined,
+    time: string | undefined,
+    isUtc: boolean | undefined,
+    targetTimeZone: string | undefined
+  ): { date?: string; time?: string } => {
+    if (!date && !time) return {}
+    if (!date || !time) return { date, time }
+    if (!isUtc) return { date, time }
+
+    try {
+      const dt = new Date(`${date}T${time}:00Z`)
+      const formatter = new Intl.DateTimeFormat('sv-SE', {
+        timeZone: targetTimeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      })
+      const parts = formatter.formatToParts(dt)
+      const map = Object.fromEntries(parts.map((p) => [p.type, p.value]))
+      const localDate = `${map.year}-${map.month}-${map.day}`
+      const localTime = `${map.hour}:${map.minute}`
+      return { date: localDate, time: localTime }
+    } catch {
+      return { date, time }
+    }
   }
 
   return (
@@ -220,6 +564,49 @@ export default function AddEditFlight() {
           <Save size={24} />
         </button>
       </header>
+
+      <div className="form-section">
+        <div className="form-section-title">Tracking</div>
+        <div className="form-field">
+          <label>Track URL</label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
+            <input
+              type="url"
+              value={trackUrl}
+              onChange={(e) => setTrackUrl(e.target.value)}
+              placeholder="FlightRadar24 / FlightAware link"
+            />
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => void handleFetchTrackingData()}
+              disabled={fetchingTrackData}
+              style={{
+                minWidth: 124,
+                padding: '0 12px',
+                background: 'var(--bg-input)',
+                border: '1px solid var(--border)',
+                borderRadius: 10,
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+              }}
+            >
+              {fetchingTrackData ? 'Fetching...' : 'Extract'}
+            </button>
+          </div>
+        </div>
+        {trackFetchMessage && (
+          <div
+            style={{
+              marginTop: 8,
+              fontSize: '0.75rem',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            {trackFetchMessage}
+          </div>
+        )}
+      </div>
 
       <div className="form-section">
         <div className="form-section-title">Route</div>
@@ -416,15 +803,6 @@ export default function AddEditFlight() {
             />
           </div>
         </div>
-        <div className="form-field">
-          <label>Track URL</label>
-          <input
-            type="url"
-            value={trackUrl}
-            onChange={(e) => setTrackUrl(e.target.value)}
-            placeholder="FlightRadar24 / FlightAware link"
-          />
-        </div>
         <div className="form-field" style={{ marginTop: 12 }}>
           <label>Notes</label>
           <textarea
@@ -555,6 +933,11 @@ export default function AddEditFlight() {
             >
               <Trash2 size={18} />
             </button>
+          </div>
+        )}
+        {boardingPassExtractMessage && (
+          <div style={{ marginTop: 8, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            {boardingPassExtractMessage}
           </div>
         )}
       </div>

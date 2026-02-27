@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import type { Flight } from '../types'
 import { flightDurationMin, formatDuration, isUpcoming } from '../types'
 import { Plane, Ticket } from 'lucide-react'
+import AirlineLabel from './AirlineLabel'
 
 interface Props {
   flight: Flight
@@ -26,8 +27,8 @@ export default function FlightCard({ flight }: Props) {
           <span className="iata-code">{flight.arrivalIata}</span>
         </div>
         <div className="flight-card-meta">
-          {flight.airline} · {flight.flightNumber} · {duration} ·{' '}
-          {Math.round(flight.distanceKm).toLocaleString()} km
+          <AirlineLabel name={flight.airline} className="flight-airline-label" />·{' '}
+          {flight.flightNumber} · {duration} · {Math.round(flight.distanceKm).toLocaleString()} km
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>

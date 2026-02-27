@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useFlightById, deleteFlight, saveFlight } from '../hooks/useFlights'
 import { useMembershipById } from '../hooks/useMemberships'
+import AirlineLabel from '../components/AirlineLabel'
 import { formatDuration, flightDurationMin } from '../types'
 import {
   ArrowLeft,
@@ -93,7 +94,9 @@ export default function FlightDetail() {
           </div>
         </div>
         <div className="detail-meta-row">
-          <span className="detail-pill">{flight.airline}</span>
+          <span className="detail-pill">
+            <AirlineLabel name={flight.airline} />
+          </span>
           <span className="detail-pill">{flight.flightNumber}</span>
           <span className="detail-pill">{flight.seatClass}</span>
           {flight.seat && <span className="detail-pill">Seat {flight.seat}</span>}

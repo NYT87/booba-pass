@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStats } from '../hooks/useFlights'
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import StatCard from '../components/StatCard'
+import AirlineLabel from '../components/AirlineLabel'
 import { Plane, MapPin, Clock } from 'lucide-react'
 
 const COLORS = ['#25aff4', '#a78bfa', '#f59e0b', '#ef4444', '#10b981']
@@ -136,7 +137,9 @@ export default function Stats() {
                     background: COLORS[i % COLORS.length],
                   }}
                 />
-                <span style={{ color: 'var(--text-secondary)' }}>{a.airline}</span>
+                <span style={{ color: 'var(--text-secondary)', maxWidth: 120 }}>
+                  <AirlineLabel name={a.airline} />
+                </span>
               </div>
             ))}
           </div>

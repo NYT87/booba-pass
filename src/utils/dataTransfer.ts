@@ -1,4 +1,4 @@
-import type { Flight, Membership } from '../types'
+import type { Airline, Flight, Membership } from '../types'
 import { db } from '../db/db'
 
 const toIntOrUndefined = (value: unknown): number | undefined => {
@@ -78,12 +78,26 @@ async function smartUpsertMembership(membership: Omit<Membership, 'id'>) {
   }
 }
 
-export const exportToJSON = (flights: Flight[], memberships: Membership[]) => {
+async function upsertMembershipAndGetId(
+  membership: Omit<Membership, 'id'>
+): Promise<number | undefined> {
+  await smartUpsertMembership(membership)
+  const stored = await db.memberships
+    .where({
+      airlineName: membership.airlineName,
+      membershipNumber: membership.membershipNumber,
+    })
+    .first()
+  return stored?.id
+}
+
+export const exportToJSON = (flights: Flight[], memberships: Membership[], airlines: Airline[]) => {
   const bundle = {
-    version: 4,
+    version: 5,
     exportedAt: new Date().toISOString(),
     flights,
     memberships,
+    airlines,
   }
   const data = JSON.stringify(bundle, null, 2)
   const blob = new Blob([data], { type: 'application/json' })
@@ -93,6 +107,19 @@ export const exportToJSON = (flights: Flight[], memberships: Membership[]) => {
   a.download = `booba-pass-bundle-${new Date().toISOString().slice(0, 10)}.json`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+async function smartUpsertAirline(airline: Omit<Airline, 'id'>) {
+  const normalizedName = airline.name.trim().toUpperCase()
+  if (!normalizedName || !airline.image) return
+
+  const existing = await db.airlines
+    .filter((a) => a.name.trim().toUpperCase() === normalizedName)
+    .first()
+  if (existing?.id !== undefined) {
+    return db.airlines.update(existing.id, { name: normalizedName, image: airline.image })
+  }
+  return db.airlines.add({ name: normalizedName, image: airline.image })
 }
 
 export const exportToCSV = (flights: Flight[]) => {
@@ -169,26 +196,61 @@ export const handleImportFile = async (
           }
           // Case 2: New Bundle format
           else if (bundle.flights || bundle.memberships) {
-            if (bundle.flights && Array.isArray(bundle.flights)) {
-              for (const f of bundle.flights) {
-                if (f.airline && f.flightNumber && f.scheduledDepartureDate) {
-                  const data = { ...(f as Record<string, unknown>) }
+            const membershipIdRemap = new Map<number, number>()
+
+            if (bundle.memberships && Array.isArray(bundle.memberships)) {
+              for (const m of bundle.memberships) {
+                if (m.airlineName && m.membershipNumber) {
+                  const sourceId =
+                    typeof (m as Record<string, unknown>).id === 'number'
+                      ? ((m as Record<string, unknown>).id as number)
+                      : undefined
+                  const data = { ...(m as Record<string, unknown>) }
                   delete data.id
-                  await smartUpsert(normalizeImportedFlight(data))
+                  const normalizedMembership = normalizeImportedMembership(data)
+                  const storedId = await upsertMembershipAndGetId(normalizedMembership)
+                  if (sourceId !== undefined && storedId !== undefined) {
+                    membershipIdRemap.set(sourceId, storedId)
+                  }
                   success++
                 } else {
                   failed++
                 }
               }
             }
-            if (bundle.memberships && Array.isArray(bundle.memberships)) {
-              for (const m of bundle.memberships) {
-                if (m.airlineName && m.membershipNumber) {
-                  const data = { ...(m as Record<string, unknown>) }
+
+            if (bundle.flights && Array.isArray(bundle.flights)) {
+              for (const f of bundle.flights) {
+                if (f.airline && f.flightNumber && f.scheduledDepartureDate) {
+                  const data = { ...(f as Record<string, unknown>) }
                   delete data.id
-                  await smartUpsertMembership(normalizeImportedMembership(data))
-                  // We don't count these in the flight success count for now to keep UI simple,
-                  // or we could combine. Let's combine for the "success" count.
+                  const normalizedFlight = normalizeImportedFlight(data)
+
+                  if (
+                    normalizedFlight.membershipId !== undefined &&
+                    membershipIdRemap.has(normalizedFlight.membershipId)
+                  ) {
+                    normalizedFlight.membershipId = membershipIdRemap.get(
+                      normalizedFlight.membershipId
+                    )
+                  }
+
+                  await smartUpsert(normalizedFlight)
+                  success++
+                } else {
+                  failed++
+                }
+              }
+            }
+
+            if (bundle.airlines && Array.isArray(bundle.airlines)) {
+              for (const a of bundle.airlines) {
+                if (a.name && a.image) {
+                  const data = { ...(a as Record<string, unknown>) } as Omit<Airline, 'id'>
+                  await smartUpsertAirline({
+                    name: String(data.name),
+                    image: String(data.image),
+                  })
                   success++
                 } else {
                   failed++

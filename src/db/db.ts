@@ -1,9 +1,10 @@
 import Dexie, { type Table } from 'dexie'
-import type { Flight, Membership } from '../types'
+import type { Airline, Flight, Membership } from '../types'
 
 class BoobaPassDB extends Dexie {
   flights!: Table<Flight, number>
   memberships!: Table<Membership, number>
+  airlines!: Table<Airline, number>
 
   constructor() {
     super('booba-pass')
@@ -15,6 +16,12 @@ class BoobaPassDB extends Dexie {
       flights:
         '++id, scheduledDepartureDate, departureIata, arrivalIata, airline, flightNumber, membershipId, mileageGranted',
       memberships: '++id, airlineName, programName, membershipNumber',
+    })
+    this.version(5).stores({
+      flights:
+        '++id, scheduledDepartureDate, departureIata, arrivalIata, airline, flightNumber, membershipId, mileageGranted',
+      memberships: '++id, airlineName, programName, membershipNumber',
+      airlines: '++id, name',
     })
   }
 }
