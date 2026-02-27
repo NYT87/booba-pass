@@ -31,6 +31,8 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          VITE_TRACKING_PROXY_URL: ${{ secrets.VITE_TRACKING_PROXY_URL }}
         run: npm run build -w apps/web
 
       - name: Setup Pages
