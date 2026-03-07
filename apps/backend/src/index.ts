@@ -33,6 +33,23 @@ function cleanFlightNumber(value: string): string {
   return value.toUpperCase().replace(/\s+/g, '')
 }
 
+function normalizeAircraft(value: string): string {
+  return value
+    .toUpperCase()
+    .replace(/\b(?:AIRBUS|BOEING)\s+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function splitFlightCode(value: string): { carrier: string; number: string } | null {
+  const match = value
+    .trim()
+    .toUpperCase()
+    .match(/^([A-Z]{2,3}|[A-Z]\d)\s*[- ]?\s*(\d{1,4}[A-Z]?)$/)
+  if (!match) return null
+  return { carrier: match[1], number: match[2] }
+}
+
 function extractDateTimeNearLabel(source: string, labelPattern: RegExp): { date: string; time: string } | null {
   const labelMatch = source.match(labelPattern)
   if (!labelMatch || labelMatch.index === undefined) return null
@@ -49,21 +66,71 @@ function extractDateTimeNearLabel(source: string, labelPattern: RegExp): { date:
 }
 
 export function extractFromTrackingUrl(trackUrl: string): Partial<ExtractedTrackingFlightData> | null {
-  const match = trackUrl.match(/\/live\/flight\/([^/]+)\/history\/(\d{8})\/(\d{4})Z\/([A-Z]{3,4})\/([A-Z]{3,4})/i)
-  if (!match) return null
+  const flightAwareMatch = trackUrl.match(
+    /\/live\/flight\/([^/]+)\/history\/(\d{8})\/(\d{4})Z\/([A-Z]{3,4})\/([A-Z]{3,4})/i
+  )
+  if (flightAwareMatch) {
+    const [, flightNoRaw, yyyymmdd, hhmm, dep, arr] = flightAwareMatch
+    const date = `${yyyymmdd.slice(0, 4)}-${yyyymmdd.slice(4, 6)}-${yyyymmdd.slice(6, 8)}`
+    const time = `${hhmm.slice(0, 2)}:${hhmm.slice(2, 4)}`
 
-  const [, flightNoRaw, yyyymmdd, hhmm, dep, arr] = match
-  const date = `${yyyymmdd.slice(0, 4)}-${yyyymmdd.slice(4, 6)}-${yyyymmdd.slice(6, 8)}`
-  const time = `${hhmm.slice(0, 2)}:${hhmm.slice(2, 4)}`
-
-  return {
-    flightNumber: cleanFlightNumber(flightNoRaw),
-    departureIata: dep.toUpperCase(),
-    arrivalIata: arr.toUpperCase(),
-    scheduledDepartureDate: date,
-    scheduledDepartureTime: time,
-    timesInUtc: true,
+    return {
+      flightNumber: cleanFlightNumber(flightNoRaw),
+      departureIata: dep.toUpperCase(),
+      arrivalIata: arr.toUpperCase(),
+      scheduledDepartureDate: date,
+      scheduledDepartureTime: time,
+      timesInUtc: true,
+    }
   }
+
+  const flightStatsMatch = trackUrl.match(/\/v2\/flight-tracker\/([A-Z0-9]{2,3})\/(\d{1,4}[A-Z]?)/i)
+  if (flightStatsMatch) {
+    const [, carrierRaw, numberRaw] = flightStatsMatch
+    const extracted: Partial<ExtractedTrackingFlightData> = {
+      flightNumber: cleanFlightNumber(`${carrierRaw}${numberRaw}`),
+    }
+
+    try {
+      const url = new URL(trackUrl)
+      const year = Number.parseInt(url.searchParams.get('year') ?? '', 10)
+      const month = Number.parseInt(url.searchParams.get('month') ?? '', 10)
+      const day = Number.parseInt(url.searchParams.get('date') ?? '', 10)
+
+      if (
+        Number.isInteger(year) &&
+        Number.isInteger(month) &&
+        Number.isInteger(day) &&
+        year >= 2000 &&
+        year <= 2099 &&
+        month >= 1 &&
+        month <= 12 &&
+        day >= 1 &&
+        day <= 31
+      ) {
+        extracted.scheduledDepartureDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      }
+    } catch {
+      // Ignore URL parse failures; path-derived flight number is still useful.
+    }
+
+    return extracted
+  }
+
+  const flighteraMatch = trackUrl.match(
+    /\/flight_details\/[^/]+\/([A-Z0-9]{2,3}\d{1,4}[A-Z]?)\/([A-Z]{3,4})\/(\d{4}-\d{2}-\d{2})(?:\/([A-Z]{3,4}))?/i
+  )
+  if (flighteraMatch) {
+    const [, flightNoRaw, depRaw, dateRaw, arrRaw] = flighteraMatch
+    return {
+      flightNumber: cleanFlightNumber(flightNoRaw),
+      departureIata: depRaw.toUpperCase(),
+      arrivalIata: arrRaw?.toUpperCase(),
+      scheduledDepartureDate: dateRaw,
+    }
+  }
+
+  return null
 }
 
 function extractFromJsonLd(html: string): Partial<ExtractedTrackingFlightData> {
@@ -111,6 +178,17 @@ function extractFromJsonLd(html: string): Partial<ExtractedTrackingFlightData> {
 }
 
 function extractAirlineImageFromHtml(html: string, baseUrl?: string): string | undefined {
+  if (baseUrl) {
+    try {
+      const host = new URL(baseUrl).hostname.toLowerCase()
+      if (host.includes('flightstats.com')) {
+        return undefined
+      }
+    } catch {
+      // Ignore malformed baseUrl and continue best-effort extraction.
+    }
+  }
+
   const imagePatterns = [
     /https?:\/\/[^"'()\s]*airline[^"'()\s]*\.(?:png|svg|jpg|jpeg|webp)/i,
     /https?:\/\/[^"'()\s]*airline_logos?[^"'()\s]*\.(?:png|svg|jpg|jpeg|webp)/i,
@@ -142,6 +220,8 @@ function extractWithRegex(text: string): Partial<ExtractedTrackingFlightData> {
   const scheduledArr = extractDateTimeNearLabel(text, /\b(SCHEDULED|FILED)\s+ARRIV(?:AL)?\b/i)
   const actualDep = extractDateTimeNearLabel(text, /\bACTUAL\s+DEPART(?:URE)?\b/i)
   const actualArr = extractDateTimeNearLabel(text, /\bACTUAL\s+ARRIV(?:AL)?\b/i)
+  const estimatedDep = extractDateTimeNearLabel(text, /\bESTIMAT(?:ED|E)\s+DEPART(?:URE)?\b/i)
+  const estimatedArr = extractDateTimeNearLabel(text, /\bESTIMAT(?:ED|E)\s+ARRIV(?:AL)?\b/i)
 
   if (scheduledDep) {
     extracted.scheduledDepartureDate = scheduledDep.date
@@ -159,15 +239,63 @@ function extractWithRegex(text: string): Partial<ExtractedTrackingFlightData> {
     extracted.actualArrivalDate = actualArr.date
     extracted.actualArrivalTime = actualArr.time
   }
+  if (!actualDep && estimatedDep) {
+    extracted.actualDepartureDate = estimatedDep.date
+    extracted.actualDepartureTime = estimatedDep.time
+  }
+  if (!actualArr && estimatedArr) {
+    extracted.actualArrivalDate = estimatedArr.date
+    extracted.actualArrivalTime = estimatedArr.time
+  }
 
-  const flightNumberMatch =
-    uppercaseText.match(/\b([A-Z0-9]{2,3}\s?\d{1,4}[A-Z]?)\b/) ?? uppercaseText.match(/\b([A-Z]{2}\d{1,4}[A-Z]?)\b/)
+  // FlightStats pages often expose airline name in a title/header pattern like:
+  // "(OZ) Asiana Airlines 748 Flight Details"
+  const flightStatsAirlineMatch =
+    text.match(/\(([A-Z0-9]{2,3})\)\s+([A-Z][A-Za-z0-9&'.\-\s]{2,}?)\s+\d{1,4}[A-Z]?\s+FLIGHT\s+DETAILS/i) ??
+    text.match(/([A-Z][A-Za-z0-9&'.\-\s]{2,}?)\s+\(([A-Z0-9]{2,3})\)\s+\d{1,4}[A-Z]?\s+FLIGHT\s+DETAILS/i)
+  if (flightStatsAirlineMatch) {
+    const candidate =
+      flightStatsAirlineMatch[2]?.length > flightStatsAirlineMatch[1]?.length
+        ? flightStatsAirlineMatch[2]
+        : flightStatsAirlineMatch[1]
+    if (candidate) {
+      extracted.airline = candidate.replace(/\s+/g, ' ').trim()
+    }
+  }
+
+  // Flight number must start with a 2-letter airline code (e.g. KE, AA, OZ)
+  // to avoid matching stray years like "2026" or short numbers
+  const flightNumberMatch = uppercaseText.match(/\b([A-Z]{2}\d{1,4}[A-Z]?)\b/)
   if (flightNumberMatch?.[1]) {
     extracted.flightNumber = cleanFlightNumber(flightNumberMatch[1])
   }
 
-  const routeMatch = uppercaseText.match(/\b([A-Z]{3,4})\s*(?:\/|->|→|-| TO )\s*([A-Z]{3,4})\b/)
-  if (routeMatch?.[1] && routeMatch?.[2]) {
+  // Exclude common HTML tag names that would otherwise look like IATA codes
+  const HTML_KEYWORDS = new Set([
+    'HTML',
+    'HEAD',
+    'BODY',
+    'TEXT',
+    'SPAN',
+    'HREF',
+    'TYPE',
+    'META',
+    'LINK',
+    'FORM',
+    'MAIN',
+    'NONE',
+    'AUTO',
+    'NEXT',
+    'PREV',
+    'MORE',
+    'OPEN',
+    'TRUE',
+    'NULL',
+    'VOID',
+  ])
+  // Restrict fallback route regex to IATA-style 3-letter codes to avoid false positives like PLAY/APP.
+  const routeMatch = uppercaseText.match(/\b([A-Z]{3})\s*(?:\/|->|→|-| TO )\s*([A-Z]{3})\b/)
+  if (routeMatch?.[1] && routeMatch?.[2] && !HTML_KEYWORDS.has(routeMatch[1]) && !HTML_KEYWORDS.has(routeMatch[2])) {
     extracted.departureIata = routeMatch[1]
     extracted.arrivalIata = routeMatch[2]
   }
@@ -186,7 +314,7 @@ function extractWithRegex(text: string): Partial<ExtractedTrackingFlightData> {
 
   const aircraftMatch = uppercaseText.match(AIRCRAFT_PATTERN)
   if (aircraftMatch?.[1]) {
-    extracted.aircraft = aircraftMatch[1].replace(/\s+/g, ' ').trim()
+    extracted.aircraft = normalizeAircraft(aircraftMatch[1])
   }
 
   return extracted
@@ -249,6 +377,115 @@ export function extractTrackingFlightDataFromHtml(
   return hasAnyValue ? merged : null
 }
 
+function isIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const parsed = new Date(`${value}T00:00:00Z`)
+  return !Number.isNaN(parsed.getTime())
+}
+
+function normalizeFlightCode(value: string): string | null {
+  const split = splitFlightCode(value)
+  if (!split) return null
+  return `${split.carrier}${split.number}`
+}
+
+const IATA_TO_ICAO_AIRLINE_CODE: Record<string, string> = {
+  AA: 'AAL',
+  AC: 'ACA',
+  AF: 'AFR',
+  AS: 'ASA',
+  BA: 'BAW',
+  B6: 'JBU',
+  CX: 'CPA',
+  DL: 'DAL',
+  EK: 'UAE',
+  EY: 'ETD',
+  IB: 'IBE',
+  JL: 'JAL',
+  KE: 'KAL',
+  KL: 'KLM',
+  LH: 'DLH',
+  NH: 'ANA',
+  OZ: 'AAR',
+  QF: 'QFA',
+  QR: 'QTR',
+  SQ: 'SIA',
+  TK: 'THY',
+  UA: 'UAL',
+  WN: 'SWA',
+}
+
+function expandFlightCodeVariants(flightCode: string): string[] {
+  const match = flightCode.match(/^([A-Z0-9]{2,3})(\d{1,4}[A-Z]?)$/)
+  if (!match) return [flightCode]
+
+  const [, carrier, number] = match
+  const variants = new Set<string>()
+
+  if (carrier.length === 2 && IATA_TO_ICAO_AIRLINE_CODE[carrier]) {
+    variants.add(`${IATA_TO_ICAO_AIRLINE_CODE[carrier]}${number}`)
+  }
+  variants.add(flightCode)
+
+  return [...variants]
+}
+
+function buildProviderUrls(flightCode: string, date: string): string[] {
+  const split = splitFlightCode(flightCode)
+  const carrier = split?.carrier
+  const number = split?.number
+  const [year, monthRaw, dayRaw] = date.split('-')
+  const month = String(Number.parseInt(monthRaw, 10))
+  const day = String(Number.parseInt(dayRaw, 10))
+  const variants = expandFlightCodeVariants(flightCode)
+  const urls = new Set<string>()
+
+  if (carrier && number) {
+    // Primary flight-code lookup source.
+    urls.add(
+      `https://www.flightstats.com/v2/flight-details/${carrier}/${number}?year=${year}&month=${month}&date=${day}`
+    )
+    urls.add(`https://www.flightstats.com/v2/flight-details/${carrier}/${number}`)
+    urls.add(`https://www.flightera.net/en/flight/${flightCode}/${date}`)
+  }
+
+  for (const variant of variants) {
+    // FlightAware commonly indexes by ICAO callsign (e.g. AAR748), not IATA (e.g. OZ748).
+    urls.add(`https://www.flightaware.com/live/flight/${variant}`)
+  }
+
+  return [...urls]
+}
+
+async function extractFromSourceUrl(sourceUrl: string): Promise<Partial<ExtractedTrackingFlightData> | null> {
+  let lastError: unknown
+  try {
+    const text = await fetchText(sourceUrl)
+    const fromHtml = extractTrackingFlightDataFromHtml(text, { baseUrl: sourceUrl })
+    const fromUrl = extractFromTrackingUrl(sourceUrl)
+    if (!fromHtml && !fromUrl) return null
+    return fromHtml
+      ? {
+          ...fromUrl,
+          ...fromHtml,
+          departureIata: fromHtml.departureIata ?? fromUrl?.departureIata,
+          arrivalIata: fromHtml.arrivalIata ?? fromUrl?.arrivalIata,
+          flightNumber: fromHtml.flightNumber ?? fromUrl?.flightNumber,
+          scheduledDepartureDate: fromHtml.scheduledDepartureDate ?? fromUrl?.scheduledDepartureDate,
+          scheduledDepartureTime: fromHtml.scheduledDepartureTime ?? fromUrl?.scheduledDepartureTime,
+          timesInUtc: fromHtml.timesInUtc ?? fromUrl?.timesInUtc,
+        }
+      : fromUrl
+  } catch (err) {
+    lastError = err
+  }
+
+  const fromUrl = extractFromTrackingUrl(sourceUrl)
+  if (fromUrl) return fromUrl
+  if (lastError) throw lastError
+  return null
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -266,41 +503,23 @@ export default {
     }
 
     try {
-      const body = (await request.json()) as { url?: string }
-      const trackUrl = body.url
+      const body = (await request.json()) as { url?: string; flightCode?: string; date?: string }
+      const trackUrl = typeof body.url === 'string' ? body.url.trim() : ''
+      const flightCodeInput = typeof body.flightCode === 'string' ? body.flightCode.trim() : ''
 
-      if (!trackUrl || typeof trackUrl !== 'string') {
-        return new Response(JSON.stringify({ error: 'Missing or invalid "url" in request body' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
-      }
-
-      let lastError: unknown
-      try {
-        const text = await fetchText(trackUrl)
-        const merged = extractTrackingFlightDataFromHtml(text, { baseUrl: trackUrl })
-        if (merged) {
-          return new Response(
-            JSON.stringify({
-              data: {
-                ...merged,
-                sourceUrl: trackUrl,
-              },
-            }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          )
+      if (trackUrl) {
+        const extracted = await extractFromSourceUrl(trackUrl)
+        if (!extracted) {
+          return new Response(JSON.stringify({ error: 'Could not extract tracking data' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
         }
-      } catch (err) {
-        lastError = err
-      }
 
-      const fromUrl = extractFromTrackingUrl(trackUrl)
-      if (fromUrl) {
         return new Response(
           JSON.stringify({
             data: {
-              ...fromUrl,
+              ...extracted,
               sourceUrl: trackUrl,
             },
           }),
@@ -308,12 +527,61 @@ export default {
         )
       }
 
-      if (lastError) {
-        throw lastError
+      if (flightCodeInput) {
+        const normalizedFlightCode = normalizeFlightCode(flightCodeInput)
+        if (!normalizedFlightCode) {
+          return new Response(JSON.stringify({ error: 'Invalid "flightCode" format' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+
+        const requestedDate =
+          typeof body.date === 'string' && isIsoDate(body.date) ? body.date : new Date().toISOString().slice(0, 10)
+        const providerUrls = buildProviderUrls(normalizedFlightCode, requestedDate)
+
+        let lastError: unknown
+        for (const providerUrl of providerUrls) {
+          try {
+            const extracted = await extractFromSourceUrl(providerUrl)
+            if (!extracted) continue
+            return new Response(
+              JSON.stringify({
+                data: {
+                  flightNumber: extracted.flightNumber ?? normalizedFlightCode,
+                  scheduledDepartureDate: extracted.scheduledDepartureDate ?? requestedDate,
+                  ...extracted,
+                  sourceUrl: providerUrl,
+                },
+              }),
+              { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          } catch (err) {
+            lastError = err
+          }
+        }
+
+        if (lastError) {
+          console.error('Flight code lookup failed across providers', {
+            flightCode: normalizedFlightCode,
+            error: lastError,
+          })
+        }
+
+        return new Response(
+          JSON.stringify({
+            data: {
+              flightNumber: normalizedFlightCode,
+              scheduledDepartureDate: requestedDate,
+              sourceUrl: providerUrls[0],
+            },
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
       }
 
-      return new Response(JSON.stringify({ error: 'Could not extract tracking data' }), {
-        status: 404,
+      return new Response(JSON.stringify({ error: 'Missing "url" or "flightCode" in request body' }), {
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     } catch (error: any) {
