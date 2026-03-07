@@ -36,18 +36,40 @@ The Worker proxy receives a `POST` request with the following JSON body schema:
 
 ```json
 {
-  "url": "https://www.flightradar24.com/data/flights/fr24"
+  "url": "https://www.flightstats.com/v2/flight-details/OZ/748?year=2026&month=3&date=7"
 }
 ```
 
-It returns strictly formatted information for flights corresponding to the `ExtractedTrackingFlightData` type.
+Or by flight code:
+
+```json
+{
+  "flightCode": "OZ748",
+  "date": "2026-03-07"
+}
+```
+
+`date` is optional and must be ISO `YYYY-MM-DD` when provided. If omitted, the backend uses the current ISO date (`new Date().toISOString().slice(0, 10)`).
+
+It returns structured flight details matching the `ExtractedTrackingFlightData` shape in a JSON envelope:
+
+- success: `{ "data": { ... } }`
+- error: `{ "error": "..." }`
+
+Provider strategy currently prioritizes FlightStats flight-details URLs and also attempts Flightera and FlightAware variants when searching by flight code.
 
 ## Testing Locally via cURL
 
 ```bash
 curl -X POST http://localhost:8787 \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://www.flightradar24.com/data/flights/aa1"}'
+  -d '{"url": "https://www.flightstats.com/v2/flight-details/OZ/748?year=2026&month=3&date=7"}'
+```
+
+```bash
+curl -X POST http://localhost:8787 \
+  -H "Content-Type: application/json" \
+  -d '{"flightCode":"OZ748","date":"2026-03-07"}'
 ```
 
 ## Deployment

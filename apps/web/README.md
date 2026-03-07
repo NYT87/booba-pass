@@ -2,11 +2,13 @@
 
 A mobile-first flight and loyalty tracker built as a Progressive Web App (PWA).
 
-Version: `0.1.1`
+Version: `0.1.2`
 
 ## What it does
 
 - Track flights with route, schedule, aircraft, seat, notes, photos, and boarding pass.
+- Start a new flight in 3 modes: by flight code, by tracking link, or fully manual input.
+- Auto-fill flight fields from provider-backed tracking extraction (with graceful fallback to manual flow).
 - Link each flight to a loyalty membership and record granted mileage.
 - Organize flights by `all`, `past`, and `upcoming`.
 - View an interactive map of your routes.
@@ -18,6 +20,7 @@ Version: `0.1.1`
 - View personal travel stats (flights, distance, hours, aircraft, airlines).
 - Import/export backups from the Settings page.
 - Run fully local-first using IndexedDB (no account required).
+- Use static airline/loyalty catalogs under `public/data/*.json` for suggestions and lookup.
 
 ## PWA behavior
 
@@ -35,6 +38,7 @@ Version: `0.1.1`
 - React Router
 - Leaflet + React Leaflet
 - Recharts
+- web-haptics
 
 ## Getting started
 
@@ -68,12 +72,15 @@ npm run preview
 ```
 
 Note: `npm run build` runs `scripts/build-airports.mjs` first, which fetches airport source data from GitHub.
+Airport data is generated to `public/data/airports.json`.
 
 ## Scripts
 
 - `npm run dev`: start Vite dev server
 - `npm run build`: generate airport data + typecheck + production build
 - `npm run preview`: preview production build
+- `npm run test:tracking`: run tracking extraction tests
+- `npm run inspect:tracking`: inspect extraction output for a provider URL
 - `npm run lint`: run ESLint
 - `npm run lint:fix`: auto-fix lint issues
 - `npm run format`: run Prettier write
