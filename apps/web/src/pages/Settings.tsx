@@ -47,7 +47,7 @@ export default function Settings() {
     setImporting(true)
     setMessage(null)
     try {
-      const res = await fetch('/airports.json')
+      const res = await fetch('/data/airports.json')
       const airports: { iata: string; timezone: string }[] = await res.json()
       const airportMap = new Map(airports.map((a) => [a.iata, a.timezone]))
 

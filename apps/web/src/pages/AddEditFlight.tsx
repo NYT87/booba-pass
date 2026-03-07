@@ -7,15 +7,23 @@ import AirportSearch from '../components/AirportSearch'
 import type { Airport, Flight } from '../types'
 import { haversineKm, computeDurationMin, formatDuration } from '../types'
 import { ArrowLeftRight, Save, X, Camera, Trash2, Ticket } from 'lucide-react'
-import { fetchAndExtractTrackingFlightData } from '../utils/trackingExtraction'
+import { useWebHaptics } from 'web-haptics/react'
+import {
+  fetchAndExtractTrackingFlightData,
+  fetchAndExtractTrackingFlightDataByCode,
+  type ExtractedTrackingFlightData,
+} from '../utils/trackingExtraction'
+import { cacheAirlineFromInput, loadAirlineCatalog } from '../utils/airlineCatalog'
 
 export default function AddEditFlight() {
   const { id } = useParams()
+  const isEditMode = Boolean(id)
   const navigate = useNavigate()
   const location = useLocation()
   const existingFlight = useFlightById(id ? parseInt(id) : undefined)
   const memberships = useMemberships() || []
   const stats = useStats() // Get stats for all time for suggestions
+  const { trigger: triggerHapticRaw } = useWebHaptics()
   const prefilledMembershipId =
     typeof (location.state as { membershipId?: unknown } | null)?.membershipId === 'number'
       ? ((location.state as { membershipId: number }).membershipId ?? null)
@@ -41,15 +49,31 @@ export default function AddEditFlight() {
   const [aircraft, setAircraft] = useState('')
   const [notes, setNotes] = useState('')
   const [trackUrl, setTrackUrl] = useState('')
+  const [flightCodeQuery, setFlightCodeQuery] = useState('')
   const [fetchingTrackData, setFetchingTrackData] = useState(false)
+  const [activeTrackingAction, setActiveTrackingAction] = useState<'url' | 'code' | null>(null)
   const [trackFetchMessage, setTrackFetchMessage] = useState<string | null>(null)
+  const [newFlightStep, setNewFlightStep] = useState<'chooser' | 'form'>(isEditMode ? 'form' : 'chooser')
+  const [newFlightLinkInput, setNewFlightLinkInput] = useState('')
+  const [newFlightCodeInput, setNewFlightCodeInput] = useState('')
+  const [newFlightBootstrapLoading, setNewFlightBootstrapLoading] = useState(false)
+  const [newFlightBootstrapError, setNewFlightBootstrapError] = useState<string | null>(null)
   const [boardingPassExtractMessage, setBoardingPassExtractMessage] = useState<string | null>(null)
   const [photos, setPhotos] = useState<string[]>([])
   const [boardingPass, setBoardingPass] = useState<string | undefined>(undefined)
   const [membershipId, setMembershipId] = useState<number | ''>('')
   const [mileageGranted, setMileageGranted] = useState('')
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
+  const [catalogAirlineNames, setCatalogAirlineNames] = useState<string[]>([])
   const airportsByIataRef = useRef<Map<string, Airport> | null>(null)
+
+  const triggerHaptic = (preset: 'success' | 'nudge' | 'error') => {
+    void triggerHapticRaw?.(preset)?.catch(() => {
+      // Ignore unsupported browsers/devices.
+    })
+  }
+
+  const getTodayIsoDate = () => new Date().toISOString().slice(0, 10)
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false)
@@ -101,6 +125,7 @@ export default function AddEditFlight() {
       setAircraft(existingFlight.aircraft ?? '')
       setNotes(existingFlight.notes ?? '')
       setTrackUrl(existingFlight.trackUrl ?? '')
+      setFlightCodeQuery(existingFlight.flightNumber ?? '')
       setPhotos(existingFlight.photoDataUrls ?? [])
       setBoardingPass(existingFlight.boardingPassDataUrl)
       setMembershipId(existingFlight.membershipId ?? '')
@@ -112,8 +137,24 @@ export default function AddEditFlight() {
       setScheduledArrivalDate(today)
       setMembershipId(prefilledMembershipId ?? '')
       setMileageGranted('')
+      setFlightCodeQuery('')
     }
   }, [existingFlight, prefilledMembershipId])
+
+  useEffect(() => {
+    let cancelled = false
+    void loadAirlineCatalog()
+      .then((catalog) => {
+        if (cancelled) return
+        setCatalogAirlineNames(catalog.map((entry) => entry.name))
+      })
+      .catch((error) => {
+        console.error('Failed to load airline catalog:', error)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleScheduledDepartureDateChange = (val: string) => {
     const oldDepDate = scheduledDepartureDate
@@ -137,6 +178,8 @@ export default function AddEditFlight() {
       alert('Arrival must be later than departure. Please check dates and times.')
       return
     }
+
+    await cacheAirlineFromInput(airline)
 
     const distanceKm = haversineKm(departure.lat, departure.lon, arrival.lat, arrival.lon)
     const parsedMileage = mileageGranted.trim() ? Number.parseInt(mileageGranted.trim(), 10) : undefined
@@ -180,6 +223,7 @@ export default function AddEditFlight() {
     }
 
     const savedId = await saveFlight(id ? { ...flightData, id: parseInt(id) } : flightData)
+    triggerHaptic('success')
     navigate(`/flights/${savedId}`)
   }
 
@@ -187,6 +231,7 @@ export default function AddEditFlight() {
     const temp = departure
     setDeparture(arrival)
     setArrival(temp)
+    triggerHaptic('nudge')
   }
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -381,11 +426,114 @@ export default function AddEditFlight() {
   const getAirportByIata = async (iata: string): Promise<Airport | undefined> => {
     const normalized = iata.toUpperCase()
     if (!airportsByIataRef.current) {
-      const res = await fetch('/airports.json')
+      const res = await fetch(`${import.meta.env.BASE_URL}data/airports.json`)
       const airports = (await res.json()) as Airport[]
       airportsByIataRef.current = new Map(airports.map((a) => [a.iata.toUpperCase(), a]))
     }
     return airportsByIataRef.current.get(normalized)
+  }
+
+  const applyExtractedTrackingData = async (extracted: ExtractedTrackingFlightData) => {
+    if (extracted.airline) setAirline(extracted.airline.toUpperCase())
+    if (extracted.airline) {
+      void cacheAirlineFromInput(extracted.airline)
+    }
+    if (extracted.flightNumber) {
+      setFlightNumber(extracted.flightNumber.toUpperCase())
+      setFlightCodeQuery(extracted.flightNumber.toUpperCase())
+    }
+    if (extracted.aircraft) setAircraft(extracted.aircraft.toUpperCase())
+    if (extracted.sourceUrl && extracted.sourceUrl.startsWith('http')) {
+      setTrackUrl(extracted.sourceUrl)
+    }
+
+    if (extracted.departureIata) {
+      const depAirport = await getAirportByIata(extracted.departureIata)
+      if (depAirport) setDeparture(depAirport)
+    }
+    if (extracted.arrivalIata) {
+      const arrAirport = await getAirportByIata(extracted.arrivalIata)
+      if (arrAirport) setArrival(arrAirport)
+    }
+
+    if (extracted.airline && extracted.airlineImage) {
+      try {
+        await saveAirlineLogo(extracted.airline, extracted.airlineImage)
+      } catch {
+        // logo fetch/save is best-effort, don't fail the entire extraction
+      }
+    }
+
+    const depAirportForTime = extracted.departureIata ? await getAirportByIata(extracted.departureIata) : undefined
+    const arrAirportForTime = extracted.arrivalIata ? await getAirportByIata(extracted.arrivalIata) : undefined
+    const depTimeZone = depAirportForTime?.timezone
+    const arrTimeZone = arrAirportForTime?.timezone
+
+    const scheduleDep = convertExtractedDateTime(
+      extracted.scheduledDepartureDate,
+      extracted.scheduledDepartureTime,
+      extracted.timesInUtc,
+      depTimeZone
+    )
+    const scheduleArr = convertExtractedDateTime(
+      extracted.scheduledArrivalDate,
+      extracted.scheduledArrivalTime,
+      extracted.timesInUtc,
+      arrTimeZone ?? depTimeZone
+    )
+    const actualDep = convertExtractedDateTime(
+      extracted.actualDepartureDate,
+      extracted.actualDepartureTime,
+      extracted.timesInUtc,
+      depTimeZone
+    )
+    const actualArr = convertExtractedDateTime(
+      extracted.actualArrivalDate,
+      extracted.actualArrivalTime,
+      extracted.timesInUtc,
+      arrTimeZone ?? depTimeZone
+    )
+
+    if (scheduleDep.date) setScheduledDepartureDate(scheduleDep.date)
+    if (scheduleDep.time) setScheduledDepartureTime(scheduleDep.time)
+    if (scheduleArr.date) setScheduledArrivalDate(scheduleArr.date)
+    if (scheduleArr.time) setScheduledArrivalTime(scheduleArr.time)
+    if (actualDep.date) setActualDepartureDate(actualDep.date)
+    if (actualDep.time) setActualDepartureTime(actualDep.time)
+    if (actualArr.date) setActualArrivalDate(actualArr.date)
+    if (actualArr.time) setActualArrivalTime(actualArr.time)
+
+    const extractedFields = [
+      extracted.flightNumber && 'flight number',
+      extracted.departureIata && extracted.arrivalIata && 'route',
+      (extracted.scheduledDepartureDate || extracted.scheduledDepartureTime) && 'schedule',
+      (extracted.actualDepartureDate ||
+        extracted.actualDepartureTime ||
+        extracted.actualArrivalDate ||
+        extracted.actualArrivalTime) &&
+        'actual delay times',
+      extracted.aircraft && 'aircraft',
+    ].filter(Boolean)
+
+    setTrackFetchMessage(
+      extractedFields.length > 0
+        ? `Tracking data extracted: ${extractedFields.join(', ')}. Review and save if correct.`
+        : 'Tracking data fetched but no known fields were extracted.'
+    )
+  }
+
+  const hasProviderBackedFlightData = (extracted: ExtractedTrackingFlightData) => {
+    if (extracted.sourceUrl?.startsWith('flight-code:')) return false
+    return Boolean(
+      extracted.airline ||
+      extracted.departureIata ||
+      extracted.arrivalIata ||
+      extracted.scheduledDepartureTime ||
+      extracted.scheduledArrivalTime ||
+      extracted.actualDepartureTime ||
+      extracted.actualArrivalTime ||
+      extracted.aircraft
+    )
   }
 
   const handleFetchTrackingData = async () => {
@@ -395,109 +543,129 @@ export default function AddEditFlight() {
     }
 
     setFetchingTrackData(true)
+    setActiveTrackingAction('url')
     setTrackFetchMessage(null)
+    triggerHaptic('nudge')
     try {
       const extracted = await fetchAndExtractTrackingFlightData(trackUrl.trim())
       if (!extracted) {
         setTrackFetchMessage('No structured flight details could be extracted from that link.')
+        triggerHaptic('error')
         return
       }
-
-      if (extracted.airline) setAirline(extracted.airline.toUpperCase())
-      if (extracted.flightNumber) setFlightNumber(extracted.flightNumber.toUpperCase())
-      if (extracted.aircraft) setAircraft(extracted.aircraft.toUpperCase())
-
-      if (extracted.departureIata) {
-        const depAirport = await getAirportByIata(extracted.departureIata)
-        if (depAirport) setDeparture(depAirport)
-      }
-      if (extracted.arrivalIata) {
-        const arrAirport = await getAirportByIata(extracted.arrivalIata)
-        if (arrAirport) setArrival(arrAirport)
-      }
-
-      if (extracted.airline && extracted.airlineImage) {
-        const imageToStore = await toDataUrlIfPossible(extracted.airlineImage)
-        await saveAirlineLogo(extracted.airline, imageToStore)
-      }
-
-      const depAirportForTime = extracted.departureIata ? await getAirportByIata(extracted.departureIata) : undefined
-      const arrAirportForTime = extracted.arrivalIata ? await getAirportByIata(extracted.arrivalIata) : undefined
-      const depTimeZone = depAirportForTime?.timezone
-      const arrTimeZone = arrAirportForTime?.timezone
-
-      const scheduleDep = convertExtractedDateTime(
-        extracted.scheduledDepartureDate,
-        extracted.scheduledDepartureTime,
-        extracted.timesInUtc,
-        depTimeZone
-      )
-      const scheduleArr = convertExtractedDateTime(
-        extracted.scheduledArrivalDate,
-        extracted.scheduledArrivalTime,
-        extracted.timesInUtc,
-        arrTimeZone ?? depTimeZone
-      )
-      const actualDep = convertExtractedDateTime(
-        extracted.actualDepartureDate,
-        extracted.actualDepartureTime,
-        extracted.timesInUtc,
-        depTimeZone
-      )
-      const actualArr = convertExtractedDateTime(
-        extracted.actualArrivalDate,
-        extracted.actualArrivalTime,
-        extracted.timesInUtc,
-        arrTimeZone ?? depTimeZone
-      )
-
-      if (scheduleDep.date) setScheduledDepartureDate(scheduleDep.date)
-      if (scheduleDep.time) setScheduledDepartureTime(scheduleDep.time)
-      if (scheduleArr.date) setScheduledArrivalDate(scheduleArr.date)
-      if (scheduleArr.time) setScheduledArrivalTime(scheduleArr.time)
-      if (actualDep.date) setActualDepartureDate(actualDep.date)
-      if (actualDep.time) setActualDepartureTime(actualDep.time)
-      if (actualArr.date) setActualArrivalDate(actualArr.date)
-      if (actualArr.time) setActualArrivalTime(actualArr.time)
-
-      const extractedFields = [
-        extracted.flightNumber && 'flight number',
-        extracted.departureIata && extracted.arrivalIata && 'route',
-        (extracted.scheduledDepartureDate || extracted.scheduledDepartureTime) && 'schedule',
-        (extracted.actualDepartureDate ||
-          extracted.actualDepartureTime ||
-          extracted.actualArrivalDate ||
-          extracted.actualArrivalTime) &&
-          'actual delay times',
-        extracted.aircraft && 'aircraft',
-      ].filter(Boolean)
-
-      setTrackFetchMessage(
-        extractedFields.length > 0
-          ? `Tracking data extracted: ${extractedFields.join(', ')}. Review and save if correct.`
-          : 'Tracking data fetched but no known fields were extracted.'
-      )
+      await applyExtractedTrackingData(extracted)
+      triggerHaptic('success')
     } catch (err) {
       console.error(err)
       setTrackFetchMessage('Could not fetch or parse that tracking link.')
+      triggerHaptic('error')
     } finally {
       setFetchingTrackData(false)
+      setActiveTrackingAction(null)
     }
   }
 
-  const toDataUrlIfPossible = async (url: string): Promise<string> => {
+  const handleFetchByFlightCode = async () => {
+    if (!flightCodeQuery.trim()) {
+      alert('Please provide a flight code first (e.g. OZ742).')
+      return
+    }
+
+    setFetchingTrackData(true)
+    setActiveTrackingAction('code')
+    setTrackFetchMessage(null)
+    triggerHaptic('nudge')
     try {
-      const res = await fetch(url)
-      if (!res.ok) return url
-      const blob = await res.blob()
-      return await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result as string)
-        reader.onerror = () => reject(reader.error)
-        reader.readAsDataURL(blob)
-      })
-    } catch {
-      return url
+      const extracted = await fetchAndExtractTrackingFlightDataByCode(flightCodeQuery.trim(), getTodayIsoDate())
+      if (!extracted) {
+        setTrackFetchMessage('No structured flight details could be extracted from that flight code.')
+        triggerHaptic('error')
+        return
+      }
+      if (!hasProviderBackedFlightData(extracted)) {
+        setTrackFetchMessage('Could not fetch provider flight details for that code. Please fill data manually.')
+        triggerHaptic('error')
+        return
+      }
+      await applyExtractedTrackingData(extracted)
+      triggerHaptic('success')
+    } catch (err) {
+      console.error(err)
+      setTrackFetchMessage('Could not fetch tracking data by flight code.')
+      triggerHaptic('error')
+    } finally {
+      setFetchingTrackData(false)
+      setActiveTrackingAction(null)
+    }
+  }
+
+  const handleStartFromLink = async () => {
+    if (!newFlightLinkInput.trim()) {
+      alert('Please provide a tracking URL first.')
+      return
+    }
+
+    setNewFlightBootstrapLoading(true)
+    setNewFlightBootstrapError(null)
+    triggerHaptic('nudge')
+    try {
+      const extracted = await fetchAndExtractTrackingFlightData(newFlightLinkInput.trim())
+      if (!extracted) {
+        setNewFlightBootstrapError('Could not find flight details from that link. You can continue with manual input.')
+        setNewFlightStep('form')
+        triggerHaptic('error')
+        return
+      }
+      await applyExtractedTrackingData(extracted)
+      setTrackUrl(newFlightLinkInput.trim())
+      setNewFlightStep('form')
+      triggerHaptic('success')
+    } catch (error) {
+      console.error(error)
+      setNewFlightBootstrapError('Could not fetch flight details from that link. You can continue with manual input.')
+      setNewFlightStep('form')
+      triggerHaptic('error')
+    } finally {
+      setNewFlightBootstrapLoading(false)
+    }
+  }
+
+  const handleStartFromCode = async () => {
+    if (!newFlightCodeInput.trim()) {
+      alert('Please provide a flight code first (e.g. OZ742).')
+      return
+    }
+
+    setNewFlightBootstrapLoading(true)
+    setNewFlightBootstrapError(null)
+    triggerHaptic('nudge')
+    try {
+      const extracted = await fetchAndExtractTrackingFlightDataByCode(newFlightCodeInput.trim(), getTodayIsoDate())
+      if (!extracted) {
+        setNewFlightBootstrapError('Could not find flight details for that code. You can continue with manual input.')
+        setNewFlightStep('form')
+        triggerHaptic('error')
+        return
+      }
+      if (!hasProviderBackedFlightData(extracted)) {
+        setNewFlightBootstrapError(
+          'Could not find provider flight details for that code. You can continue with manual input.'
+        )
+        setNewFlightStep('form')
+        triggerHaptic('error')
+        return
+      }
+      await applyExtractedTrackingData(extracted)
+      setFlightCodeQuery(newFlightCodeInput.trim().toUpperCase())
+      setNewFlightStep('form')
+      triggerHaptic('success')
+    } catch (error) {
+      console.error(error)
+      setNewFlightBootstrapError('Could not fetch flight details for that code. You can continue with manual input.')
+      setNewFlightStep('form')
+      triggerHaptic('error')
+    } finally {
+      setNewFlightBootstrapLoading(false)
     }
   }
 
@@ -532,6 +700,128 @@ export default function AddEditFlight() {
     }
   }
 
+  if (!isEditMode && newFlightStep === 'chooser') {
+    return (
+      <div className="page animate-in">
+        <header className="page-header">
+          <button onClick={() => navigate('/flights')} className="btn-ghost">
+            <X size={24} />
+          </button>
+          <h1>Add Flight</h1>
+          <div style={{ width: 24 }} />
+        </header>
+
+        {newFlightBootstrapLoading ? (
+          <div
+            className="form-section"
+            style={{
+              minHeight: '50vh',
+              display: 'grid',
+              placeItems: 'center',
+              textAlign: 'center',
+            }}
+          >
+            <div>
+              <div style={{ fontSize: '1rem', fontWeight: 700 }}>Fetching flight details...</div>
+              <div style={{ marginTop: 8, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                Checking available providers.
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {isOffline && (
+              <div
+                className="form-section"
+                style={{
+                  marginBottom: 12,
+                  border: '1px solid var(--warning)',
+                  color: 'var(--warning)',
+                  fontWeight: 600,
+                }}
+              >
+                No internet connection detected. Only manual input is available.
+              </div>
+            )}
+
+            <div className="form-section">
+              <div className="form-section-title">Add New Flight By Flight Code</div>
+              <div className="form-field">
+                <label>Flight Code</label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
+                  <input
+                    type="text"
+                    value={newFlightCodeInput}
+                    onChange={(e) => setNewFlightCodeInput(e.target.value.toUpperCase())}
+                    placeholder="e.g. OZ742"
+                    disabled={isOffline}
+                  />
+                  <button
+                    type="button"
+                    className={`btn-ghost ${isOffline ? 'disabled' : ''}`}
+                    onClick={() => void handleStartFromCode()}
+                    disabled={isOffline}
+                    style={{
+                      minWidth: 124,
+                      padding: '0 12px',
+                      background: 'var(--bg-input)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 10,
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    Search
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-section">
+              <div className="form-section-title">Add New Flight By Link</div>
+              <div className="form-field">
+                <label>Tracking URL</label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
+                  <input
+                    type="url"
+                    value={newFlightLinkInput}
+                    onChange={(e) => setNewFlightLinkInput(e.target.value)}
+                    placeholder="General or past-flight details link"
+                    disabled={isOffline}
+                  />
+                  <button
+                    type="button"
+                    className={`btn-ghost ${isOffline ? 'disabled' : ''}`}
+                    onClick={() => void handleStartFromLink()}
+                    disabled={isOffline}
+                    style={{
+                      minWidth: 124,
+                      padding: '0 12px',
+                      background: 'var(--bg-input)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 10,
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    Search
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-section">
+              <div className="form-section-title">Add Data Manually</div>
+              <button className="btn-primary" onClick={() => setNewFlightStep('form')} style={{ width: '100%' }}>
+                Continue To Empty Form
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="page animate-in">
       <header className="page-header">
@@ -543,6 +833,20 @@ export default function AddEditFlight() {
           <Save size={24} />
         </button>
       </header>
+
+      {newFlightBootstrapError && !isEditMode && (
+        <div
+          className="form-section"
+          style={{
+            border: '1px solid var(--warning)',
+            color: 'var(--warning)',
+            fontWeight: 600,
+            marginBottom: 12,
+          }}
+        >
+          {newFlightBootstrapError}
+        </div>
+      )}
 
       <div className="form-section">
         <div className="form-section-title">Tracking</div>
@@ -570,7 +874,35 @@ export default function AddEditFlight() {
                 color: 'var(--text-primary)',
               }}
             >
-              {fetchingTrackData ? 'Fetching...' : 'Extract'}
+              {fetchingTrackData && activeTrackingAction === 'url' ? 'Fetching...' : 'Extract'}
+            </button>
+          </div>
+        </div>
+        <div className="form-field" style={{ marginTop: 12 }}>
+          <label>Flight Code Search</label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
+            <input
+              type="text"
+              value={flightCodeQuery}
+              onChange={(e) => setFlightCodeQuery(e.target.value.toUpperCase())}
+              placeholder="e.g. OZ742"
+            />
+            <button
+              type="button"
+              className={`btn-ghost ${isOffline ? 'disabled' : ''}`}
+              onClick={() => void handleFetchByFlightCode()}
+              disabled={fetchingTrackData || isOffline}
+              style={{
+                minWidth: 124,
+                padding: '0 12px',
+                background: 'var(--bg-input)',
+                border: '1px solid var(--border)',
+                borderRadius: 10,
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+              }}
+            >
+              {fetchingTrackData && activeTrackingAction === 'code' ? 'Searching...' : 'Search'}
             </button>
           </div>
         </div>
@@ -676,9 +1008,13 @@ export default function AddEditFlight() {
               list="airline-list"
               value={airline}
               onChange={(e) => setAirline(e.target.value.toUpperCase())}
+              onBlur={() => void cacheAirlineFromInput(airline)}
               placeholder="e.g. Korean Air"
             />
             <datalist id="airline-list">
+              {catalogAirlineNames.map((name) => (
+                <option key={name} value={name} />
+              ))}
               {stats?.airlines.map((a) => (
                 <option key={a.airline} value={a.airline} />
               ))}

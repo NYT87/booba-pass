@@ -16,24 +16,62 @@ export interface ExtractedTrackingFlightData {
   aircraft?: string
   sourceUrl: string
 }
-const PROXY_URL = import.meta.env.VITE_TRACKING_PROXY_URL || 'http://localhost:8787'
+const PROXY_URL = import.meta.env?.VITE_TRACKING_PROXY_URL || 'http://localhost:8787'
 
-function extractFromTrackingUrl(trackUrl: string): Partial<ExtractedTrackingFlightData> | null {
-  const match = trackUrl.match(/\/live\/flight\/([^/]+)\/history\/(\d{8})\/(\d{4})Z\/([A-Z]{3,4})\/([A-Z]{3,4})/i)
+type ProxyEnvelope = {
+  data?: unknown
+  result?: unknown
+  error?: unknown
+}
+
+function normalizeFlightCode(value: string): string | null {
+  const match = value
+    .trim()
+    .toUpperCase()
+    .match(/^([A-Z]{2,3}|[A-Z]\d)\s*[- ]?\s*(\d{1,4}[A-Z]?)$/)
   if (!match) return null
+  return `${match[1]}${match[2]}`
+}
 
-  const [, flightNoRaw, yyyymmdd, hhmm, dep, arr] = match
-  const date = `${yyyymmdd.slice(0, 4)}-${yyyymmdd.slice(4, 6)}-${yyyymmdd.slice(6, 8)}`
-  const time = `${hhmm.slice(0, 2)}:${hhmm.slice(2, 4)}`
+function parseProxySuccessBody(
+  response: Response,
+  rawBody: string,
+  sourceFallback: string
+): ExtractedTrackingFlightData | null {
+  let envelope: ProxyEnvelope | null = null
 
-  return {
-    flightNumber: flightNoRaw.toUpperCase().replace(/\s+/g, ''),
-    departureIata: dep.toUpperCase(),
-    arrivalIata: arr.toUpperCase(),
-    scheduledDepartureDate: date,
-    scheduledDepartureTime: time,
-    timesInUtc: true,
+  if (rawBody.trim()) {
+    try {
+      envelope = JSON.parse(rawBody) as ProxyEnvelope
+    } catch {
+      envelope = null
+    }
   }
+
+  if (!response.ok) {
+    const proxyMessage = typeof envelope?.error === 'string' ? envelope.error : rawBody.slice(0, 120).trim()
+    throw new Error(proxyMessage || `Proxy error: HTTP ${response.status}`)
+  }
+
+  const dataCandidate =
+    (envelope?.data as ExtractedTrackingFlightData | undefined) ??
+    (envelope?.result as ExtractedTrackingFlightData | undefined)
+
+  if (dataCandidate && typeof dataCandidate === 'object') {
+    return {
+      ...dataCandidate,
+      sourceUrl: dataCandidate.sourceUrl || sourceFallback,
+    }
+  }
+
+  if (envelope && typeof envelope === 'object' && !('error' in envelope)) {
+    return {
+      ...(envelope as ExtractedTrackingFlightData),
+      sourceUrl: (envelope as ExtractedTrackingFlightData).sourceUrl || sourceFallback,
+    }
+  }
+
+  return null
 }
 
 export async function fetchAndExtractTrackingFlightData(trackUrl: string): Promise<ExtractedTrackingFlightData | null> {
@@ -49,37 +87,50 @@ export async function fetchAndExtractTrackingFlightData(trackUrl: string): Promi
       body: JSON.stringify({ url: trackUrl }),
       signal: controller.signal,
     })
-
-    if (!response.ok) {
-      throw new Error(`Proxy error: HTTP ${response.status}`)
-    }
-
-    const json = await response.json()
-    if (json.data) {
-      return json.data as ExtractedTrackingFlightData
-    }
-
-    if (json.error) {
-      throw new Error(json.error)
-    }
-
-    return null
+    const rawBody = await response.text()
+    return parseProxySuccessBody(response, rawBody, trackUrl)
   } catch (err) {
     console.error('Failed to extract via proxy:', err)
-
-    // Fallback: If proxy fails, try to extract metadata simply from the URL string itself
-    const fromUrl = extractFromTrackingUrl(trackUrl)
-    if (fromUrl) {
-      return {
-        ...fromUrl,
-        sourceUrl: trackUrl,
-      } as ExtractedTrackingFlightData
-    }
-
     throw err
   } finally {
     globalThis.clearTimeout(timer)
   }
 }
 
-export { extractFromTrackingUrl }
+export async function fetchAndExtractTrackingFlightDataByCode(
+  flightCode: string,
+  date?: string
+): Promise<ExtractedTrackingFlightData | null> {
+  const normalized = normalizeFlightCode(flightCode)
+  if (!normalized) {
+    throw new Error('Invalid flight code format')
+  }
+
+  const controller = new AbortController()
+  const timer = globalThis.setTimeout(() => controller.abort(), 15000)
+  const sourceFallback = `flight-code:${normalized}`
+
+  try {
+    const response = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ flightCode: normalized, date }),
+      signal: controller.signal,
+    })
+
+    const rawBody = await response.text()
+    return parseProxySuccessBody(response, rawBody, sourceFallback)
+  } catch (err) {
+    console.error('Failed to extract via flight code proxy:', err)
+
+    return {
+      flightNumber: normalized,
+      scheduledDepartureDate: date,
+      sourceUrl: sourceFallback,
+    }
+  } finally {
+    globalThis.clearTimeout(timer)
+  }
+}

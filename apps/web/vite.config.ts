@@ -26,7 +26,7 @@ export default defineConfig({
     VitePWA({
       injectRegister: null,
       registerType: 'autoUpdate',
-      includeAssets: ['airports.json', 'icons/*.png'],
+      includeAssets: ['data/*.json', 'icons/*.png'],
       manifest: {
         id: '/booba-pass/',
         name: 'booba-pass',
@@ -49,6 +49,8 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
+        // JSON catalogs are precached with content revisions, so clients
+        // only fetch updated versions after a new build changes the files.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],
         runtimeCaching: [
           {

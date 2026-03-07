@@ -1,0 +1,127 @@
+[
+  {
+    "airlineIata": "AA",
+    "airlineName": "AMERICAN AIRLINES",
+    "programName": "AADVANTAGE",
+    "alliance": "ONEWORLD",
+    "logo": ""
+  },
+  {
+    "airlineIata": "DL",
+    "airlineName": "DELTA AIR LINES",
+    "programName": "SKYMILES",
+    "alliance": "SKYTEAM",
+    "logo": ""
+  },
+  {
+    "airlineIata": "UA",
+    "airlineName": "UNITED AIRLINES",
+    "programName": "MILEAGEPLUS",
+    "alliance": "STAR ALLIANCE",
+    "logo": ""
+  },
+  {
+    "airlineIata": "AS",
+    "airlineName": "ALASKA AIRLINES",
+    "programName": "MILEAGE PLAN",
+    "alliance": "ONEWORLD",
+    "logo": ""
+  },
+  { "airlineIata": "B6", "airlineName": "JETBLUE", "programName": "TRUEBLUE", "alliance": "NONE", "logo": "" },
+  {
+    "airlineIata": "WN",
+    "airlineName": "SOUTHWEST AIRLINES",
+    "programName": "RAPID REWARDS",
+    "alliance": "NONE",
+    "logo": ""
+  },
+  {
+    "airlineIata": "AC",
+    "airlineName": "AIR CANADA",
+    "programName": "AEROPLAN",
+    "alliance": "STAR ALLIANCE",
+    "logo": ""
+  },
+  {
+    "airlineIata": "BA",
+    "airlineName": "BRITISH AIRWAYS",
+    "programName": "THE BRITISH AIRWAYS CLUB",
+    "alliance": "ONEWORLD",
+    "logo": ""
+  },
+  {
+    "airlineIata": "LH",
+    "airlineName": "LUFTHANSA",
+    "programName": "MILES & MORE",
+    "alliance": "STAR ALLIANCE",
+    "logo": ""
+  },
+  { "airlineIata": "AF", "airlineName": "AIR FRANCE", "programName": "FLYING BLUE", "alliance": "SKYTEAM", "logo": "" },
+  { "airlineIata": "KL", "airlineName": "KLM", "programName": "FLYING BLUE", "alliance": "SKYTEAM", "logo": "" },
+  { "airlineIata": "IB", "airlineName": "IBERIA", "programName": "IBERIA CLUB", "alliance": "ONEWORLD", "logo": "" },
+  {
+    "airlineIata": "QR",
+    "airlineName": "QATAR AIRWAYS",
+    "programName": "PRIVILEGE CLUB",
+    "alliance": "ONEWORLD",
+    "logo": ""
+  },
+  { "airlineIata": "EK", "airlineName": "EMIRATES", "programName": "SKYWARDS", "alliance": "NONE", "logo": "" },
+  {
+    "airlineIata": "SQ",
+    "airlineName": "SINGAPORE AIRLINES",
+    "programName": "KRISFLYER",
+    "alliance": "STAR ALLIANCE",
+    "logo": ""
+  },
+  {
+    "airlineIata": "CX",
+    "airlineName": "CATHAY PACIFIC",
+    "programName": "ASIA MILES",
+    "alliance": "ONEWORLD",
+    "logo": ""
+  },
+  {
+    "airlineIata": "QF",
+    "airlineName": "QANTAS",
+    "programName": "QANTAS FREQUENT FLYER",
+    "alliance": "ONEWORLD",
+    "logo": ""
+  },
+  {
+    "airlineIata": "NH",
+    "airlineName": "ALL NIPPON AIRWAYS",
+    "programName": "ANA MILEAGE CLUB",
+    "alliance": "STAR ALLIANCE",
+    "logo": ""
+  },
+  {
+    "airlineIata": "JL",
+    "airlineName": "JAPAN AIRLINES",
+    "programName": "JAL MILEAGE BANK",
+    "alliance": "ONEWORLD",
+    "logo": ""
+  },
+  { "airlineIata": "KE", "airlineName": "KOREAN AIR", "programName": "SKYPASS", "alliance": "SKYTEAM", "logo": "" },
+  {
+    "airlineIata": "OZ",
+    "airlineName": "ASIANA AIRLINES",
+    "programName": "ASIANA CLUB",
+    "alliance": "STAR ALLIANCE",
+    "logo": ""
+  },
+  {
+    "airlineIata": "TK",
+    "airlineName": "TURKISH AIRLINES",
+    "programName": "MILES&SMILES",
+    "alliance": "STAR ALLIANCE",
+    "logo": ""
+  },
+  {
+    "airlineIata": "EY",
+    "airlineName": "ETIHAD AIRWAYS",
+    "programName": "ETIHAD GUEST",
+    "alliance": "NONE",
+    "logo": ""
+  }
+]

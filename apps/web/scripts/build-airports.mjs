@@ -4,7 +4,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const OUT = path.join(__dirname, '../public/airports.json')
+const OUT = path.join(__dirname, '../public/data/airports.json')
 
 function fetch(url) {
   return new Promise((resolve, reject) => {

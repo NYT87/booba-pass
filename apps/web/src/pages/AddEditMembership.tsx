@@ -3,6 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { deleteMembership, useMembershipById, saveMembership } from '../hooks/useMemberships'
 import type { Membership } from '../types'
 import { Save, X, ScanLine, Trash2 } from 'lucide-react'
+import {
+  cacheAirlineFromInput,
+  loadAirlineCatalog,
+  loadLoyaltyProgramCatalog,
+  matchProgramsForAirline,
+  type AirlineCatalogEntry,
+  type LoyaltyProgramEntry,
+} from '../utils/airlineCatalog'
 
 export default function AddEditMembership() {
   const { id } = useParams()
@@ -20,6 +28,8 @@ export default function AddEditMembership() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deletingMembership, setDeletingMembership] = useState(false)
   const [notes, setNotes] = useState('')
+  const [airlineCatalog, setAirlineCatalog] = useState<AirlineCatalogEntry[]>([])
+  const [programCatalog, setProgramCatalog] = useState<LoyaltyProgramEntry[]>([])
 
   const detectCodeFromImage = async (file: File): Promise<{ value: string; type: 'QR' | 'BARCODE' } | null> => {
     const BarcodeDetectorApi = (
@@ -70,11 +80,55 @@ export default function AddEditMembership() {
     }
   }, [existingMembership])
 
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const [airlines, programs] = await Promise.all([loadAirlineCatalog(), loadLoyaltyProgramCatalog()])
+        if (cancelled) return
+        setAirlineCatalog(airlines)
+        setProgramCatalog(programs)
+      } catch (error) {
+        console.error('Failed to load airline/program catalog:', error)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const programOptions = matchProgramsForAirline(programCatalog, airlineName)
+  const selectedAirline = airlineCatalog.find(
+    (a) => a.name === airlineName.trim().toUpperCase() || a.iata === airlineName.trim().toUpperCase()
+  )
+
+  useEffect(() => {
+    const normalizedProgram = programName.trim().toUpperCase()
+    const matchingProgram = programOptions.find((p) => p.programName === normalizedProgram)
+    const shouldPreserveProgram = Boolean(matchingProgram) || (Boolean(id) && normalizedProgram.length > 0)
+
+    if (!shouldPreserveProgram) {
+      if (normalizedProgram.length === 0 && programOptions.length > 0) {
+        setProgramName(programOptions[0].programName)
+      } else if (programOptions.length === 1) {
+        setProgramName(programOptions[0].programName)
+      }
+    }
+
+    if (!allianceGroup.trim()) {
+      const fromProgram = matchingProgram?.alliance ?? programOptions[0]?.alliance
+      const alliance = fromProgram ?? selectedAirline?.alliance
+      if (alliance) setAllianceGroup(alliance)
+    }
+  }, [airlineName, programCatalog, id, programName, allianceGroup, selectedAirline?.alliance])
+
   const handleSave = async () => {
     if (!airlineName || !memberName || !membershipNumber) {
       alert('Please fill in Airline, Member Name, and Membership Number')
       return
     }
+
+    await cacheAirlineFromInput(airlineName)
 
     const membershipData: Omit<Membership, 'id'> = {
       airlineName: airlineName.toUpperCase(),
@@ -153,19 +207,43 @@ export default function AddEditMembership() {
           <label>Airline Name</label>
           <input
             type="text"
+            list="airline-catalog-list"
             value={airlineName}
             onChange={(e) => setAirlineName(e.target.value.toUpperCase())}
+            onBlur={() => {
+              void cacheAirlineFromInput(airlineName)
+              if (selectedAirline?.alliance && !allianceGroup.trim()) {
+                setAllianceGroup(selectedAirline.alliance)
+              }
+            }}
             placeholder="e.g. Iberia, Lufthansa, Delta"
           />
+          <datalist id="airline-catalog-list">
+            {airlineCatalog.map((airline) => (
+              <option key={airline.iata} value={airline.name} />
+            ))}
+          </datalist>
         </div>
         <div className="form-field" style={{ marginTop: 12 }}>
           <label>Program Name (Optional)</label>
           <input
             type="text"
+            list="program-catalog-list"
             value={programName}
             onChange={(e) => setProgramName(e.target.value.toUpperCase())}
+            onBlur={() => {
+              const selectedProgram = programOptions.find((p) => p.programName === programName.trim().toUpperCase())
+              if (selectedProgram?.alliance && !allianceGroup.trim()) {
+                setAllianceGroup(selectedProgram.alliance)
+              }
+            }}
             placeholder="e.g. Iberia Plus, Miles & More"
           />
+          <datalist id="program-catalog-list">
+            {programOptions.map((program) => (
+              <option key={`${program.airlineName}-${program.programName}`} value={program.programName} />
+            ))}
+          </datalist>
         </div>
         <div className="form-field" style={{ marginTop: 12 }}>
           <label>Alliance / Group (Optional)</label>
