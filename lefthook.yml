@@ -4,3 +4,7 @@ pre-commit:
       run: npm run format
     lint_fix:
       run: npm run lint
+commit-msg:
+  commands:
+    commitlint:
+      run: npm run lint:commit-msg {1}

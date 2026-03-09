@@ -10,9 +10,13 @@
     "dev:web": "npm run dev -w apps/web",
     "build:web": "npm run build -w apps/web",
     "lint": "npm run lint --workspaces --if-present",
+    "lint:commit": "commitlint --from=HEAD~1 --to=HEAD",
+    "lint:commit-msg": "commitlint --edit",
     "format": "prettier . --write"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.4.3",
+    "@commitlint/config-conventional": "^20.4.3",
     "lefthook": "^1.13.6",
     "prettier": "^3.6.2"
   }
