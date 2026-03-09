@@ -82,21 +82,11 @@ npm run deploy
 
 Make sure to adjust your endpoint locally or within `.env` on production to point towards the Cloudflare deployment hostname.
 
-## TODO
+## CI Deployment
 
-- [ ] **Automate Worker deployment via GitHub Actions** — Add a `deploy-backend` job to `.github/workflows/release-please.yml` that runs `wrangler deploy` automatically when a new release is published. This requires:
-  1. Creating a Cloudflare API token with **Workers Scripts: Edit** permission at [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens)
-  2. Adding `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as GitHub repository secrets
-  3. Adding the job to the release workflow:
-     ```yaml
-     deploy-backend:
-       runs-on: ubuntu-latest
-       needs: release-please
-       steps:
-         - uses: actions/checkout@v4
-         - uses: cloudflare/wrangler-action@v3
-           with:
-             apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-             accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-             workingDirectory: apps/backend
-     ```
+Backend deployment is automated in `.github/workflows/release-please.yml` and runs only when a backend release is created.
+
+Required GitHub repository secrets:
+
+1. `CLOUDFLARE_API_TOKEN` (Cloudflare token with Workers Scripts edit permissions)
+2. `CLOUDFLARE_ACCOUNT_ID`

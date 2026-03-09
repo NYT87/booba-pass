@@ -7,18 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.3](https://github.com/NYT87/booba-pass/compare/booba-pass-web-v0.1.2...booba-pass-web-v0.1.3) (2026-03-07)
 
-
 ### Features
 
-* **web:** add provider-backed flight bootstrap, airline catalogs, and PWA data caching ([4017795](https://github.com/NYT87/booba-pass/commit/40177957a7774eb9477eb1410a540597fd0f6cb1))
+- **web:** add provider-backed flight bootstrap, airline catalogs, and PWA data caching ([4017795](https://github.com/NYT87/booba-pass/commit/40177957a7774eb9477eb1410a540597fd0f6cb1))
 
 ## [0.1.2](https://github.com/NYT87/booba-pass/compare/booba-pass-web-v0.1.1...booba-pass-web-v0.1.2) (2026-02-27)
 
-
 ### Features
 
-* Introduce a new Cloudflare Worker backend application and update various frontend components and configurations. ([1f2eb02](https://github.com/NYT87/booba-pass/commit/1f2eb0288e15b175b2636252089f016593dd35a8))
-* Migrate the web application to a monorepo structure within the `apps/web` directory. ([ea19e3a](https://github.com/NYT87/booba-pass/commit/ea19e3a06173bfff7cd6849db2f5bdabc6c262ad))
+- Introduce a new Cloudflare Worker backend application and update various frontend components and configurations. ([1f2eb02](https://github.com/NYT87/booba-pass/commit/1f2eb0288e15b175b2636252089f016593dd35a8))
+- Migrate the web application to a monorepo structure within the `apps/web` directory. ([ea19e3a](https://github.com/NYT87/booba-pass/commit/ea19e3a06173bfff7cd6849db2f5bdabc6c262ad))
 
 ## [0.1.1] - 2026-02-23
 
