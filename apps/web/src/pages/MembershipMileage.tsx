@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { useMembershipById } from '../hooks/useMemberships'
 import { useFlightsByMembership } from '../hooks/useFlights'
+import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
 function formatMileage(value: number | undefined) {
   if (value === undefined) return '—'
@@ -17,6 +18,7 @@ export default function MembershipMileage() {
   const { id } = useParams()
   const membershipId = id ? Number.parseInt(id, 10) : undefined
   const navigate = useNavigate()
+  const triggerHaptic = useHapticFeedback()
   const membership = useMembershipById(membershipId)
   const flights = useFlightsByMembership(membershipId) || []
 
@@ -31,14 +33,23 @@ export default function MembershipMileage() {
   return (
     <div className="page animate-in">
       <header className="page-header">
-        <button className="btn-ghost" onClick={() => navigate('/memberships')}>
+        <button
+          className="btn-ghost"
+          onClick={() => {
+            triggerHaptic()
+            navigate('/memberships')
+          }}
+        >
           <ArrowLeft size={24} />
         </button>
         <h1>Recent Mileage</h1>
         <button
           className="btn-ghost"
           style={{ color: 'var(--accent)' }}
-          onClick={() => navigate('/flights/new', { state: { membershipId } })}
+          onClick={() => {
+            triggerHaptic()
+            navigate('/flights/new', { state: { membershipId } })
+          }}
         >
           <Plus size={22} />
         </button>

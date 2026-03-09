@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Home, List, BarChart2, CreditCard } from 'lucide-react'
+import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
 const NAV_ITEMS = [
   { path: '/', label: 'Home', Icon: Home },
@@ -11,13 +12,20 @@ const NAV_ITEMS = [
 export default function BottomNav() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const triggerHaptic = useHapticFeedback()
 
   return (
     <nav className="bottom-nav">
       <div className="nav-items">
         {NAV_ITEMS.map(({ path, label, Icon }) => (
           <div key={path} className="nav-item-wrap">
-            <button className={`nav-item ${pathname === path ? 'active' : ''}`} onClick={() => navigate(path)}>
+            <button
+              className={`nav-item ${pathname === path ? 'active' : ''}`}
+              onClick={() => {
+                triggerHaptic()
+                navigate(path)
+              }}
+            >
               <Icon />
               <span>{label}</span>
             </button>

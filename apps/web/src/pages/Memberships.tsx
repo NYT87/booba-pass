@@ -4,9 +4,11 @@ import { useMemberships } from '../hooks/useMemberships'
 import { Barcode as BarcodeIcon, Check, Copy, CreditCard, List, Pencil, Plus, QrCode, X } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import Barcode from 'react-barcode'
+import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
 export default function Memberships() {
   const navigate = useNavigate()
+  const triggerHaptic = useHapticFeedback()
   const memberships = useMemberships() || []
   const [visibleCode, setVisibleCode] = useState<{
     membershipId: number
@@ -20,6 +22,7 @@ export default function Memberships() {
   const [copiedId, setCopiedId] = useState<number | null>(null)
 
   const handleCopyMembershipNumber = async (id: number, membershipNumber: string) => {
+    triggerHaptic()
     try {
       await navigator.clipboard.writeText(membershipNumber)
       setCopiedId(id)
@@ -58,7 +61,14 @@ export default function Memberships() {
     <div className="page animate-in">
       <header className="page-header">
         <h1>Memberships</h1>
-        <button className="btn-ghost" style={{ color: 'var(--accent)' }} onClick={() => navigate('/memberships/new')}>
+        <button
+          className="btn-ghost"
+          style={{ color: 'var(--accent)' }}
+          onClick={() => {
+            triggerHaptic()
+            navigate('/memberships/new')
+          }}
+        >
           <Plus size={24} />
         </button>
       </header>
@@ -116,7 +126,10 @@ export default function Memberships() {
                     <button
                       type="button"
                       className="membership-icon-btn"
-                      onClick={() => navigate(`/memberships/${m.id}/mileage`)}
+                      onClick={() => {
+                        triggerHaptic()
+                        navigate(`/memberships/${m.id}/mileage`)
+                      }}
                       title="View mileage history"
                       aria-label="View mileage history"
                     >
@@ -125,7 +138,10 @@ export default function Memberships() {
                     <button
                       type="button"
                       className="membership-icon-btn"
-                      onClick={() => navigate(`/memberships/${m.id}/edit`)}
+                      onClick={() => {
+                        triggerHaptic()
+                        navigate(`/memberships/${m.id}/edit`)
+                      }}
                       title="Edit membership"
                       aria-label="Edit membership"
                     >
@@ -164,7 +180,8 @@ export default function Memberships() {
                         <button
                           type="button"
                           className="membership-icon-btn"
-                          onClick={() =>
+                          onClick={() => {
+                            triggerHaptic()
                             toggleCode(
                               m.id!,
                               'QR',
@@ -174,7 +191,7 @@ export default function Memberships() {
                               m.memberName,
                               m.membershipNumber
                             )
-                          }
+                          }}
                           title={isQrVisible ? 'Hide QR code' : 'Show QR code'}
                           aria-label={isQrVisible ? 'Hide QR code' : 'Show QR code'}
                         >
@@ -185,7 +202,8 @@ export default function Memberships() {
                         <button
                           type="button"
                           className="membership-icon-btn"
-                          onClick={() =>
+                          onClick={() => {
+                            triggerHaptic()
                             toggleCode(
                               m.id!,
                               'BARCODE',
@@ -195,7 +213,7 @@ export default function Memberships() {
                               m.memberName,
                               m.membershipNumber
                             )
-                          }
+                          }}
                           title={isBarcodeVisible ? 'Hide barcode' : 'Show barcode'}
                           aria-label={isBarcodeVisible ? 'Hide barcode' : 'Show barcode'}
                         >
@@ -218,7 +236,14 @@ export default function Memberships() {
               <br />
               Keep all your loyalty codes in one place!
             </p>
-            <button className="btn-primary" onClick={() => navigate('/memberships/new')} style={{ marginTop: 16 }}>
+            <button
+              className="btn-primary"
+              onClick={() => {
+                triggerHaptic()
+                navigate('/memberships/new')
+              }}
+              style={{ marginTop: 16 }}
+            >
               Add Your First Membership
             </button>
           </div>
@@ -227,7 +252,13 @@ export default function Memberships() {
       <div style={{ height: 80 }} />
 
       {visibleCode && (
-        <div className="membership-code-overlay" onClick={() => setVisibleCode(null)}>
+        <div
+          className="membership-code-overlay"
+          onClick={() => {
+            triggerHaptic()
+            setVisibleCode(null)
+          }}
+        >
           <div className="membership-code-content" onClick={(e) => e.stopPropagation()}>
             <div className="membership-code-header">
               <div>
@@ -237,7 +268,10 @@ export default function Memberships() {
               <button
                 type="button"
                 className="membership-code-close"
-                onClick={() => setVisibleCode(null)}
+                onClick={() => {
+                  triggerHaptic()
+                  setVisibleCode(null)
+                }}
                 aria-label="Close code preview"
               >
                 <X size={20} />

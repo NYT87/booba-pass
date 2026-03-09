@@ -11,11 +11,13 @@ import {
   type AirlineCatalogEntry,
   type LoyaltyProgramEntry,
 } from '../utils/airlineCatalog'
+import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
 export default function AddEditMembership() {
   const { id } = useParams()
   const navigate = useNavigate()
   const existingMembership = useMembershipById(id ? parseInt(id) : undefined)
+  const triggerHaptic = useHapticFeedback()
 
   const [airlineName, setAirlineName] = useState('')
   const [programName, setProgramName] = useState('')
@@ -192,11 +194,24 @@ export default function AddEditMembership() {
   return (
     <div className="page animate-in">
       <header className="page-header">
-        <button onClick={() => navigate('/memberships')} className="btn-ghost">
+        <button
+          onClick={() => {
+            triggerHaptic()
+            navigate('/memberships')
+          }}
+          className="btn-ghost"
+        >
           <X size={24} />
         </button>
         <h1>{id ? 'Edit Membership' : 'Add Membership'}</h1>
-        <button onClick={handleSave} className="btn-ghost" style={{ color: 'var(--accent)' }}>
+        <button
+          onClick={() => {
+            triggerHaptic()
+            void handleSave()
+          }}
+          className="btn-ghost"
+          style={{ color: 'var(--accent)' }}
+        >
           <Save size={24} />
         </button>
       </header>
@@ -336,7 +351,13 @@ export default function AddEditMembership() {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={handleSave}>
+      <button
+        className="btn-primary"
+        onClick={() => {
+          triggerHaptic()
+          void handleSave()
+        }}
+      >
         {id ? 'Update Membership' : 'Save Membership'}
       </button>
 
@@ -344,7 +365,10 @@ export default function AddEditMembership() {
         <button
           className="btn-danger"
           type="button"
-          onClick={() => setShowDeleteModal(true)}
+          onClick={() => {
+            triggerHaptic()
+            setShowDeleteModal(true)
+          }}
           style={{ width: '100%', marginTop: 12 }}
         >
           <Trash2 size={16} style={{ marginRight: 8 }} />
@@ -355,15 +379,35 @@ export default function AddEditMembership() {
       <div style={{ height: 40 }} />
 
       {showDeleteModal && (
-        <div className="confirm-modal-overlay" onClick={() => setShowDeleteModal(false)}>
+        <div
+          className="confirm-modal-overlay"
+          onClick={() => {
+            triggerHaptic()
+            setShowDeleteModal(false)
+          }}
+        >
           <div className="confirm-modal-card" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <h3 className="confirm-modal-title">Delete membership?</h3>
             <p className="confirm-modal-text">This membership card will be permanently removed from this device.</p>
             <div className="confirm-modal-actions">
-              <button className="btn-ghost" type="button" onClick={() => setShowDeleteModal(false)}>
+              <button
+                className="btn-ghost"
+                type="button"
+                onClick={() => {
+                  triggerHaptic()
+                  setShowDeleteModal(false)
+                }}
+              >
                 Cancel
               </button>
-              <button className="btn-danger" type="button" onClick={() => void handleDeleteMembership()}>
+              <button
+                className="btn-danger"
+                type="button"
+                onClick={() => {
+                  triggerHaptic()
+                  void handleDeleteMembership()
+                }}
+              >
                 {deletingMembership ? 'Deleting...' : 'Delete'}
               </button>
             </div>

@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { useFlights } from '../hooks/useFlights'
 import FlightCard from '../components/FlightCard'
 import { Plus } from 'lucide-react'
+import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
 type FilterType = 'all' | 'past' | 'upcoming'
 
 export default function Flights() {
   const navigate = useNavigate()
+  const triggerHaptic = useHapticFeedback()
   const [filter, setFilter] = useState<FilterType>('all')
   const flights = useFlights(filter)
 
@@ -32,14 +34,28 @@ export default function Flights() {
         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
       >
         <h1>My Flights</h1>
-        <button className="btn-ghost" style={{ color: 'var(--accent)' }} onClick={() => navigate('/flights/new')}>
+        <button
+          className="btn-ghost"
+          style={{ color: 'var(--accent)' }}
+          onClick={() => {
+            triggerHaptic()
+            navigate('/flights/new')
+          }}
+        >
           <Plus size={24} />
         </button>
       </header>
 
       <div className="filter-tabs">
         {(['all', 'past', 'upcoming'] as const).map((f) => (
-          <button key={f} className={`filter-tab ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
+          <button
+            key={f}
+            className={`filter-tab ${filter === f ? 'active' : ''}`}
+            onClick={() => {
+              triggerHaptic()
+              setFilter(f)
+            }}
+          >
             {f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
         ))}
@@ -59,7 +75,13 @@ export default function Flights() {
           <div className="empty-icon">✈️</div>
           <p>No {filter !== 'all' ? filter : ''} flights found.</p>
           {filter === 'all' && (
-            <button className="btn-primary" onClick={() => navigate('/flights/new')}>
+            <button
+              className="btn-primary"
+              onClick={() => {
+                triggerHaptic()
+                navigate('/flights/new')
+              }}
+            >
               Add Your First Flight
             </button>
           )}

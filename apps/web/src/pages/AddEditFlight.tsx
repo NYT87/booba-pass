@@ -704,7 +704,13 @@ export default function AddEditFlight() {
     return (
       <div className="page animate-in">
         <header className="page-header">
-          <button onClick={() => navigate('/flights')} className="btn-ghost">
+          <button
+            onClick={() => {
+              triggerHaptic('nudge')
+              navigate('/flights')
+            }}
+            className="btn-ghost"
+          >
             <X size={24} />
           </button>
           <h1>Add Flight</h1>
@@ -759,7 +765,10 @@ export default function AddEditFlight() {
                   <button
                     type="button"
                     className={`btn-ghost ${isOffline ? 'disabled' : ''}`}
-                    onClick={() => void handleStartFromCode()}
+                    onClick={() => {
+                      triggerHaptic('nudge')
+                      void handleStartFromCode()
+                    }}
                     disabled={isOffline}
                     style={{
                       minWidth: 124,
@@ -792,7 +801,10 @@ export default function AddEditFlight() {
                   <button
                     type="button"
                     className={`btn-ghost ${isOffline ? 'disabled' : ''}`}
-                    onClick={() => void handleStartFromLink()}
+                    onClick={() => {
+                      triggerHaptic('nudge')
+                      void handleStartFromLink()
+                    }}
                     disabled={isOffline}
                     style={{
                       minWidth: 124,
@@ -812,7 +824,14 @@ export default function AddEditFlight() {
 
             <div className="form-section">
               <div className="form-section-title">Add Data Manually</div>
-              <button className="btn-primary" onClick={() => setNewFlightStep('form')} style={{ width: '100%' }}>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  triggerHaptic('nudge')
+                  setNewFlightStep('form')
+                }}
+                style={{ width: '100%' }}
+              >
                 Continue To Empty Form
               </button>
             </div>
@@ -825,11 +844,24 @@ export default function AddEditFlight() {
   return (
     <div className="page animate-in">
       <header className="page-header">
-        <button onClick={() => navigate(id ? `/flights/${id}` : '/flights')} className="btn-ghost">
+        <button
+          onClick={() => {
+            triggerHaptic('nudge')
+            navigate(id ? `/flights/${id}` : '/flights')
+          }}
+          className="btn-ghost"
+        >
           <X size={24} />
         </button>
         <h1>{id ? 'Edit Flight' : 'Add Flight'}</h1>
-        <button onClick={handleSave} className="btn-ghost" style={{ color: 'var(--accent)' }}>
+        <button
+          onClick={() => {
+            triggerHaptic('nudge')
+            void handleSave()
+          }}
+          className="btn-ghost"
+          style={{ color: 'var(--accent)' }}
+        >
           <Save size={24} />
         </button>
       </header>
@@ -862,7 +894,10 @@ export default function AddEditFlight() {
             <button
               type="button"
               className={`btn-ghost ${isOffline ? 'disabled' : ''}`}
-              onClick={() => void handleFetchTrackingData()}
+              onClick={() => {
+                triggerHaptic('nudge')
+                void handleFetchTrackingData()
+              }}
               disabled={fetchingTrackData || isOffline}
               style={{
                 minWidth: 124,
@@ -890,7 +925,10 @@ export default function AddEditFlight() {
             <button
               type="button"
               className={`btn-ghost ${isOffline ? 'disabled' : ''}`}
-              onClick={() => void handleFetchByFlightCode()}
+              onClick={() => {
+                triggerHaptic('nudge')
+                void handleFetchByFlightCode()
+              }}
               disabled={fetchingTrackData || isOffline}
               style={{
                 minWidth: 124,
@@ -935,7 +973,13 @@ export default function AddEditFlight() {
         <div className="form-section-title">Route</div>
         <div className="form-row" style={{ alignItems: 'flex-start' }}>
           <AirportSearch label="Departure" value={departure} onChange={setDeparture} />
-          <button className="swap-btn" onClick={swapAirports}>
+          <button
+            className="swap-btn"
+            onClick={() => {
+              triggerHaptic('nudge')
+              swapAirports()
+            }}
+          >
             <ArrowLeftRight size={18} />
           </button>
           <AirportSearch label="Arrival" value={arrival} onChange={setArrival} />
@@ -1038,7 +1082,10 @@ export default function AddEditFlight() {
               <button
                 key={c}
                 className={`class-btn ${seatClass === c ? 'active' : ''}`}
-                onClick={() => setSeatClass(c)}
+                onClick={() => {
+                  triggerHaptic('nudge')
+                  setSeatClass(c)
+                }}
               >
                 {c}
               </button>
@@ -1213,7 +1260,14 @@ export default function AddEditFlight() {
               <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Boarding Pass Attached</div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Ready for your trip</div>
             </div>
-            <button className="btn-ghost" style={{ color: 'var(--danger)' }} onClick={() => setBoardingPass(undefined)}>
+            <button
+              className="btn-ghost"
+              style={{ color: 'var(--danger)' }}
+              onClick={() => {
+                triggerHaptic('nudge')
+                setBoardingPass(undefined)
+              }}
+            >
               <Trash2 size={18} />
             </button>
           </div>
@@ -1231,7 +1285,13 @@ export default function AddEditFlight() {
           {photos.map((p, i) => (
             <div key={i} className="photo-preview-item card">
               <img src={p} alt="Flight" />
-              <button className="photo-remove-btn" onClick={() => removePhoto(i)}>
+              <button
+                className="photo-remove-btn"
+                onClick={() => {
+                  triggerHaptic('nudge')
+                  removePhoto(i)
+                }}
+              >
                 <Trash2 size={14} />
               </button>
             </div>
@@ -1244,7 +1304,13 @@ export default function AddEditFlight() {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={handleSave}>
+      <button
+        className="btn-primary"
+        onClick={() => {
+          triggerHaptic('nudge')
+          void handleSave()
+        }}
+      >
         {id ? 'Update Flight' : 'Save Flight'}
       </button>
 

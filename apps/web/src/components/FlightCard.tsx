@@ -3,6 +3,7 @@ import type { Flight } from '../types'
 import { flightDurationMin, formatDuration, isUpcoming } from '../types'
 import { Plane, Ticket } from 'lucide-react'
 import AirlineLabel from './AirlineLabel'
+import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
 interface Props {
   flight: Flight
@@ -10,11 +11,18 @@ interface Props {
 
 export default function FlightCard({ flight }: Props) {
   const navigate = useNavigate()
+  const triggerHaptic = useHapticFeedback()
   const upcoming = isUpcoming(flight)
   const duration = formatDuration(flightDurationMin(flight))
 
   return (
-    <div className="card card-hover flight-card animate-in" onClick={() => navigate(`/flights/${flight.id}`)}>
+    <div
+      className="card card-hover flight-card animate-in"
+      onClick={() => {
+        triggerHaptic()
+        navigate(`/flights/${flight.id}`)
+      }}
+    >
       <div style={{ flex: 1 }}>
         <div className="flight-card-route">
           <span className="iata-code">{flight.departureIata}</span>

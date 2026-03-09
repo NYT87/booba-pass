@@ -19,12 +19,14 @@ import {
   Ticket,
   Maximize2,
 } from 'lucide-react'
+import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
 export default function FlightDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const flight = useFlightById(id ? parseInt(id) : undefined)
   const linkedMembership = useMembershipById(flight?.membershipId)
+  const triggerHaptic = useHapticFeedback()
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [showBoardingPass, setShowBoardingPass] = useState(false)
 
@@ -65,15 +67,34 @@ export default function FlightDetail() {
   return (
     <div className="page animate-in">
       <header className="page-header">
-        <button onClick={() => navigate('/flights')} className="btn-ghost">
+        <button
+          onClick={() => {
+            triggerHaptic()
+            navigate('/flights')
+          }}
+          className="btn-ghost"
+        >
           <ArrowLeft size={24} />
         </button>
         <h1>Flight Details</h1>
         <div style={{ display: 'flex', gap: 4 }}>
-          <button onClick={() => navigate(`/flights/${flight.id}/edit`)} className="btn-ghost">
+          <button
+            onClick={() => {
+              triggerHaptic()
+              navigate(`/flights/${flight.id}/edit`)
+            }}
+            className="btn-ghost"
+          >
             <Edit2 size={20} />
           </button>
-          <button onClick={handleDelete} className="btn-ghost" style={{ color: 'var(--danger)' }}>
+          <button
+            onClick={() => {
+              triggerHaptic()
+              void handleDelete()
+            }}
+            className="btn-ghost"
+            style={{ color: 'var(--danger)' }}
+          >
             <Trash2 size={20} />
           </button>
         </div>
@@ -205,7 +226,10 @@ export default function FlightDetail() {
           <div className="form-section-title">Boarding Pass</div>
           <button
             className="card"
-            onClick={() => setShowBoardingPass(true)}
+            onClick={() => {
+              triggerHaptic()
+              setShowBoardingPass(true)
+            }}
             style={{
               width: '100%',
               padding: 16,
@@ -253,7 +277,14 @@ export default function FlightDetail() {
         <div className="photo-gallery">
           {flight.photoDataUrls &&
             flight.photoDataUrls.map((p, i) => (
-              <div key={i} className="photo-item card" onClick={() => setSelectedImage(p)}>
+              <div
+                key={i}
+                className="photo-item card"
+                onClick={() => {
+                  triggerHaptic()
+                  setSelectedImage(p)
+                }}
+              >
                 <img src={p} alt={`Flight memory ${i + 1}`} />
               </div>
             ))}
@@ -292,7 +323,13 @@ export default function FlightDetail() {
 
       {/* Lightbox Modal */}
       {selectedImage && (
-        <div className="lightbox-overlay" onClick={() => setSelectedImage(null)}>
+        <div
+          className="lightbox-overlay"
+          onClick={() => {
+            triggerHaptic()
+            setSelectedImage(null)
+          }}
+        >
           <button className="lightbox-close">
             <X size={32} />
           </button>
@@ -302,10 +339,22 @@ export default function FlightDetail() {
 
       {/* Boarding Pass Travel Mode Modal */}
       {showBoardingPass && flight.boardingPassDataUrl && (
-        <div className="travel-mode-overlay animate-in" onClick={() => setShowBoardingPass(false)}>
+        <div
+          className="travel-mode-overlay animate-in"
+          onClick={() => {
+            triggerHaptic()
+            setShowBoardingPass(false)
+          }}
+        >
           <div className="travel-mode-content" onClick={(e) => e.stopPropagation()}>
             <header className="travel-mode-header">
-              <button className="btn-ghost" onClick={() => setShowBoardingPass(false)}>
+              <button
+                className="btn-ghost"
+                onClick={() => {
+                  triggerHaptic()
+                  setShowBoardingPass(false)
+                }}
+              >
                 <X size={28} />
               </button>
               <div style={{ textAlign: 'center' }}>

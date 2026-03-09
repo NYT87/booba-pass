@@ -6,9 +6,11 @@ import { exportToJSON, exportToCSV, handleImportFile } from '../utils/dataTransf
 import { useState } from 'react'
 import { useTheme } from '../hooks/useTheme'
 import { Moon, Sun, Monitor } from 'lucide-react'
+import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
 export default function Settings() {
   const navigate = useNavigate()
+  const triggerHaptic = useHapticFeedback()
   const flights = useLiveQuery(() => db.flights.toArray())
   const memberships = useLiveQuery(() => db.memberships.toArray())
   const airlines = useLiveQuery(() => db.airlines.toArray())
@@ -19,6 +21,14 @@ export default function Settings() {
   } | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [theme, setTheme] = useTheme()
+
+  const handleClickHaptics: React.MouseEventHandler<HTMLDivElement> = (event) => {
+    const target = event.target as HTMLElement | null
+    const clickable = target?.closest('button, a, label')
+    if (!clickable) return
+    if (clickable instanceof HTMLButtonElement && clickable.disabled) return
+    triggerHaptic()
+  }
 
   const onImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -93,7 +103,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="page animate-in">
+    <div className="page animate-in" onClickCapture={handleClickHaptics}>
       <header className="page-header">
         <button onClick={() => navigate(-1)} className="btn-ghost">
           <ArrowLeft size={24} />

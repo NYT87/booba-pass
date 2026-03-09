@@ -15,9 +15,11 @@ import MembershipMileage from './pages/MembershipMileage'
 import Settings from './pages/Settings'
 import { db } from './db/db'
 import { useTheme } from './hooks/useTheme'
+import { useHapticFeedback } from './hooks/useHapticFeedback'
 
 function App() {
   useTheme()
+  const triggerHaptic = useHapticFeedback()
   const [splashStage, setSplashStage] = useState<'visible' | 'fading' | 'hidden'>('visible')
   const splashStartTimeRef = useRef<number>(0)
   const initialDataLoaded = useLiveQuery(async () => {
@@ -67,10 +69,22 @@ function App() {
         <div className="pwa-update-banner" role="status" aria-live="polite">
           <p>New version available.</p>
           <div className="pwa-update-actions">
-            <button type="button" onClick={() => void updateServiceWorker(true)}>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic()
+                void updateServiceWorker(true)
+              }}
+            >
               Update now
             </button>
-            <button type="button" onClick={() => needRefresh[1](false)}>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic()
+                needRefresh[1](false)
+              }}
+            >
               Later
             </button>
           </div>

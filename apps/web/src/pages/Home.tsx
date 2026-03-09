@@ -4,9 +4,11 @@ import { useFlights, useStats } from '../hooks/useFlights'
 import { Plane, MapPin, Clock, Settings as SettingsIcon, Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { isUpcoming } from '../types'
+import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
 export default function Home() {
   const navigate = useNavigate()
+  const triggerHaptic = useHapticFeedback()
   const flights = useFlights('all')
   const stats = useStats()
 
@@ -21,10 +23,23 @@ export default function Home() {
       >
         <div className="logo">booba-pass</div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-ghost" style={{ color: 'var(--accent)' }} onClick={() => navigate('/flights/new')}>
+          <button
+            className="btn-ghost"
+            style={{ color: 'var(--accent)' }}
+            onClick={() => {
+              triggerHaptic()
+              navigate('/flights/new')
+            }}
+          >
             <Plus size={24} />
           </button>
-          <button className="btn-ghost" onClick={() => navigate('/settings')}>
+          <button
+            className="btn-ghost"
+            onClick={() => {
+              triggerHaptic()
+              navigate('/settings')
+            }}
+          >
             <SettingsIcon size={20} />
           </button>
         </div>
@@ -41,7 +56,13 @@ export default function Home() {
       </div>
 
       <section>
-        <div className="map-preview-card" onClick={() => navigate('/map')}>
+        <div
+          className="map-preview-card"
+          onClick={() => {
+            triggerHaptic()
+            navigate('/map')
+          }}
+        >
           <div className="map-placeholder">
             <div className="map-dot" style={{ top: '30%', left: '30%' }}></div>
             <div className="map-dot" style={{ top: '60%', left: '70%' }}></div>
@@ -75,7 +96,14 @@ export default function Home() {
           <div className="section-header">
             <h2>Recent Flights</h2>
             {flights && flights.length > pastFlights.length && (
-              <button onClick={() => navigate('/flights')}>View All</button>
+              <button
+                onClick={() => {
+                  triggerHaptic()
+                  navigate('/flights')
+                }}
+              >
+                View All
+              </button>
             )}
           </div>
 
