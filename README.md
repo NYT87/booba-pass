@@ -65,6 +65,22 @@ npm run format
 
 ## Deployment
 
-The current GitHub Actions workflow automatically builds and deploys the `apps/web` package to GitHub Pages when a Release Please PR is merged and a new release gets published.
+Release and deployment are managed per app:
 
-The backend service is designed to be deployed to Cloudflare Workers via Wrangler (`npm run deploy -w apps/backend`).
+- `apps/web`
+  - Versioned independently via Release Please
+  - Auto-deployed to GitHub Pages only when a web release is created
+- `apps/backend`
+  - Versioned independently via Release Please
+  - Auto-deployed to Cloudflare Workers only when a backend release is created
+
+Backend deploy requires repository secrets:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+Manual backend deploy remains available:
+
+```bash
+npm run deploy -w apps/backend
+```

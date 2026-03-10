@@ -2,7 +2,7 @@
 
 A mobile-first flight and loyalty tracker built as a Progressive Web App (PWA).
 
-Version: `0.1.2`
+Version: see [`package.json`](./package.json)
 
 ## What it does
 
@@ -56,19 +56,19 @@ npm install
 ### Run dev server
 
 ```bash
-npm run dev
+npm run dev -w apps/web
 ```
 
 ### Build
 
 ```bash
-npm run build
+npm run build -w apps/web
 ```
 
 Then preview:
 
 ```bash
-npm run preview
+npm run preview -w apps/web
 ```
 
 Note: `npm run build` runs `scripts/build-airports.mjs` first, which fetches airport source data from GitHub.
@@ -76,15 +76,16 @@ Airport data is generated to `public/data/airports.json`.
 
 ## Scripts
 
-- `npm run dev`: start Vite dev server
-- `npm run build`: generate airport data + typecheck + production build
-- `npm run preview`: preview production build
-- `npm run test:tracking`: run tracking extraction tests
-- `npm run inspect:tracking`: inspect extraction output for a provider URL
-- `npm run lint`: run ESLint
-- `npm run lint:fix`: auto-fix lint issues
-- `npm run format`: run Prettier write
-- `npm run format:check`: check formatting
+- `npm run dev -w apps/web`: start Vite dev server
+- `npm run build -w apps/web`: generate airport data + typecheck + production build
+- `npm run preview -w apps/web`: preview production build
+- `npm run test:tracking -w apps/web`: run tracking extraction tests
+- `npm run inspect:tracking -w apps/web`: inspect extraction output for a provider URL
+
+Repository-level quality commands:
+
+- `npm run lint` (from repo root)
+- `npm run format` (from repo root)
 
 ## Usage docs
 
