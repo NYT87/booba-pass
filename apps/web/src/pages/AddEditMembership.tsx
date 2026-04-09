@@ -27,6 +27,7 @@ export default function AddEditMembership() {
   const [qrCodeValue, setQrCodeValue] = useState('')
   const [barcodeValue, setBarcodeValue] = useState('')
   const [analyzingCodeImage, setAnalyzingCodeImage] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deletingMembership, setDeletingMembership] = useState(false)
   const [notes, setNotes] = useState('')
@@ -192,8 +193,13 @@ export default function AddEditMembership() {
   }
 
   return (
-    <div className="page animate-in">
-      <header className="page-header">
+    <div
+      className="page animate-in"
+      onScroll={(event) => {
+        setIsScrolled(event.currentTarget.scrollTop > 0)
+      }}
+    >
+      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
         <button
           onClick={() => {
             triggerHaptic()

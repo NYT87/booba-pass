@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom'
+import { useState } from 'react'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { useMembershipById } from '../hooks/useMemberships'
 import { useFlightsByMembership } from '../hooks/useFlights'
@@ -19,6 +20,7 @@ export default function MembershipMileage() {
   const membershipId = id ? Number.parseInt(id, 10) : undefined
   const navigate = useNavigate()
   const triggerHaptic = useHapticFeedback()
+  const [isScrolled, setIsScrolled] = useState(false)
   const membership = useMembershipById(membershipId)
   const flights = useFlightsByMembership(membershipId) || []
 
@@ -31,8 +33,13 @@ export default function MembershipMileage() {
   }
 
   return (
-    <div className="page animate-in">
-      <header className="page-header">
+    <div
+      className="page animate-in"
+      onScroll={(event) => {
+        setIsScrolled(event.currentTarget.scrollTop > 0)
+      }}
+    >
+      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
         <button
           className="btn-ghost"
           onClick={() => {

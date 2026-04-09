@@ -10,6 +10,7 @@ type FilterType = 'all' | 'past' | 'upcoming'
 export default function Flights() {
   const navigate = useNavigate()
   const triggerHaptic = useHapticFeedback()
+  const [isScrolled, setIsScrolled] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
   const flights = useFlights(filter)
 
@@ -28,8 +29,13 @@ export default function Flights() {
   const years = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
 
   return (
-    <div className="page animate-in">
-      <header className="page-header">
+    <div
+      className="page animate-in"
+      onScroll={(event) => {
+        setIsScrolled(event.currentTarget.scrollTop > 0)
+      }}
+    >
+      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
         <h1>My Flights</h1>
         <button
           className="btn-ghost btn-ghost-accent"

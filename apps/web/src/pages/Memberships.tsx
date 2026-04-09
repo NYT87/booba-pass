@@ -10,6 +10,7 @@ export default function Memberships() {
   const navigate = useNavigate()
   const triggerHaptic = useHapticFeedback()
   const memberships = useMemberships() || []
+  const [isScrolled, setIsScrolled] = useState(false)
   const [visibleCode, setVisibleCode] = useState<{
     membershipId: number
     kind: 'QR' | 'BARCODE'
@@ -58,8 +59,13 @@ export default function Memberships() {
   }
 
   return (
-    <div className="page animate-in">
-      <header className="page-header">
+    <div
+      className="page animate-in"
+      onScroll={(event) => {
+        setIsScrolled(event.currentTarget.scrollTop > 0)
+      }}
+    >
+      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
         <h1>Memberships</h1>
         <button
           className="btn-ghost btn-ghost-accent"

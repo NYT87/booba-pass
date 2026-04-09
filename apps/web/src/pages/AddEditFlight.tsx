@@ -50,6 +50,7 @@ export default function AddEditFlight() {
   const [notes, setNotes] = useState('')
   const [trackUrl, setTrackUrl] = useState('')
   const [flightCodeQuery, setFlightCodeQuery] = useState('')
+  const [isScrolled, setIsScrolled] = useState(false)
   const [fetchingTrackData, setFetchingTrackData] = useState(false)
   const [activeTrackingAction, setActiveTrackingAction] = useState<'url' | 'code' | null>(null)
   const [trackFetchMessage, setTrackFetchMessage] = useState<string | null>(null)
@@ -702,8 +703,13 @@ export default function AddEditFlight() {
 
   if (!isEditMode && newFlightStep === 'chooser') {
     return (
-      <div className="page animate-in">
-        <header className="page-header">
+      <div
+        className="page animate-in"
+        onScroll={(event) => {
+          setIsScrolled(event.currentTarget.scrollTop > 0)
+        }}
+      >
+        <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
           <button
             onClick={() => {
               triggerHaptic('nudge')
@@ -842,8 +848,13 @@ export default function AddEditFlight() {
   }
 
   return (
-    <div className="page animate-in">
-      <header className="page-header">
+    <div
+      className="page animate-in"
+      onScroll={(event) => {
+        setIsScrolled(event.currentTarget.scrollTop > 0)
+      }}
+    >
+      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
         <button
           onClick={() => {
             triggerHaptic('nudge')

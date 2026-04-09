@@ -8,6 +8,7 @@ import { Plane, MapPin, Clock } from 'lucide-react'
 const COLORS = ['#25aff4', '#a78bfa', '#f59e0b', '#ef4444', '#10b981']
 
 export default function Stats() {
+  const [isScrolled, setIsScrolled] = useState(false)
   const [year, setYear] = useState<number | undefined>(undefined)
   const stats = useStats(year)
 
@@ -26,8 +27,13 @@ export default function Stats() {
   const hasAirlines = stats.airlines.length > 0
 
   return (
-    <div className="page animate-in">
-      <header className="page-header">
+    <div
+      className="page animate-in"
+      onScroll={(event) => {
+        setIsScrolled(event.currentTarget.scrollTop > 0)
+      }}
+    >
+      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
         <h1>My Stats</h1>
         <select
           value={year || ''}

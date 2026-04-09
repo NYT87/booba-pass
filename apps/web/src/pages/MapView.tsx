@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { MapContainer, TileLayer, Polyline, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useFlights } from '../hooks/useFlights'
@@ -7,6 +8,7 @@ import { useTheme } from '../hooks/useTheme'
 export default function MapView() {
   const flights = useFlights('all')
   const [theme] = useTheme()
+  const [isScrolled, setIsScrolled] = useState(false)
 
   // Determine actual theme for map tiles
   const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
@@ -15,8 +17,13 @@ export default function MapView() {
     : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
 
   return (
-    <div className="page animate-in">
-      <header className="page-header">
+    <div
+      className="page animate-in"
+      onScroll={(event) => {
+        setIsScrolled(event.currentTarget.scrollTop > 0)
+      }}
+    >
+      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
         <h1>Flight Map</h1>
       </header>
 

@@ -293,6 +293,8 @@ img {
 
 .page {
   min-height: 100%;
+  height: calc(100dvh - var(--nav-height) - var(--safe-bottom));
+  overflow-y: auto;
   padding: 0 0 var(--space-2xl);
 }
 
@@ -317,8 +319,15 @@ img {
   gap: var(--space-md);
   padding: var(--space-lg) var(--space-md) var(--space-md);
   flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 45;
   background: var(--black);
   border-bottom: 1px solid transparent;
+}
+
+.page-header-persistent {
+  border-bottom-color: var(--border);
 }
 
 .page-header-scrolled {
@@ -1246,6 +1255,52 @@ img {
   width: min(100%, 420px);
   padding: var(--space-xl) var(--space-lg);
   position: relative;
+}
+
+.settings-section-copy {
+  margin-bottom: 20px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.settings-action-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+}
+
+.settings-action-title {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.settings-action-description {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.settings-action-icon-spacer {
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+  flex: 0 0 auto;
+}
+
+.settings-update-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+.settings-update-status {
+  margin-top: var(--space-sm);
+  color: var(--text-secondary);
+  font-size: var(--caption);
+  line-height: 1.5;
 }
 
 .settings-modal-close {
