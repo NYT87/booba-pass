@@ -859,8 +859,7 @@ export default function AddEditFlight() {
             triggerHaptic('nudge')
             void handleSave()
           }}
-          className="btn-ghost"
-          style={{ color: 'var(--accent)' }}
+          className="btn-ghost btn-ghost-accent"
         >
           <Save size={24} />
         </button>
@@ -899,15 +898,7 @@ export default function AddEditFlight() {
                 void handleFetchTrackingData()
               }}
               disabled={fetchingTrackData || isOffline}
-              style={{
-                minWidth: 124,
-                padding: '0 12px',
-                background: 'var(--bg-input)',
-                border: '1px solid var(--border)',
-                borderRadius: 10,
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-              }}
+              style={{ minWidth: 124, padding: '0 12px' }}
             >
               {fetchingTrackData && activeTrackingAction === 'url' ? 'Fetching...' : 'Extract'}
             </button>
@@ -930,15 +921,7 @@ export default function AddEditFlight() {
                 void handleFetchByFlightCode()
               }}
               disabled={fetchingTrackData || isOffline}
-              style={{
-                minWidth: 124,
-                padding: '0 12px',
-                background: 'var(--bg-input)',
-                border: '1px solid var(--border)',
-                borderRadius: 10,
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-              }}
+              style={{ minWidth: 124, padding: '0 12px' }}
             >
               {fetchingTrackData && activeTrackingAction === 'code' ? 'Searching...' : 'Search'}
             </button>
@@ -1173,11 +1156,11 @@ export default function AddEditFlight() {
               style={{
                 padding: 16,
                 textAlign: 'center',
-                background: 'rgba(37, 175, 244, 0.1)',
-                border: '1px solid rgba(37, 175, 244, 0.2)',
               }}
             >
-              <div style={{ color: 'var(--accent)', fontSize: '0.8rem', marginBottom: 4 }}>Calculated Duration</div>
+              <div className="form-section-title" style={{ marginBottom: 8 }}>
+                Calculated Duration
+              </div>
               <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>
                 {formatDuration(
                   computeDurationMin(

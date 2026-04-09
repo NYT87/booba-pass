@@ -29,14 +29,10 @@ export default function Flights() {
 
   return (
     <div className="page animate-in">
-      <header
-        className="page-header"
-        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-      >
+      <header className="page-header">
         <h1>My Flights</h1>
         <button
-          className="btn-ghost"
-          style={{ color: 'var(--accent)' }}
+          className="btn-ghost btn-ghost-accent"
           onClick={() => {
             triggerHaptic()
             navigate('/flights/new')
@@ -72,7 +68,7 @@ export default function Flights() {
         ))
       ) : (
         <div className="empty-state">
-          <div className="empty-icon">✈️</div>
+          <div className="empty-icon">[ ]</div>
           <p>No {filter !== 'all' ? filter : ''} flights found.</p>
           {filter === 'all' && (
             <button

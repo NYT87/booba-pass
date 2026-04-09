@@ -44,8 +44,7 @@ export default function MembershipMileage() {
         </button>
         <h1>Recent Mileage</h1>
         <button
-          className="btn-ghost"
-          style={{ color: 'var(--accent)' }}
+          className="btn-ghost btn-ghost-accent"
           onClick={() => {
             triggerHaptic()
             navigate('/flights/new', { state: { membershipId } })

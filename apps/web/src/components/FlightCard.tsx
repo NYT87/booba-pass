@@ -16,14 +16,24 @@ export default function FlightCard({ flight }: Props) {
   const duration = formatDuration(flightDurationMin(flight))
 
   return (
-    <div
-      className="card card-hover flight-card animate-in"
+    <button
+      type="button"
+      className="card flight-card animate-in"
       onClick={() => {
         triggerHaptic()
         navigate(`/flights/${flight.id}`)
       }}
     >
-      <div style={{ flex: 1 }}>
+      <div className="flight-card-main">
+        <div className="flight-card-topline">
+          <span className={`badge ${upcoming ? 'badge-upcoming' : 'badge-past'}`}>
+            {upcoming ? 'Upcoming' : 'Completed'}
+          </span>
+          <span className="flight-card-date">
+            {flight.boardingPassDataUrl && <Ticket size={12} />}
+            {flight.scheduledDepartureDate}
+          </span>
+        </div>
         <div className="flight-card-route">
           <span className="iata-code">{flight.departureIata}</span>
           <div className="flight-arc-line">
@@ -32,27 +42,21 @@ export default function FlightCard({ flight }: Props) {
           <span className="iata-code">{flight.arrivalIata}</span>
         </div>
         <div className="flight-card-meta">
-          <AirlineLabel name={flight.airline} className="flight-airline-label" />· {flight.flightNumber} · {duration} ·{' '}
-          {Math.round(flight.distanceKm).toLocaleString()} km
+          <div className="flight-card-meta-row">
+            <AirlineLabel name={flight.airline} className="flight-airline-label" />
+            <span>{flight.flightNumber}</span>
+          </div>
+          <div className="flight-card-meta-row flight-card-meta-row-secondary">
+            <span>{duration}</span>
+            <span className="flight-card-meta-separator">|</span>
+            <span>{Math.round(flight.distanceKm).toLocaleString()} km</span>
+          </div>
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-        <span className={`badge ${upcoming ? 'badge-upcoming' : 'badge-past'}`}>
-          {upcoming ? 'Upcoming' : 'Completed'}
-        </span>
-        <span
-          style={{
-            fontSize: '0.72rem',
-            color: 'var(--text-muted)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-          }}
-        >
-          {flight.boardingPassDataUrl && <Ticket size={12} style={{ color: 'var(--accent)' }} />}
-          {flight.scheduledDepartureDate}
-        </span>
+      <div className="flight-card-side">
+        <span className="flight-card-city">{flight.departureCity}</span>
+        <span className="flight-card-city">{flight.arrivalCity}</span>
       </div>
-    </div>
+    </button>
   )
 }

@@ -9,9 +9,11 @@ interface Props {
 export default function StatCard({ icon, value, label }: Props) {
   return (
     <div className="stat-card animate-in">
-      <div className="stat-icon">{icon}</div>
+      <div className="stat-label-row">
+        <div className="stat-label">{label}</div>
+        <div className="stat-icon">{icon}</div>
+      </div>
       <div className="stat-value">{value}</div>
-      <div className="stat-label">{label}</div>
     </div>
   )
 }

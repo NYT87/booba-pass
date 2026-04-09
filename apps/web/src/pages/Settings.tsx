@@ -167,7 +167,7 @@ export default function Settings() {
               onClick={() => flights && exportToCSV(flights)}
               style={{ justifyContent: 'flex-start', padding: 12, background: 'var(--bg-input)' }}
             >
-              <FileSpreadsheet size={18} style={{ marginRight: 10, color: '#10b981' }} />
+              <FileSpreadsheet size={18} style={{ marginRight: 10, color: 'var(--text-primary)' }} />
               <div>
                 <div style={{ fontSize: '0.9rem' }}>Flights Data (CSV)</div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
@@ -229,13 +229,13 @@ export default function Settings() {
             style={{
               padding: 12,
               marginTop: 16,
-              border: `1px solid ${message.type === 'success' ? '#10b981' : 'var(--danger)'}`,
+              border: `1px solid ${message.type === 'success' ? 'var(--text-primary)' : 'var(--danger)'}`,
               background: 'rgba(0,0,0,0.2)',
             }}
           >
             <div
               style={{
-                color: message.type === 'success' ? '#10b981' : 'var(--danger)',
+                color: message.type === 'success' ? 'var(--text-primary)' : 'var(--danger)',
                 fontSize: '0.85rem',
               }}
             >
@@ -254,7 +254,7 @@ export default function Settings() {
                 style={{
                   padding: 8,
                   borderRadius: 10,
-                  background: 'rgba(37, 175, 244, 0.1)',
+                  background: 'var(--surface-raised)',
                   color: 'var(--accent)',
                 }}
               >
@@ -271,8 +271,8 @@ export default function Settings() {
                 style={{
                   padding: 8,
                   borderRadius: 10,
-                  background: 'rgba(16, 185, 129, 0.1)',
-                  color: '#10b981',
+                  background: 'var(--surface-raised)',
+                  color: 'var(--text-primary)',
                 }}
               >
                 <GitBranch size={18} />

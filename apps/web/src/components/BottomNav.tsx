@@ -26,7 +26,9 @@ export default function BottomNav() {
                 navigate(path)
               }}
             >
-              <Icon />
+              <span className="nav-item-icon">
+                <Icon />
+              </span>
               <span>{label}</span>
             </button>
           </div>

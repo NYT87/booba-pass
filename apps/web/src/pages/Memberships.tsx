@@ -62,8 +62,7 @@ export default function Memberships() {
       <header className="page-header">
         <h1>Memberships</h1>
         <button
-          className="btn-ghost"
-          style={{ color: 'var(--accent)' }}
+          className="btn-ghost btn-ghost-accent"
           onClick={() => {
             triggerHaptic()
             navigate('/memberships/new')
@@ -82,43 +81,14 @@ export default function Memberships() {
             const isBarcodeVisible = visibleCode?.membershipId === m.id && visibleCode?.kind === 'BARCODE'
 
             return (
-              <div
-                key={m.id}
-                className="card membership-card"
-                style={{ padding: 0, marginBottom: 16, overflow: 'hidden' }}
-              >
-                <div
-                  className="membership-header"
-                  style={{
-                    padding: '16px 16px 8px 16px',
-                    background: 'rgba(37, 175, 244, 0.05)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                  }}
-                >
+              <div key={m.id} className="card membership-card">
+                <div className="membership-header">
                   <div>
-                    <div className="airline-name" style={{ fontWeight: 700, fontSize: '1.1rem' }}>
-                      {m.airlineName}
-                    </div>
-                    {m.programName && (
-                      <div className="program-name" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                        {m.programName}
-                      </div>
-                    )}
+                    <div className="airline-name">{m.airlineName}</div>
+                    {m.programName && <div className="program-name">{m.programName}</div>}
                     {m.allianceGroup && (
                       <div style={{ marginTop: 6 }}>
-                        <span
-                          style={{
-                            fontSize: '0.7rem',
-                            padding: '2px 8px',
-                            borderRadius: 9999,
-                            border: '1px solid var(--border)',
-                            background: 'var(--bg-card)',
-                          }}
-                        >
-                          {m.allianceGroup}
-                        </span>
+                        <span className="membership-tag">{m.allianceGroup}</span>
                       </div>
                     )}
                   </div>
@@ -150,21 +120,12 @@ export default function Memberships() {
                   </div>
                 </div>
 
-                <div className="membership-body" style={{ padding: 16 }}>
+                <div className="membership-body">
                   <div className="membership-body-top">
                     <div className="member-info">
-                      <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.5 }}>Member</div>
-                      <div style={{ fontWeight: 600 }}>{m.memberName}</div>
-                      <div
-                        style={{
-                          fontSize: '0.9rem',
-                          marginTop: 4,
-                          letterSpacing: 1,
-                          wordBreak: 'break-all',
-                        }}
-                      >
-                        {m.membershipNumber}
-                      </div>
+                      <div className="membership-label">Member</div>
+                      <div className="membership-member-name">{m.memberName}</div>
+                      <div className="membership-number">{m.membershipNumber}</div>
                     </div>
                     <div className="membership-body-actions">
                       <button
