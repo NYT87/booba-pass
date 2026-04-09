@@ -8,7 +8,7 @@ import { Plane, MapPin, Clock } from 'lucide-react'
 const COLORS = ['#25aff4', '#a78bfa', '#f59e0b', '#ef4444', '#10b981']
 
 export default function Stats() {
-  const [year, setYear] = useState<number | undefined>(new Date().getFullYear())
+  const [year, setYear] = useState<number | undefined>(undefined)
   const stats = useStats(year)
 
   // Get list of years from now down to 2000
@@ -66,7 +66,7 @@ export default function Stats() {
             {stats.airplanes.map((a) => (
               <div key={a.aircraft} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{a.aircraft}</div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--accent)', fontWeight: 700 }}>{a.count}</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-display)', fontWeight: 700 }}>{a.count}</div>
               </div>
             ))}
           </div>
@@ -76,6 +76,29 @@ export default function Stats() {
       {hasAirlines && (
         <div className="chart-card">
           <h3>Airlines</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+            {stats.airlines.map((a) => (
+              <div
+                key={a.airline}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}
+              >
+                <div style={{ minWidth: 0, fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-display)' }}>
+                  <AirlineLabel name={a.airline} />
+                </div>
+                <div
+                  style={{
+                    flexShrink: 0,
+                    fontSize: '0.85rem',
+                    color: 'var(--text-display)',
+                    fontWeight: 700,
+                    fontFamily: 'Space Mono, monospace',
+                  }}
+                >
+                  {a.count}
+                </div>
+              </div>
+            ))}
+          </div>
           <div style={{ width: '100%', height: 200 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
