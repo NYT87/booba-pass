@@ -22,10 +22,20 @@ export default defineConfig({
     __COMMIT_HASH__: JSON.stringify(commitHash),
   },
   plugins: [
+    {
+      name: 'emit-version-metadata',
+      generateBundle() {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'version.json',
+          source: JSON.stringify({ version, commitHash }),
+        })
+      },
+    },
     react(),
     VitePWA({
       injectRegister: null,
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['data/*.json', 'icons/*.png'],
       manifest: {
         id: '/booba-pass/',
@@ -48,7 +58,8 @@ export default defineConfig({
       workbox: {
         cleanupOutdatedCaches: true,
         clientsClaim: true,
-        skipWaiting: true,
+        skipWaiting: false,
+        globIgnores: ['**/version.json'],
         // JSON catalogs are precached with content revisions, so clients
         // only fetch updated versions after a new build changes the files.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],

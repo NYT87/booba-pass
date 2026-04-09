@@ -21,6 +21,7 @@ function App() {
   useTheme()
   const triggerHaptic = useHapticFeedback()
   const [splashStage, setSplashStage] = useState<'visible' | 'fading' | 'hidden'>('visible')
+  const [availableVersion, setAvailableVersion] = useState<string | null>(null)
   const splashStartTimeRef = useRef<number>(0)
   const initialDataLoaded = useLiveQuery(async () => {
     await Promise.all([db.flights.count(), db.memberships.count()])
@@ -49,6 +50,36 @@ function App() {
     }
   }, [initialDataLoaded])
 
+  useEffect(() => {
+    if (!needRefresh[0]) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAvailableVersion(null)
+      return
+    }
+
+    let cancelled = false
+    const loadAvailableVersion = async () => {
+      try {
+        const baseUrl = import.meta.env.BASE_URL || '/'
+        const url = `${baseUrl}version.json?ts=${Date.now()}`
+        const res = await fetch(url, { cache: 'no-store' })
+        if (!res.ok) return
+        const data = (await res.json()) as { version?: string }
+        if (!cancelled && data.version) {
+          setAvailableVersion(data.version)
+        }
+      } catch {
+        // Ignore and keep a generic update message when metadata is unavailable.
+      }
+    }
+
+    void loadAvailableVersion()
+
+    return () => {
+      cancelled = true
+    }
+  }, [needRefresh])
+
   return (
     <Router>
       {splashStage !== 'hidden' && (
@@ -65,34 +96,21 @@ function App() {
           </div>
         </div>
       )}
-      {needRefresh[0] && (
-        <div className="pwa-update-banner" role="status" aria-live="polite">
-          <p>New version available.</p>
-          <div className="pwa-update-actions">
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic()
-                void updateServiceWorker(true)
-              }}
-            >
-              Update now
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic()
-                needRefresh[1](false)
-              }}
-            >
-              Later
-            </button>
-          </div>
-        </div>
-      )}
       <div className="app-content">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route
+            path="/"
+            element={
+              <Home
+                hasUpdateAvailable={needRefresh[0]}
+                availableVersion={availableVersion}
+                onUpdate={() => {
+                  triggerHaptic()
+                  void updateServiceWorker(true)
+                }}
+              />
+            }
+          />
           <Route path="/flights" element={<Flights />} />
           <Route path="/flights/:id" element={<FlightDetail />} />
           <Route path="/flights/new" element={<AddEditFlight />} />
