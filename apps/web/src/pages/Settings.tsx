@@ -1,16 +1,31 @@
 import { useNavigate } from 'react-router-dom'
 import { db } from '../db/db'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowLeft, Upload, FileJson, FileSpreadsheet, Trash2, Info, Cpu, GitBranch, X } from 'lucide-react'
+import {
+  ArrowLeft,
+  Upload,
+  FileJson,
+  FileSpreadsheet,
+  Trash2,
+  Info,
+  Cpu,
+  GitBranch,
+  X,
+  Clock3,
+  RefreshCw,
+  Download,
+} from 'lucide-react'
 import { exportToJSON, exportToCSV, handleImportFile } from '../utils/dataTransfer'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTheme } from '../hooks/useTheme'
 import { Moon, Sun, Monitor } from 'lucide-react'
 import { useHapticFeedback } from '../hooks/useHapticFeedback'
+import { useRegisterSW } from 'virtual:pwa-register/react'
 
 export default function Settings() {
   const navigate = useNavigate()
   const triggerHaptic = useHapticFeedback()
+  const [isScrolled, setIsScrolled] = useState(false)
   const flights = useLiveQuery(() => db.flights.toArray())
   const memberships = useLiveQuery(() => db.memberships.toArray())
   const airlines = useLiveQuery(() => db.airlines.toArray())
@@ -20,7 +35,13 @@ export default function Settings() {
     text: string
   } | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [updateMessage, setUpdateMessage] = useState<string | null>(null)
+  const [availableVersion, setAvailableVersion] = useState<string | null>(null)
+  const [checkingForUpdates, setCheckingForUpdates] = useState(false)
   const [theme, setTheme] = useTheme()
+  const { needRefresh, updateServiceWorker } = useRegisterSW({
+    immediate: true,
+  })
 
   const handleClickHaptics: React.MouseEventHandler<HTMLDivElement> = (event) => {
     const target = event.target as HTMLElement | null
@@ -29,6 +50,35 @@ export default function Settings() {
     if (clickable instanceof HTMLButtonElement && clickable.disabled) return
     triggerHaptic()
   }
+
+  useEffect(() => {
+    if (!needRefresh[0]) {
+      setAvailableVersion(null)
+      return
+    }
+
+    let cancelled = false
+    const loadAvailableVersion = async () => {
+      try {
+        const baseUrl = import.meta.env.BASE_URL || '/'
+        const url = `${baseUrl}version.json?ts=${Date.now()}`
+        const res = await fetch(url, { cache: 'no-store' })
+        if (!res.ok) return
+        const data = (await res.json()) as { version?: string }
+        if (!cancelled && data.version) {
+          setAvailableVersion(data.version)
+        }
+      } catch {
+        // Ignore lookup failures and keep generic copy.
+      }
+    }
+
+    void loadAvailableVersion()
+
+    return () => {
+      cancelled = true
+    }
+  }, [needRefresh[0]])
 
   const onImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -102,9 +152,53 @@ export default function Settings() {
     }
   }
 
+  const checkForUpdates = async () => {
+    setCheckingForUpdates(true)
+    setUpdateMessage(null)
+    try {
+      if (!('serviceWorker' in navigator)) {
+        setUpdateMessage('Updates are not supported in this browser.')
+        return
+      }
+
+      if (!navigator.onLine) {
+        setUpdateMessage('Go online to check for updates.')
+        return
+      }
+
+      const scopeUrl = new URL(import.meta.env.BASE_URL || '/', window.location.origin).href
+      const registration =
+        (await navigator.serviceWorker.getRegistration(scopeUrl)) ?? (await navigator.serviceWorker.getRegistration())
+
+      if (!registration) {
+        setUpdateMessage('Service worker not installed on this device yet.')
+        return
+      }
+
+      await registration.update()
+
+      if (registration.waiting) {
+        setUpdateMessage('Update ready to install.')
+      } else {
+        setUpdateMessage('No update available right now.')
+      }
+    } catch (error) {
+      console.error(error)
+      setUpdateMessage('Could not check for updates in this browser session.')
+    } finally {
+      setCheckingForUpdates(false)
+    }
+  }
+
   return (
-    <div className="page animate-in" onClickCapture={handleClickHaptics}>
-      <header className="page-header">
+    <div
+      className="page animate-in"
+      onClickCapture={handleClickHaptics}
+      onScroll={(event) => {
+        setIsScrolled(event.currentTarget.scrollTop > 0)
+      }}
+    >
+      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
         <button onClick={() => navigate(-1)} className="btn-ghost">
           <ArrowLeft size={24} />
         </button>
@@ -141,7 +235,7 @@ export default function Settings() {
 
       <div className="form-section" style={{ marginTop: 24 }}>
         <div className="form-section-title">Data & Privacy</div>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 20 }}>
+        <p className="settings-section-copy">
           Your data is stored locally in your browser. Use the tools below to backup or restore your flight history.
         </p>
 
@@ -154,11 +248,9 @@ export default function Settings() {
               style={{ justifyContent: 'flex-start', padding: 12, background: 'var(--bg-input)' }}
             >
               <FileJson size={18} style={{ marginRight: 10, color: 'var(--accent)' }} />
-              <div>
-                <div style={{ fontSize: '0.9rem' }}>Full Backup (JSON)</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                  Includes flights, boarding passes, and loyalty cards.
-                </div>
+              <div className="settings-action-copy">
+                <div className="settings-action-title">Full Backup (JSON)</div>
+                <div className="settings-action-description">Includes flights, boarding passes, and loyalty cards.</div>
               </div>
             </button>
 
@@ -168,11 +260,9 @@ export default function Settings() {
               style={{ justifyContent: 'flex-start', padding: 12, background: 'var(--bg-input)' }}
             >
               <FileSpreadsheet size={18} style={{ marginRight: 10, color: 'var(--text-primary)' }} />
-              <div>
-                <div style={{ fontSize: '0.9rem' }}>Flights Data (CSV)</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                  Best for Excel. Metadata only (no photos).
-                </div>
+              <div className="settings-action-copy">
+                <div className="settings-action-title">Flights Data (CSV)</div>
+                <div className="settings-action-description">Best for Excel. Metadata only (no photos).</div>
               </div>
             </button>
           </div>
@@ -212,11 +302,12 @@ export default function Settings() {
             className="btn-ghost"
             onClick={migrateTimezones}
             disabled={importing}
-            style={{ width: '100%', background: 'var(--bg-input)', padding: 12 }}
+            style={{ width: '100%', background: 'var(--bg-input)', padding: 12, justifyContent: 'flex-start' }}
           >
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: '0.9rem' }}>Fix Missing Timezones</div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+            <Clock3 size={18} style={{ marginRight: 10, color: 'var(--text-primary)' }} />
+            <div className="settings-action-copy">
+              <div className="settings-action-title">Fix Missing Timezones</div>
+              <div className="settings-action-description">
                 Scans existing flights and adds missing timezone data from the airport database.
               </div>
             </div>
@@ -313,6 +404,27 @@ export default function Settings() {
           >
             <strong>System:</strong> {navigator.userAgent.slice(0, 50)}...
           </div>
+
+          <div className="settings-update-actions">
+            <button className="btn-ghost" type="button" onClick={() => void checkForUpdates()}>
+              <RefreshCw size={16} />
+              {checkingForUpdates ? 'Checking...' : 'Check for updates'}
+            </button>
+            {needRefresh[0] && (
+              <button
+                className="btn-primary"
+                type="button"
+                onClick={() => {
+                  setUpdateMessage(null)
+                  void updateServiceWorker(true)
+                }}
+              >
+                <Download size={16} />
+                {availableVersion ? `Update to v${availableVersion}` : 'Update app'}
+              </button>
+            )}
+          </div>
+          {updateMessage && <p className="settings-update-status">{updateMessage}</p>}
         </div>
       </div>
 
