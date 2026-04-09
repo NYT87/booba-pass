@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4](https://github.com/NYT87/booba-pass/compare/booba-pass-web-v0.1.3...booba-pass-web-v0.1.4) (2026-04-09)
+
+
+### Features
+
+* **web:** Add haptic feedback triggers ([2df92f8](https://github.com/NYT87/booba-pass/commit/2df92f8d7189bd6f3aebf4b88a60b0239470859b))
+
 ## [0.1.3](https://github.com/NYT87/booba-pass/compare/booba-pass-web-v0.1.2...booba-pass-web-v0.1.3) (2026-03-07)
 
 ### Features
