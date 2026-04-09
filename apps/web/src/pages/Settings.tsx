@@ -16,11 +16,43 @@ import {
   Download,
 } from 'lucide-react'
 import { exportToJSON, exportToCSV, handleImportFile } from '../utils/dataTransfer'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { useTheme } from '../hooks/useTheme'
 import { Moon, Sun, Monitor } from 'lucide-react'
 import { useHapticFeedback } from '../hooks/useHapticFeedback'
 import { useRegisterSW } from 'virtual:pwa-register/react'
+
+type AboutItemProps = {
+  icon: ReactNode
+  label: string
+  value: ReactNode
+  valueStyle?: CSSProperties
+}
+
+function AboutItem({ icon, label, value, valueStyle }: AboutItemProps) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div
+        style={{
+          width: 34,
+          height: 34,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: 10,
+          background: 'var(--surface-raised)',
+          color: 'var(--text-primary)',
+        }}
+      >
+        {icon}
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{label}</div>
+        <div style={{ fontSize: '0.9rem', fontWeight: 600, ...valueStyle }}>{value}</div>
+      </div>
+    </div>
+  )
+}
 
 export default function Settings() {
   const navigate = useNavigate()
@@ -42,6 +74,24 @@ export default function Settings() {
   const { needRefresh, updateServiceWorker } = useRegisterSW({
     immediate: true,
   })
+  const aboutItems = [
+    {
+      label: 'Version',
+      value: __APP_VERSION__,
+      icon: <Info size={18} />,
+    },
+    {
+      label: 'Commit',
+      value: __COMMIT_HASH__,
+      icon: <GitBranch size={18} />,
+      valueStyle: { fontFamily: 'monospace' },
+    },
+    {
+      label: 'Environment',
+      value: import.meta.env.MODE,
+      icon: <Cpu size={18} />,
+    },
+  ] satisfies AboutItemProps[]
 
   const handleClickHaptics: React.MouseEventHandler<HTMLDivElement> = (event) => {
     const target = event.target as HTMLElement | null
@@ -245,7 +295,12 @@ export default function Settings() {
             <button
               className="btn-ghost"
               onClick={() => flights && memberships && airlines && exportToJSON(flights, memberships, airlines)}
-              style={{ justifyContent: 'flex-start', padding: 12, background: 'var(--bg-input)' }}
+              style={{
+                justifyContent: 'flex-start',
+                padding: 12,
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--bg-input)',
+              }}
             >
               <FileJson size={18} style={{ marginRight: 10, color: 'var(--accent)' }} />
               <div className="settings-action-copy">
@@ -257,7 +312,12 @@ export default function Settings() {
             <button
               className="btn-ghost"
               onClick={() => flights && exportToCSV(flights)}
-              style={{ justifyContent: 'flex-start', padding: 12, background: 'var(--bg-input)' }}
+              style={{
+                justifyContent: 'flex-start',
+                padding: 12,
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--bg-input)',
+              }}
             >
               <FileSpreadsheet size={18} style={{ marginRight: 10, color: 'var(--text-primary)' }} />
               <div className="settings-action-copy">
@@ -302,7 +362,13 @@ export default function Settings() {
             className="btn-ghost"
             onClick={migrateTimezones}
             disabled={importing}
-            style={{ width: '100%', background: 'var(--bg-input)', padding: 12, justifyContent: 'flex-start' }}
+            style={{
+              width: '100%',
+              padding: 12,
+              justifyContent: 'flex-start',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--bg-input)',
+            }}
           >
             <Clock3 size={18} style={{ marginRight: 10, color: 'var(--text-primary)' }} />
             <div className="settings-action-copy">
@@ -340,56 +406,15 @@ export default function Settings() {
         <div className="form-section-title">About booba-pass</div>
         <div className="card" style={{ padding: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  padding: 8,
-                  borderRadius: 10,
-                  background: 'var(--surface-raised)',
-                  color: 'var(--accent)',
-                }}
-              >
-                <Info size={18} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Version</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{__APP_VERSION__}</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  padding: 8,
-                  borderRadius: 10,
-                  background: 'var(--surface-raised)',
-                  color: 'var(--text-primary)',
-                }}
-              >
-                <GitBranch size={18} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Commit</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 600, fontFamily: 'monospace' }}>{__COMMIT_HASH__}</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  padding: 8,
-                  borderRadius: 10,
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  color: 'var(--danger)',
-                }}
-              >
-                <Cpu size={18} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Environment</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{import.meta.env.MODE}</div>
-              </div>
-            </div>
+            {aboutItems.map((item) => (
+              <AboutItem
+                key={item.label}
+                icon={item.icon}
+                label={item.label}
+                value={item.value}
+                valueStyle={item.valueStyle}
+              />
+            ))}
           </div>
 
           <div
