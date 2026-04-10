@@ -167,16 +167,80 @@ export default function AddEditFlight() {
   }
 
   const handleSave = async () => {
-    if (!departure || !arrival || !scheduledDepartureDate || !scheduledDepartureTime || !airline || !flightNumber) {
+    if (
+      !departure ||
+      !arrival ||
+      !scheduledDepartureDate ||
+      !scheduledDepartureTime ||
+      !scheduledArrivalDate ||
+      !scheduledArrivalTime ||
+      !airline ||
+      !flightNumber
+    ) {
       alert('Please fill in required fields (Airports, Date/Time, Airline, Flight Number)')
       return
     }
 
-    // Validation for arrival vs departure chronological order
-    const depDateTime = `${scheduledDepartureDate}T${scheduledDepartureTime}`
-    const arrDateTime = `${scheduledArrivalDate}T${scheduledArrivalTime}`
-    if (arrDateTime <= depDateTime) {
-      alert('Arrival must be later than departure. Please check dates and times.')
+    const scheduledDurationMin = computeDurationMin(
+      scheduledDepartureDate,
+      scheduledDepartureTime,
+      scheduledArrivalDate,
+      scheduledArrivalTime,
+      departure.timezone,
+      arrival.timezone
+    )
+    if (scheduledDurationMin <= 0) {
+      const validationMode =
+        departure.timezone && arrival.timezone
+          ? `timezone-aware validation (${departure.iata} -> ${arrival.iata})`
+          : 'local-time validation'
+
+      alert(`Arrival must be later than departure after ${validationMode}. Please check dates and times.`)
+      return
+    }
+
+    const hasAnyActualTime = Boolean(
+      actualDepartureDate || actualDepartureTime || actualArrivalDate || actualArrivalTime
+    )
+    const hasAllActualTimes = Boolean(
+      actualDepartureDate && actualDepartureTime && actualArrivalDate && actualArrivalTime
+    )
+
+    if (hasAnyActualTime && !hasAllActualTimes) {
+      alert('Please complete all actual departure and arrival date/time fields, or leave them all empty.')
+      return
+    }
+
+    if (hasAllActualTimes) {
+      const actualDurationMin = computeDurationMin(
+        actualDepartureDate,
+        actualDepartureTime,
+        actualArrivalDate,
+        actualArrivalTime,
+        departure.timezone,
+        arrival.timezone
+      )
+
+      if (actualDurationMin <= 0) {
+        const validationMode =
+          departure.timezone && arrival.timezone
+            ? `timezone-aware validation (${departure.iata} -> ${arrival.iata})`
+            : 'local-time validation'
+
+        alert(
+          `Actual arrival must be later than actual departure after ${validationMode}. Please check dates and times.`
+        )
+        return
+      }
+    }
+
+    if (
+      !Number.isFinite(departure.lat) ||
+      !Number.isFinite(departure.lon) ||
+      !Number.isFinite(arrival.lat) ||
+      !Number.isFinite(arrival.lon)
+    ) {
+      alert('Selected airports are missing coordinates. Please reselect the airports.')
       return
     }
 
