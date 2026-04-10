@@ -1,11 +1,8 @@
 import { useState } from 'react'
 import { useFlights, useStats } from '../hooks/useFlights'
-import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import StatCard from '../components/StatCard'
 import AirlineLabel from '../components/AirlineLabel'
 import { Plane, MapPin, Clock } from 'lucide-react'
-
-const COLORS = ['#25aff4', '#a78bfa', '#f59e0b', '#ef4444', '#10b981']
 
 export default function Stats() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -17,6 +14,18 @@ export default function Stats() {
   )
     .filter((flightYear) => Number.isFinite(flightYear))
     .sort((a, b) => b - a)
+  const flightsPerYear = Object.entries(
+    (allFlights ?? []).reduce(
+      (acc: Record<string, number>, flight) => {
+        const flightYear = flight.scheduledDepartureDate.slice(0, 4)
+        acc[flightYear] = (acc[flightYear] ?? 0) + 1
+        return acc
+      },
+      {} as Record<string, number>
+    )
+  )
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([flightYear, count]) => ({ year: flightYear, count }))
 
   if (!stats)
     return (
@@ -85,7 +94,7 @@ export default function Stats() {
       {hasAirlines && (
         <div className="chart-card">
           <h3>Airlines</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {stats.airlines.map((a) => (
               <div
                 key={a.airline}
@@ -108,58 +117,39 @@ export default function Stats() {
               </div>
             ))}
           </div>
-          <div style={{ width: '100%', height: 200 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={stats.airlines}
-                  dataKey="count"
-                  nameKey="airline"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                >
-                  {stats.airlines.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 8,
-                    boxShadow: 'var(--shadow-card)',
-                    opacity: 1,
-                  }}
-                  itemStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 8,
-              marginTop: 10,
-              justifyContent: 'center',
-            }}
-          >
-            {stats.airlines.slice(0, 5).map((a, i) => (
-              <div key={a.airline} style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+        </div>
+      )}
+
+      {flightsPerYear.length > 0 && (
+        <div className="chart-card">
+          <h3>Flights Per Year</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {flightsPerYear.map((entry) => (
+              <div
+                key={entry.year}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}
+              >
                 <div
                   style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    background: COLORS[i % COLORS.length],
+                    fontSize: '0.95rem',
+                    fontWeight: 700,
+                    color: 'var(--text-display)',
+                    fontFamily: 'Space Mono, monospace',
                   }}
-                />
-                <span style={{ color: 'var(--text-secondary)', maxWidth: 120 }}>
-                  <AirlineLabel name={a.airline} />
-                </span>
+                >
+                  {entry.year}
+                </div>
+                <div
+                  style={{
+                    flexShrink: 0,
+                    fontSize: '0.85rem',
+                    color: 'var(--text-display)',
+                    fontWeight: 700,
+                    fontFamily: 'Space Mono, monospace',
+                  }}
+                >
+                  {entry.count}
+                </div>
               </div>
             ))}
           </div>
