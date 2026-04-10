@@ -40,6 +40,7 @@ export default function Stats() {
 
   return (
     <PageScaffold
+      key={year ?? 'all'}
       title={<h1>My Stats</h1>}
       right={
         <select
@@ -71,6 +72,42 @@ export default function Stats() {
         />
         <StatCard icon={<Clock size={18} />} value={Math.round(stats.totalDurationMin / 60)} label="Hours" />
       </div>
+
+      {!year && flightsPerYear.length > 0 && (
+        <div className="chart-card">
+          <h3>Flights Per Year</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {flightsPerYear.map((entry) => (
+              <div
+                key={entry.year}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}
+              >
+                <div
+                  style={{
+                    fontSize: '0.95rem',
+                    fontWeight: 700,
+                    color: 'var(--text-display)',
+                    fontFamily: 'Space Mono, monospace',
+                  }}
+                >
+                  {entry.year}
+                </div>
+                <div
+                  style={{
+                    flexShrink: 0,
+                    fontSize: '0.85rem',
+                    color: 'var(--text-display)',
+                    fontWeight: 700,
+                    fontFamily: 'Space Mono, monospace',
+                  }}
+                >
+                  {entry.count}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {hasAirplanes && (
         <div className="chart-card">
@@ -108,42 +145,6 @@ export default function Stats() {
                   }}
                 >
                   {a.count}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {flightsPerYear.length > 0 && (
-        <div className="chart-card">
-          <h3>Flights Per Year</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {flightsPerYear.map((entry) => (
-              <div
-                key={entry.year}
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}
-              >
-                <div
-                  style={{
-                    fontSize: '0.95rem',
-                    fontWeight: 700,
-                    color: 'var(--text-display)',
-                    fontFamily: 'Space Mono, monospace',
-                  }}
-                >
-                  {entry.year}
-                </div>
-                <div
-                  style={{
-                    flexShrink: 0,
-                    fontSize: '0.85rem',
-                    color: 'var(--text-display)',
-                    fontWeight: 700,
-                    fontFamily: 'Space Mono, monospace',
-                  }}
-                >
-                  {entry.count}
                 </div>
               </div>
             ))}
