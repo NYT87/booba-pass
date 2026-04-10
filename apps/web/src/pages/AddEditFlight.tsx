@@ -4,6 +4,7 @@ import { useFlightById, saveFlight, useStats } from '../hooks/useFlights'
 import { useMemberships } from '../hooks/useMemberships'
 import { saveAirlineLogo } from '../hooks/useAirlines'
 import AirportSearch from '../components/AirportSearch'
+import PageScaffold from '../components/PageScaffold'
 import type { Airport, Flight } from '../types'
 import { haversineKm, computeDurationMin, formatDuration } from '../types'
 import { ArrowLeftRight, Save, X, Camera, Trash2, Ticket } from 'lucide-react'
@@ -50,7 +51,6 @@ export default function AddEditFlight() {
   const [notes, setNotes] = useState('')
   const [trackUrl, setTrackUrl] = useState('')
   const [flightCodeQuery, setFlightCodeQuery] = useState('')
-  const [isScrolled, setIsScrolled] = useState(false)
   const [fetchingTrackData, setFetchingTrackData] = useState(false)
   const [activeTrackingAction, setActiveTrackingAction] = useState<'url' | 'code' | null>(null)
   const [trackFetchMessage, setTrackFetchMessage] = useState<string | null>(null)
@@ -767,13 +767,9 @@ export default function AddEditFlight() {
 
   if (!isEditMode && newFlightStep === 'chooser') {
     return (
-      <div
-        className="page animate-in"
-        onScroll={(event) => {
-          setIsScrolled(event.currentTarget.scrollTop > 0)
-        }}
-      >
-        <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
+      <PageScaffold
+        title={<h1>Add Flight</h1>}
+        left={
           <button
             onClick={() => {
               triggerHaptic('nudge')
@@ -783,10 +779,8 @@ export default function AddEditFlight() {
           >
             <X size={24} />
           </button>
-          <h1>Add Flight</h1>
-          <div style={{ width: 24 }} />
-        </header>
-
+        }
+      >
         {newFlightBootstrapLoading ? (
           <div
             className="form-section"
@@ -907,18 +901,14 @@ export default function AddEditFlight() {
             </div>
           </>
         )}
-      </div>
+      </PageScaffold>
     )
   }
 
   return (
-    <div
-      className="page animate-in"
-      onScroll={(event) => {
-        setIsScrolled(event.currentTarget.scrollTop > 0)
-      }}
-    >
-      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
+    <PageScaffold
+      title={<h1>{id ? 'Edit Flight' : 'Add Flight'}</h1>}
+      left={
         <button
           onClick={() => {
             triggerHaptic('nudge')
@@ -928,7 +918,8 @@ export default function AddEditFlight() {
         >
           <X size={24} />
         </button>
-        <h1>{id ? 'Edit Flight' : 'Add Flight'}</h1>
+      }
+      right={
         <button
           onClick={() => {
             triggerHaptic('nudge')
@@ -938,8 +929,8 @@ export default function AddEditFlight() {
         >
           <Save size={24} />
         </button>
-      </header>
-
+      }
+    >
       {newFlightBootstrapError && !isEditMode && (
         <div
           className="form-section"
@@ -1373,6 +1364,6 @@ export default function AddEditFlight() {
       </button>
 
       <div style={{ height: 40 }} />
-    </div>
+    </PageScaffold>
   )
 }

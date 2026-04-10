@@ -332,9 +332,7 @@ img {
 }
 
 .page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
   gap: var(--space-md);
   padding: var(--space-lg) var(--space-md) var(--space-md);
   flex: 0 0 auto;
@@ -359,6 +357,18 @@ img {
   line-height: 1.05;
   letter-spacing: -0.03em;
   font-weight: 500;
+}
+
+.page-header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.page-header-bottom {
+  display: grid;
+  gap: var(--space-sm);
 }
 
 .page-header-home {

@@ -18,6 +18,7 @@ import {
 import { exportToJSON, exportToCSV, handleImportFile } from '../utils/dataTransfer'
 import { haversineKm, normalizeAircraft, type Airport } from '../types'
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import PageScaffold from '../components/PageScaffold'
 import { useTheme } from '../hooks/useTheme'
 import { Moon, Sun, Monitor } from 'lucide-react'
 import { useHapticFeedback } from '../hooks/useHapticFeedback'
@@ -63,7 +64,6 @@ function getErrorMessage(error: unknown): string {
 export default function Settings() {
   const navigate = useNavigate()
   const triggerHaptic = useHapticFeedback()
-  const [isScrolled, setIsScrolled] = useState(false)
   const flights = useLiveQuery(() => db.flights.toArray())
   const memberships = useLiveQuery(() => db.memberships.toArray())
   const airlines = useLiveQuery(() => db.airlines.toArray())
@@ -304,21 +304,15 @@ export default function Settings() {
   }
 
   return (
-    <div
-      className="page animate-in"
-      onClickCapture={handleClickHaptics}
-      onScroll={(event) => {
-        setIsScrolled(event.currentTarget.scrollTop > 0)
-      }}
-    >
-      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
+    <PageScaffold
+      title={<h1>Settings</h1>}
+      left={
         <button onClick={() => navigate(-1)} className="btn-ghost">
           <ArrowLeft size={24} />
         </button>
-        <h1>Settings</h1>
-        <div style={{ width: 40 }} />
-      </header>
-
+      }
+      contentProps={{ onClickCapture: handleClickHaptics }}
+    >
       <div className="form-section">
         <div className="form-section-title">Appearance</div>
         <div className="card" style={{ padding: 16 }}>
@@ -567,6 +561,6 @@ export default function Settings() {
           </div>
         </div>
       )}
-    </div>
+    </PageScaffold>
   )
 }

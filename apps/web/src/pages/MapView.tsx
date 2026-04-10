@@ -1,14 +1,13 @@
-import { useState } from 'react'
 import { MapContainer, TileLayer, Polyline, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useFlights } from '../hooks/useFlights'
 import type { Flight } from '../types'
 import { useTheme } from '../hooks/useTheme'
+import PageScaffold from '../components/PageScaffold'
 
 export default function MapView() {
   const flights = useFlights('all')
   const [theme] = useTheme()
-  const [isScrolled, setIsScrolled] = useState(false)
   const validFlights =
     flights?.filter(
       (flight) =>
@@ -29,16 +28,7 @@ export default function MapView() {
     : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
 
   return (
-    <div
-      className="page animate-in"
-      onScroll={(event) => {
-        setIsScrolled(event.currentTarget.scrollTop > 0)
-      }}
-    >
-      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
-        <h1>Flight Map</h1>
-      </header>
-
+    <PageScaffold title={<h1>Flight Map</h1>}>
       <div className="map-full">
         {validFlights.length > 0 ? (
           <MapContainer
@@ -100,6 +90,6 @@ export default function MapView() {
           </div>
         )}
       </div>
-    </div>
+    </PageScaffold>
   )
 }

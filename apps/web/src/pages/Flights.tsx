@@ -2,6 +2,7 @@ import { useDeferredValue, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFlights } from '../hooks/useFlights'
 import FlightCard from '../components/FlightCard'
+import PageScaffold from '../components/PageScaffold'
 import { Plus, Search } from 'lucide-react'
 import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
@@ -10,7 +11,6 @@ type FilterType = 'all' | 'past' | 'upcoming'
 export default function Flights() {
   const navigate = useNavigate()
   const triggerHaptic = useHapticFeedback()
-  const [isScrolled, setIsScrolled] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
   const [query, setQuery] = useState('')
   const flights = useFlights(filter)
@@ -48,9 +48,9 @@ export default function Flights() {
   const years = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
 
   return (
-    <div className="page page-fixed-header-shell animate-in">
-      <header className="page-header">
-        <h1>My Flights</h1>
+    <PageScaffold
+      title={<h1>My Flights</h1>}
+      right={
         <button
           className="btn-ghost btn-ghost-accent"
           onClick={() => {
@@ -60,9 +60,9 @@ export default function Flights() {
         >
           <Plus size={24} />
         </button>
-      </header>
-
-      <div className={`page-controls ${isScrolled ? 'page-controls-scrolled' : ''}`}>
+      }
+      scrollMode="body"
+      headerBottom={
         <div className="flights-controls-layout">
           <div className="filter-tabs">
             {(['all', 'past', 'upcoming'] as const).map((f) => (
@@ -89,44 +89,37 @@ export default function Flights() {
             />
           </div>
         </div>
-      </div>
-
-      <div
-        className="page-scroll-body"
-        onScroll={(event) => {
-          setIsScrolled(event.currentTarget.scrollTop > 0)
-        }}
-      >
-        {years.length > 0 ? (
-          years.map((year) => (
-            <div key={year}>
-              <div className="year-group-header">{year}</div>
-              {grouped[year].map((f) => (
-                <FlightCard key={f.id} flight={f} />
-              ))}
-            </div>
-          ))
-        ) : (
-          <div className="empty-state">
-            <div className="empty-icon">[ ]</div>
-            <p>
-              No {filter !== 'all' ? filter : ''} flights
-              {normalizedQuery ? ' match this filter.' : ' found.'}
-            </p>
-            {filter === 'all' && !normalizedQuery && (
-              <button
-                className="btn-primary"
-                onClick={() => {
-                  triggerHaptic()
-                  navigate('/flights/new')
-                }}
-              >
-                Add Your First Flight
-              </button>
-            )}
+      }
+    >
+      {years.length > 0 ? (
+        years.map((year) => (
+          <div key={year}>
+            <div className="year-group-header">{year}</div>
+            {grouped[year].map((f) => (
+              <FlightCard key={f.id} flight={f} />
+            ))}
           </div>
-        )}
-      </div>
-    </div>
+        ))
+      ) : (
+        <div className="empty-state">
+          <div className="empty-icon">[ ]</div>
+          <p>
+            No {filter !== 'all' ? filter : ''} flights
+            {normalizedQuery ? ' match this filter.' : ' found.'}
+          </p>
+          {filter === 'all' && !normalizedQuery && (
+            <button
+              className="btn-primary"
+              onClick={() => {
+                triggerHaptic()
+                navigate('/flights/new')
+              }}
+            >
+              Add Your First Flight
+            </button>
+          )}
+        </div>
+      )}
+    </PageScaffold>
   )
 }

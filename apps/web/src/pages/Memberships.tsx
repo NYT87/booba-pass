@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMemberships } from '../hooks/useMemberships'
+import PageScaffold from '../components/PageScaffold'
 import { Barcode as BarcodeIcon, Check, Copy, CreditCard, List, Pencil, Plus, QrCode, X } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import Barcode from 'react-barcode'
@@ -10,7 +11,6 @@ export default function Memberships() {
   const navigate = useNavigate()
   const triggerHaptic = useHapticFeedback()
   const memberships = useMemberships() || []
-  const [isScrolled, setIsScrolled] = useState(false)
   const [visibleCode, setVisibleCode] = useState<{
     membershipId: number
     kind: 'QR' | 'BARCODE'
@@ -59,14 +59,9 @@ export default function Memberships() {
   }
 
   return (
-    <div
-      className="page animate-in"
-      onScroll={(event) => {
-        setIsScrolled(event.currentTarget.scrollTop > 0)
-      }}
-    >
-      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
-        <h1>Memberships</h1>
+    <PageScaffold
+      title={<h1>Memberships</h1>}
+      right={
         <button
           className="btn-ghost btn-ghost-accent"
           onClick={() => {
@@ -76,8 +71,8 @@ export default function Memberships() {
         >
           <Plus size={24} />
         </button>
-      </header>
-
+      }
+    >
       <div className="memberships-list">
         {memberships.length > 0 ? (
           memberships.map((m) => {
@@ -261,6 +256,6 @@ export default function Memberships() {
           </div>
         </div>
       )}
-    </div>
+    </PageScaffold>
   )
 }

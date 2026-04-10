@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom'
-import { useState } from 'react'
 import { ArrowLeft, Plus } from 'lucide-react'
+import PageScaffold from '../components/PageScaffold'
 import { useMembershipById } from '../hooks/useMemberships'
 import { useFlightsByMembership } from '../hooks/useFlights'
 import { useHapticFeedback } from '../hooks/useHapticFeedback'
@@ -20,7 +20,6 @@ export default function MembershipMileage() {
   const membershipId = id ? Number.parseInt(id, 10) : undefined
   const navigate = useNavigate()
   const triggerHaptic = useHapticFeedback()
-  const [isScrolled, setIsScrolled] = useState(false)
   const membership = useMembershipById(membershipId)
   const flights = useFlightsByMembership(membershipId) || []
 
@@ -33,13 +32,9 @@ export default function MembershipMileage() {
   }
 
   return (
-    <div
-      className="page animate-in"
-      onScroll={(event) => {
-        setIsScrolled(event.currentTarget.scrollTop > 0)
-      }}
-    >
-      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
+    <PageScaffold
+      title={<h1>Recent Mileage</h1>}
+      left={
         <button
           className="btn-ghost"
           onClick={() => {
@@ -49,7 +44,8 @@ export default function MembershipMileage() {
         >
           <ArrowLeft size={24} />
         </button>
-        <h1>Recent Mileage</h1>
+      }
+      right={
         <button
           className="btn-ghost btn-ghost-accent"
           onClick={() => {
@@ -59,8 +55,8 @@ export default function MembershipMileage() {
         >
           <Plus size={22} />
         </button>
-      </header>
-
+      }
+    >
       <div style={{ padding: '0 20px', marginBottom: 12 }}>
         <div style={{ fontWeight: 700 }}>{membership.airlineName}</div>
         <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
@@ -114,6 +110,6 @@ export default function MembershipMileage() {
           </div>
         )}
       </div>
-    </div>
+    </PageScaffold>
   )
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { deleteMembership, useMembershipById, saveMembership } from '../hooks/useMemberships'
 import type { Membership } from '../types'
+import PageScaffold from '../components/PageScaffold'
 import { Save, X, ScanLine, Trash2 } from 'lucide-react'
 import {
   cacheAirlineFromInput,
@@ -27,7 +28,6 @@ export default function AddEditMembership() {
   const [qrCodeValue, setQrCodeValue] = useState('')
   const [barcodeValue, setBarcodeValue] = useState('')
   const [analyzingCodeImage, setAnalyzingCodeImage] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deletingMembership, setDeletingMembership] = useState(false)
   const [notes, setNotes] = useState('')
@@ -193,13 +193,9 @@ export default function AddEditMembership() {
   }
 
   return (
-    <div
-      className="page animate-in"
-      onScroll={(event) => {
-        setIsScrolled(event.currentTarget.scrollTop > 0)
-      }}
-    >
-      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
+    <PageScaffold
+      title={<h1>{id ? 'Edit Membership' : 'Add Membership'}</h1>}
+      left={
         <button
           onClick={() => {
             triggerHaptic()
@@ -209,7 +205,8 @@ export default function AddEditMembership() {
         >
           <X size={24} />
         </button>
-        <h1>{id ? 'Edit Membership' : 'Add Membership'}</h1>
+      }
+      right={
         <button
           onClick={() => {
             triggerHaptic()
@@ -220,8 +217,8 @@ export default function AddEditMembership() {
         >
           <Save size={24} />
         </button>
-      </header>
-
+      }
+    >
       <div className="form-section">
         <div className="form-section-title">Program Info</div>
         <div className="form-field">
@@ -420,6 +417,6 @@ export default function AddEditMembership() {
           </div>
         </div>
       )}
-    </div>
+    </PageScaffold>
   )
 }

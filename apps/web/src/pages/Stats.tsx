@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useFlights, useStats } from '../hooks/useFlights'
 import StatCard from '../components/StatCard'
 import AirlineLabel from '../components/AirlineLabel'
+import PageScaffold from '../components/PageScaffold'
 import { Plane, MapPin, Clock } from 'lucide-react'
 
 export default function Stats() {
-  const [isScrolled, setIsScrolled] = useState(false)
   const [year, setYear] = useState<number | undefined>(undefined)
   const stats = useStats(year)
   const allFlights = useFlights('all')
@@ -39,14 +39,9 @@ export default function Stats() {
   const hasAirports = stats.airports.length > 0
 
   return (
-    <div
-      className="page animate-in"
-      onScroll={(event) => {
-        setIsScrolled(event.currentTarget.scrollTop > 0)
-      }}
-    >
-      <header className={`page-header ${isScrolled ? 'page-header-scrolled' : ''}`}>
-        <h1>My Stats</h1>
+    <PageScaffold
+      title={<h1>My Stats</h1>}
+      right={
         <select
           value={year || ''}
           onChange={(e) => setYear(e.target.value ? parseInt(e.target.value) : undefined)}
@@ -65,8 +60,8 @@ export default function Stats() {
             </option>
           ))}
         </select>
-      </header>
-
+      }
+    >
       <div className="stats-row" style={{ marginTop: 8 }}>
         <StatCard icon={<Plane size={18} />} value={stats.totalFlights} label="Flights" />
         <StatCard
@@ -196,6 +191,6 @@ export default function Stats() {
       )}
 
       <div style={{ height: 40 }} />
-    </div>
+    </PageScaffold>
   )
 }
