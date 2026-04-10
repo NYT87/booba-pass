@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useStats } from '../hooks/useFlights'
+import { useFlights, useStats } from '../hooks/useFlights'
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import StatCard from '../components/StatCard'
 import AirlineLabel from '../components/AirlineLabel'
@@ -11,10 +11,12 @@ export default function Stats() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [year, setYear] = useState<number | undefined>(undefined)
   const stats = useStats(year)
-
-  // Get list of years from now down to 2000
-  const currentYear = new Date().getFullYear()
-  const years = Array.from({ length: currentYear - 1999 }, (_, i) => currentYear - i)
+  const allFlights = useFlights('all')
+  const years = Array.from(
+    new Set((allFlights ?? []).map((flight) => Number.parseInt(flight.scheduledDepartureDate.slice(0, 4), 10)))
+  )
+    .filter((flightYear) => Number.isFinite(flightYear))
+    .sort((a, b) => b - a)
 
   if (!stats)
     return (
@@ -25,6 +27,7 @@ export default function Stats() {
 
   const hasAirplanes = stats.airplanes.length > 0
   const hasAirlines = stats.airlines.length > 0
+  const hasAirports = stats.airports.length > 0
 
   return (
     <div
@@ -60,7 +63,7 @@ export default function Stats() {
         <StatCard
           icon={<MapPin size={18} />}
           value={(stats.totalDistanceKm / 1000).toFixed(1) + 'k'}
-          label="Dist (k)"
+          label="Dist (km)"
         />
         <StatCard icon={<Clock size={18} />} value={Math.round(stats.totalDurationMin / 60)} label="Hours" />
       </div>
@@ -157,6 +160,45 @@ export default function Stats() {
                 <span style={{ color: 'var(--text-secondary)', maxWidth: 120 }}>
                   <AirlineLabel name={a.airline} />
                 </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {hasAirports && (
+        <div className="chart-card">
+          <h3>Airports Visited</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {stats.airports.map((airport) => (
+              <div
+                key={airport.iata}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: '0.95rem',
+                      fontWeight: 700,
+                      color: 'var(--text-display)',
+                      fontFamily: 'Space Mono, monospace',
+                    }}
+                  >
+                    {airport.iata}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{airport.city}</div>
+                </div>
+                <div
+                  style={{
+                    flexShrink: 0,
+                    fontSize: '0.85rem',
+                    color: 'var(--text-display)',
+                    fontWeight: 700,
+                    fontFamily: 'Space Mono, monospace',
+                  }}
+                >
+                  {airport.count}
+                </div>
               </div>
             ))}
           </div>

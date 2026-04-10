@@ -35,6 +35,7 @@ export interface FlightStats {
   flightsByMonth: { month: string; count: number }[]
   airplanes: { aircraft: string; count: number }[]
   airlines: { airline: string; count: number }[]
+  airports: { iata: string; city: string; count: number }[]
 }
 
 export function useStats(year?: number): FlightStats | undefined {
@@ -65,7 +66,6 @@ export function useStats(year?: number): FlightStats | undefined {
     }
     const airplanes = Object.entries(aircraftMap)
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
       .map(([aircraft, count]) => ({ aircraft, count }))
 
     const airlineMap: Record<string, number> = {}
@@ -76,7 +76,31 @@ export function useStats(year?: number): FlightStats | undefined {
       .sort(([, a], [, b]) => b - a)
       .map(([airline, count]) => ({ airline, count }))
 
-    return { totalFlights, totalDistanceKm, totalDurationMin, flightsByMonth, airplanes, airlines }
+    const airportMap: Record<string, { city: string; count: number }> = {}
+    for (const f of flights) {
+      const departureKey = f.departureIata
+      if (departureKey) {
+        const current = airportMap[departureKey] ?? { city: f.departureCity, count: 0 }
+        current.city = current.city || f.departureCity
+        current.count += 1
+        airportMap[departureKey] = current
+      }
+
+      const arrivalKey = f.arrivalIata
+      if (arrivalKey) {
+        const current = airportMap[arrivalKey] ?? { city: f.arrivalCity, count: 0 }
+        current.city = current.city || f.arrivalCity
+        current.count += 1
+        airportMap[arrivalKey] = current
+      }
+    }
+
+    const airports = Object.entries(airportMap)
+      .sort(([, a], [, b]) => b.count - a.count)
+      .slice(0, 10)
+      .map(([iata, value]) => ({ iata, city: value.city, count: value.count }))
+
+    return { totalFlights, totalDistanceKm, totalDurationMin, flightsByMonth, airplanes, airlines, airports }
   }, [year])
 }
 
