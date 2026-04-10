@@ -8,13 +8,14 @@ interface Props {
 
 export default function AirlineLabel({ name, size = 16, className }: Props) {
   const airline = useAirlineByName(name)
+  const displayName = name.toUpperCase()
 
   return (
     <span className={className} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
       {airline?.image && (
         <img
           src={airline.image}
-          alt={name}
+          alt={displayName}
           style={{
             width: size,
             height: size,
@@ -24,7 +25,7 @@ export default function AirlineLabel({ name, size = 16, className }: Props) {
           }}
         />
       )}
-      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+      <span style={{ minWidth: 0, whiteSpace: 'normal', wordBreak: 'break-word' }}>{displayName}</span>
     </span>
   )
 }

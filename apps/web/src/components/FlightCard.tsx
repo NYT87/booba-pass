@@ -35,11 +35,17 @@ export default function FlightCard({ flight }: Props) {
           </span>
         </div>
         <div className="flight-card-route">
-          <span className="iata-code">{flight.departureIata}</span>
+          <div className="flight-card-airport">
+            <span className="iata-code">{flight.departureIata}</span>
+            <span className="flight-card-city">{flight.departureCity}</span>
+          </div>
           <div className="flight-arc-line">
             <Plane size={13} />
           </div>
-          <span className="iata-code">{flight.arrivalIata}</span>
+          <div className="flight-card-airport flight-card-airport-arrival">
+            <span className="iata-code">{flight.arrivalIata}</span>
+            <span className="flight-card-city">{flight.arrivalCity}</span>
+          </div>
         </div>
         <div className="flight-card-meta">
           <div className="flight-card-meta-row">
@@ -52,10 +58,6 @@ export default function FlightCard({ flight }: Props) {
             <span>{Math.round(flight.distanceKm).toLocaleString()} km</span>
           </div>
         </div>
-      </div>
-      <div className="flight-card-side">
-        <span className="flight-card-city">{flight.departureCity}</span>
-        <span className="flight-card-city">{flight.arrivalCity}</span>
       </div>
     </button>
   )

@@ -37,6 +37,11 @@ export default function FlightDetail() {
     )
 
   const duration = formatDuration(flightDurationMin(flight))
+  const membershipProgram = linkedMembership
+    ? `${linkedMembership.airlineName}${linkedMembership.programName ? ` (${linkedMembership.programName})` : ''}`
+    : null
+  const hasMileage = flight.mileageGranted !== undefined
+  const showMembershipSection = Boolean(membershipProgram || hasMileage)
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -165,46 +170,72 @@ export default function FlightDetail() {
           </div>
         </section>
 
-        <div className="detail-info-grid">
-          <div className="detail-info-card">
-            <div className="detail-info-label">
-              <Clock size={12} style={{ marginBottom: -2, marginRight: 4 }} /> Duration
-            </div>
-            <div className="detail-info-value">{duration}</div>
-          </div>
-          <div className="detail-info-card">
-            <div className="detail-info-label">
-              <MapPin size={12} style={{ marginBottom: -2, marginRight: 4 }} /> Distance
-            </div>
-            <div className="detail-info-value">{Math.round(flight.distanceKm).toLocaleString()} km</div>
-          </div>
-          <div className="detail-info-card">
-            <div className="detail-info-label">
-              <Plane size={12} style={{ marginBottom: -2, marginRight: 4 }} /> Aircraft
-            </div>
-            <div className="detail-info-value">{flight.aircraft || '—'}</div>
-          </div>
-        </div>
-
         <section className="form-section">
-          <div className="form-section-title">Membership</div>
           <div className="card" style={{ padding: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 12 }}>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Program</span>
-              <span style={{ fontWeight: 600, textAlign: 'right' }}>
-                {linkedMembership
-                  ? `${linkedMembership.airlineName}${linkedMembership.programName ? ` (${linkedMembership.programName})` : ''}`
-                  : '—'}
+              <span className="detail-info-label">
+                <Clock size={12} style={{ marginBottom: -2, marginRight: 4 }} /> Duration
+              </span>
+              <span className="detail-info-value" style={{ textAlign: 'right' }}>
+                {duration}
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Mileage</span>
-              <span style={{ fontWeight: 600, textAlign: 'right' }}>
-                {flight.mileageGranted !== undefined ? `+${flight.mileageGranted.toLocaleString()}` : '—'}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: 12,
+                marginBottom: flight.aircraft ? 8 : 0,
+              }}
+            >
+              <span className="detail-info-label">
+                <MapPin size={12} style={{ marginBottom: -2, marginRight: 4 }} /> Distance
+              </span>
+              <span className="detail-info-value" style={{ textAlign: 'right' }}>
+                {Math.round(flight.distanceKm).toLocaleString()} km
               </span>
             </div>
+            {flight.aircraft && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                <span className="detail-info-label">
+                  <Plane size={12} style={{ marginBottom: -2, marginRight: 4 }} /> Aircraft
+                </span>
+                <span className="detail-info-value" style={{ textAlign: 'right' }}>
+                  {flight.aircraft}
+                </span>
+              </div>
+            )}
           </div>
         </section>
+
+        {showMembershipSection && (
+          <section className="form-section">
+            <div className="form-section-title">Membership</div>
+            <div className="card" style={{ padding: 16 }}>
+              {membershipProgram && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginBottom: hasMileage ? 8 : 0,
+                    gap: 12,
+                  }}
+                >
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Program</span>
+                  <span style={{ fontWeight: 600, textAlign: 'right' }}>{membershipProgram}</span>
+                </div>
+              )}
+              {hasMileage && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Mileage</span>
+                  <span style={{ fontWeight: 600, textAlign: 'right' }}>
+                    +{flight.mileageGranted!.toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {(flight.actualDepartureTime || flight.actualArrivalTime) && (
           <section className="form-section">
