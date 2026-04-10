@@ -138,7 +138,7 @@ img {
 
 .app-content {
   min-height: 100dvh;
-  padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-md));
+  padding-bottom: 0;
 }
 
 .app-splash {
@@ -312,6 +312,25 @@ img {
   padding-bottom: var(--space-2xl);
 }
 
+.page-controls {
+  flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 44;
+  padding-bottom: var(--space-sm);
+  background: var(--black);
+  border-bottom: 1px solid transparent;
+}
+
+.page-controls-scrolled {
+  border-bottom-color: var(--border);
+}
+
+.flights-controls-layout {
+  display: grid;
+  gap: var(--space-sm);
+}
+
 .page-header {
   display: flex;
   align-items: center;
@@ -477,7 +496,6 @@ img {
 
 .stat-label-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: var(--space-sm);
 }
@@ -582,9 +600,6 @@ img {
   width: calc(100% - (var(--space-md) * 2));
   margin: 0 var(--space-md) var(--space-sm);
   padding: var(--space-md);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-md);
   text-align: left;
 }
 
@@ -613,6 +628,17 @@ img {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+}
+
+.flight-card-airport {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.flight-card-airport-arrival {
+  justify-items: end;
+  text-align: right;
 }
 
 .iata-code,
@@ -666,15 +692,13 @@ img {
 }
 
 .flight-airline-label {
-  max-width: 160px;
+  max-width: none;
 }
 
-.flight-card-side {
-  display: grid;
-  align-content: space-between;
-  justify-items: end;
-  gap: var(--space-xs);
-  min-width: 88px;
+.flight-card-city {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.2;
 }
 
 .badge {
@@ -712,12 +736,12 @@ img {
   border-top: 1px solid var(--border-visible);
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
-  background: rgba(0, 0, 0, 0.94);
+  background: rgba(26, 26, 26, 0.98);
   backdrop-filter: blur(10px);
 }
 
 [data-theme='light'] .bottom-nav {
-  background: rgba(245, 245, 245, 0.94);
+  background: rgba(236, 236, 236, 0.98);
 }
 
 .nav-items {
@@ -737,11 +761,12 @@ img {
   justify-items: center;
   gap: 6px;
   padding-top: 6px;
-  color: var(--text-disabled);
+  color: var(--text-secondary);
   font-family: 'Space Mono', monospace;
   font-size: var(--label);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  transition: color 180ms ease;
 }
 
 .nav-item-icon {
@@ -749,6 +774,7 @@ img {
   height: 28px;
   display: grid;
   place-items: center;
+  color: inherit;
 }
 
 .nav-item.active {
@@ -782,6 +808,56 @@ img {
   background: var(--text-display);
   color: var(--black);
   border-color: var(--text-display);
+}
+
+.flights-search-wrap {
+  margin: 0 var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 14px;
+  min-height: 48px;
+  border: 1px solid var(--border-visible);
+  border-radius: var(--radius-pill);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+}
+
+.flights-search-wrap input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+}
+
+.flights-search-wrap input:focus {
+  outline: none;
+}
+
+.flights-search-wrap input::placeholder {
+  color: var(--text-disabled);
+  letter-spacing: 0.02em;
+}
+
+@media (min-width: 860px) {
+  .flights-controls-layout {
+    grid-template-columns: auto minmax(320px, 1fr);
+    align-items: center;
+    gap: var(--space-md);
+    padding: 0 var(--space-md);
+  }
+
+  .flights-controls-layout .filter-tabs {
+    padding: 0;
+  }
+
+  .flights-controls-layout .flights-search-wrap {
+    margin: 0;
+  }
 }
 
 .year-group-header {
