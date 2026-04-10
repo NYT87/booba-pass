@@ -82,11 +82,16 @@ export function computeDurationMin(
   startTimeZone?: string,
   endTimeZone?: string
 ): number {
+  if (!startDate || !startTime || !endDate || !endTime) {
+    return 0
+  }
+
   if (!startTimeZone || !endTimeZone) {
     // Fallback to local browser time if timezones missing
     const start = new Date(`${startDate}T${startTime}:00`)
     const end = new Date(`${endDate}T${endTime}:00`)
-    return Math.round((end.getTime() - start.getTime()) / 60000)
+    const diff = Math.round((end.getTime() - start.getTime()) / 60000)
+    return Number.isFinite(diff) && diff > 0 ? diff : 0
   }
 
   const getUTC = (dateStr: string, timeStr: string, timeZone: string) => {
@@ -104,7 +109,8 @@ export function computeDurationMin(
   const startUTC = getUTC(startDate, startTime, startTimeZone)
   const endUTC = getUTC(endDate, endTime, endTimeZone)
 
-  return Math.round((endUTC - startUTC) / 60000)
+  const diff = Math.round((endUTC - startUTC) / 60000)
+  return Number.isFinite(diff) && diff > 0 ? diff : 0
 }
 
 /** Returns effective duration in minutes (actual if available, else scheduled) */
@@ -130,6 +136,7 @@ export function flightDurationMin(f: Flight): number {
 }
 
 export function formatDuration(minutes: number): string {
+  if (!Number.isFinite(minutes) || minutes <= 0) return '0h 00m'
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
   return `${h}h ${m.toString().padStart(2, '0')}m`
@@ -144,6 +151,14 @@ export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: numb
     Math.sin(dLat / 2) ** 2 +
     Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+export function normalizeAircraft(value: string): string {
+  return value
+    .toUpperCase()
+    .replace(/\b(?:AIRBUS|BOEING)\s+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 export function isUpcoming(f: Flight): boolean {

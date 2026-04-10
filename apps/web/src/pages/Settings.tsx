@@ -16,6 +16,7 @@ import {
   Download,
 } from 'lucide-react'
 import { exportToJSON, exportToCSV, handleImportFile } from '../utils/dataTransfer'
+import { haversineKm, normalizeAircraft, type Airport } from '../types'
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { useTheme } from '../hooks/useTheme'
 import { Moon, Sun, Monitor } from 'lucide-react'
@@ -52,6 +53,11 @@ function AboutItem({ icon, label, value, valueStyle }: AboutItemProps) {
       </div>
     </div>
   )
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message
+  return String(error)
 }
 
 export default function Settings() {
@@ -157,37 +163,94 @@ export default function Settings() {
     setImporting(true)
     setMessage(null)
     try {
-      const res = await fetch('/data/airports.json')
-      const airports: { iata: string; timezone: string }[] = await res.json()
-      const airportMap = new Map(airports.map((a) => [a.iata, a.timezone]))
+      const baseUrl = import.meta.env.BASE_URL || '/'
+      const res = await fetch(`${baseUrl}data/airports.json`)
+      if (!res.ok) {
+        throw new Error(`Airport database request failed (${res.status} ${res.statusText})`)
+      }
+
+      const airports: Airport[] = await res.json()
+      const airportMap = new Map(airports.map((airport) => [airport.iata, airport]))
 
       const allFlights = await db.flights.toArray()
-      let updatedCount = 0
+      let timezoneUpdatedCount = 0
+      let distanceUpdatedCount = 0
+      let seatClassUpdatedCount = 0
+      let airlineUpdatedCount = 0
+      let aircraftUpdatedCount = 0
 
       for (const f of allFlights) {
         let changed = false
-        if (!f.departureTimeZone && airportMap.has(f.departureIata)) {
-          f.departureTimeZone = airportMap.get(f.departureIata)
+        const departureAirport = airportMap.get(f.departureIata)
+        const arrivalAirport = airportMap.get(f.arrivalIata)
+
+        if (!f.departureTimeZone && departureAirport?.timezone) {
+          f.departureTimeZone = departureAirport.timezone
           changed = true
+          timezoneUpdatedCount++
         }
-        if (!f.arrivalTimeZone && airportMap.has(f.arrivalIata)) {
-          f.arrivalTimeZone = airportMap.get(f.arrivalIata)
+
+        if (!f.arrivalTimeZone && arrivalAirport?.timezone) {
+          f.arrivalTimeZone = arrivalAirport.timezone
           changed = true
+          timezoneUpdatedCount++
+        }
+
+        if (!f.distanceKm || f.distanceKm <= 0) {
+          const departureLat = Number.isFinite(f.departureLat) ? f.departureLat : departureAirport?.lat
+          const departureLon = Number.isFinite(f.departureLon) ? f.departureLon : departureAirport?.lon
+          const arrivalLat = Number.isFinite(f.arrivalLat) ? f.arrivalLat : arrivalAirport?.lat
+          const arrivalLon = Number.isFinite(f.arrivalLon) ? f.arrivalLon : arrivalAirport?.lon
+
+          if (
+            departureLat !== undefined &&
+            departureLon !== undefined &&
+            arrivalLat !== undefined &&
+            arrivalLon !== undefined
+          ) {
+            f.distanceKm = haversineKm(departureLat, departureLon, arrivalLat, arrivalLon)
+            changed = true
+            distanceUpdatedCount++
+          }
+        }
+
+        if (f.seatClass !== 'Economy' && f.seatClass !== 'Business' && f.seatClass !== 'First') {
+          f.seatClass = 'Economy'
+          changed = true
+          seatClassUpdatedCount++
+        }
+
+        const normalizedAirline = f.airline.trim().toUpperCase()
+        if (normalizedAirline && normalizedAirline !== f.airline) {
+          f.airline = normalizedAirline
+          changed = true
+          airlineUpdatedCount++
+        }
+
+        if (f.aircraft) {
+          const normalizedAircraft = normalizeAircraft(f.aircraft)
+          if (normalizedAircraft && normalizedAircraft !== f.aircraft) {
+            f.aircraft = normalizedAircraft
+            changed = true
+            aircraftUpdatedCount++
+          }
         }
 
         if (changed) {
           await db.flights.put(f)
-          updatedCount++
         }
       }
 
       setMessage({
         type: 'success',
-        text: `Successfully updated ${updatedCount} flights with timezone data.`,
+        text: `Updated ${timezoneUpdatedCount} timezone fields, ${distanceUpdatedCount} flight distances, ${seatClassUpdatedCount} seat classes, ${airlineUpdatedCount} airline names, and ${aircraftUpdatedCount} aircraft names.`,
       })
     } catch (err) {
       console.error(err)
-      setMessage({ type: 'error', text: 'Failed to migrate timezones.' })
+      setMessage({
+        type: 'error',
+        text: `Failed to migrate timezones: ${getErrorMessage(err)}`,
+      })
     } finally {
       setImporting(false)
     }
@@ -372,9 +435,9 @@ export default function Settings() {
           >
             <Clock3 size={18} style={{ marginRight: 10, color: 'var(--text-primary)' }} />
             <div className="settings-action-copy">
-              <div className="settings-action-title">Fix Missing Timezones</div>
+              <div className="settings-action-title">Repair Flight Data</div>
               <div className="settings-action-description">
-                Scans existing flights and adds missing timezone data from the airport database.
+                Backfills timezones and distances, and normalizes seat class, airline, and aircraft names.
               </div>
             </div>
           </button>

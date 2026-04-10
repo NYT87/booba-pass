@@ -13,11 +13,17 @@ const toNumberOrUndefined = (value: unknown): number | undefined => {
   return Number.isNaN(parsed) ? undefined : parsed
 }
 
+const normalizeSeatClass = (value: unknown): Flight['seatClass'] => {
+  if (value === 'Business' || value === 'First' || value === 'Economy') return value
+  return 'Economy'
+}
+
 function normalizeImportedFlight(raw: Record<string, unknown>): Omit<Flight, 'id'> {
   const normalized = { ...raw } as Omit<Flight, 'id'>
   normalized.distanceKm = toNumberOrUndefined(raw.distanceKm) ?? 0
   normalized.membershipId = toIntOrUndefined(raw.membershipId)
   normalized.mileageGranted = toIntOrUndefined(raw.mileageGranted)
+  normalized.seatClass = normalizeSeatClass(raw.seatClass)
   return normalized
 }
 
