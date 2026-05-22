@@ -10,6 +10,7 @@ import {
   Edit2,
   Trash2,
   ExternalLink,
+  Download,
   Plane,
   MapPin,
   Clock,
@@ -19,6 +20,7 @@ import {
   Maximize2,
 } from 'lucide-react'
 import { useHapticFeedback } from '../hooks/useHapticFeedback'
+import { exportSingleFlightToJSON } from '../utils/dataTransfer'
 
 export default function FlightDetail() {
   const { id } = useParams()
@@ -83,7 +85,7 @@ export default function FlightDetail() {
         </button>
       }
       right={
-        <div style={{ display: 'flex', gap: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <button
             onClick={() => {
               triggerHaptic()
@@ -92,6 +94,15 @@ export default function FlightDetail() {
             className="btn-ghost"
           >
             <Edit2 size={20} />
+          </button>
+          <button
+            onClick={() => {
+              triggerHaptic()
+              exportSingleFlightToJSON(flight)
+            }}
+            className="btn-ghost"
+          >
+            <Download size={20} />
           </button>
           <button
             onClick={() => {

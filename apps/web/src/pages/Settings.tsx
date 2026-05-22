@@ -159,6 +159,31 @@ export default function Settings() {
     }
   }
 
+  const onSingleFlightImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setImporting(true)
+    setMessage(null)
+    setImportResult(null)
+    try {
+      const result = await handleImportFile(file, { mode: 'single-flight' })
+      setImportResult({
+        type: 'success',
+        text: `Single-flight import complete. ${result.success} flight upserted successfully. ${result.failed} rows skipped.`,
+      })
+    } catch (err) {
+      console.error(err)
+      setImportResult({
+        type: 'error',
+        text: 'Failed to import a single flight. Please use a single-flight JSON export file.',
+      })
+    } finally {
+      setImporting(false)
+      e.target.value = ''
+    }
+  }
+
   const migrateTimezones = async () => {
     setImporting(true)
     setMessage(null)
@@ -387,20 +412,43 @@ export default function Settings() {
 
         <div className="card" style={{ padding: 16, marginTop: 16 }}>
           <h4 style={{ marginBottom: 12, fontSize: '0.9rem' }}>Import Data</h4>
-          <label
-            className={`btn-primary ${importing ? 'disabled' : ''}`}
-            style={{
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-            }}
-          >
-            <input type="file" accept=".json,.csv" onChange={onImport} disabled={importing} hidden />
-            <Upload size={18} />
-            {importing ? 'Importing...' : 'Restore from Backup / CSV'}
-          </label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <label
+              className={`btn-primary ${importing ? 'disabled' : ''}`}
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              <input type="file" accept=".json,.csv" onChange={onImport} disabled={importing} hidden />
+              <Upload size={18} />
+              {importing ? 'Importing...' : 'Restore from Backup / CSV'}
+            </label>
+
+            <label
+              className={`btn-primary ${importing ? 'disabled' : ''}`}
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              <input
+                type="file"
+                accept=".json,application/json"
+                onChange={onSingleFlightImport}
+                disabled={importing}
+                hidden
+              />
+              <FileJson size={18} />
+              {importing ? 'Importing...' : 'Import 1 Flight'}
+            </label>
+          </div>
           <p
             style={{
               fontSize: '0.7rem',
@@ -409,7 +457,8 @@ export default function Settings() {
               textAlign: 'center',
             }}
           >
-            Smart Upsert enabled: Existing flights will be updated, new ones will be added.
+            Smart Upsert enabled: Existing flights will be updated, new ones will be added. Single-flight import accepts
+            JSON only.
           </p>
         </div>
 

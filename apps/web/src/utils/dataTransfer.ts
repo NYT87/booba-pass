@@ -1,6 +1,44 @@
 import type { Airline, Flight, Membership } from '../types'
 import { db } from '../db/db'
 
+type ImportMode = 'auto' | 'single-flight'
+
+type SingleFlightExportPayload = {
+  kind: 'single-flight'
+  version: 1
+  exportedAt: string
+  flight: Flight
+}
+
+const downloadJsonFile = (data: unknown, filename: string) => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+const sanitizeFilenamePart = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'flight'
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+const isSingleFlightPayload = (value: unknown): value is SingleFlightExportPayload =>
+  isRecord(value) && value.kind === 'single-flight' && isRecord(value.flight)
+
+const looksLikeFlightRecord = (value: unknown): value is Record<string, unknown> =>
+  isRecord(value) &&
+  typeof value.airline === 'string' &&
+  typeof value.flightNumber === 'string' &&
+  typeof value.scheduledDepartureDate === 'string'
+
 const toIntOrUndefined = (value: unknown): number | undefined => {
   if (value === '' || value === null || value === undefined) return undefined
   const parsed = Number.parseInt(String(value), 10)
@@ -103,14 +141,19 @@ export const exportToJSON = (flights: Flight[], memberships: Membership[], airli
     memberships,
     airlines,
   }
-  const data = JSON.stringify(bundle, null, 2)
-  const blob = new Blob([data], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `booba-pass-bundle-${new Date().toISOString().slice(0, 10)}.json`
-  a.click()
-  URL.revokeObjectURL(url)
+  downloadJsonFile(bundle, `booba-pass-bundle-${new Date().toISOString().slice(0, 10)}.json`)
+}
+
+export const exportSingleFlightToJSON = (flight: Flight) => {
+  const payload: SingleFlightExportPayload = {
+    kind: 'single-flight',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    flight,
+  }
+  const route = `${sanitizeFilenamePart(flight.departureIata)}-${sanitizeFilenamePart(flight.arrivalIata)}`
+  const flightNumber = sanitizeFilenamePart(flight.flightNumber)
+  downloadJsonFile(payload, `booba-pass-flight-${flight.scheduledDepartureDate}-${route}-${flightNumber}.json`)
 }
 
 async function smartUpsertAirline(airline: Omit<Airline, 'id'>) {
@@ -168,7 +211,23 @@ export const exportToCSV = (flights: Flight[]) => {
   URL.revokeObjectURL(url)
 }
 
-export const handleImportFile = async (file: File): Promise<{ success: number; failed: number }> => {
+const importSingleFlight = async (payload: unknown): Promise<{ success: number; failed: number }> => {
+  const rawFlight = isSingleFlightPayload(payload) ? payload.flight : payload
+  if (!looksLikeFlightRecord(rawFlight)) {
+    throw new Error('The selected JSON file is not a single-flight export.')
+  }
+
+  const data = { ...rawFlight }
+  delete data.id
+  await smartUpsert(normalizeImportedFlight(data))
+  return { success: 1, failed: 0 }
+}
+
+export const handleImportFile = async (
+  file: File,
+  options: { mode?: ImportMode } = {}
+): Promise<{ success: number; failed: number }> => {
+  const mode = options.mode ?? 'auto'
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = async (event) => {
@@ -180,6 +239,11 @@ export const handleImportFile = async (file: File): Promise<{ success: number; f
         // Handle JSON Bundle
         if (file.name.endsWith('.json')) {
           const bundle = JSON.parse(content)
+
+          if (mode === 'single-flight') {
+            resolve(await importSingleFlight(bundle))
+            return
+          }
 
           // Case 1: Legacy format (just an array of flights)
           if (Array.isArray(bundle)) {
@@ -256,9 +320,19 @@ export const handleImportFile = async (file: File): Promise<{ success: number; f
               }
             }
           }
+          // Case 3: Dedicated single-flight JSON
+          else if (isSingleFlightPayload(bundle) || looksLikeFlightRecord(bundle)) {
+            const result = await importSingleFlight(bundle)
+            success += result.success
+            failed += result.failed
+          }
         }
         // Handle CSV (Flights only)
         else if (file.name.endsWith('.csv')) {
+          if (mode === 'single-flight') {
+            throw new Error('Single-flight import only supports JSON files.')
+          }
+
           const lines = content.split('\n')
           const headers = lines[0].split(',').map((h: string) => h.replace(/"/g, '').trim())
           const flights = lines
