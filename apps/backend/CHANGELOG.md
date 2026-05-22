@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/NYT87/booba-pass/compare/backend-v1.0.0...backend-v1.0.1) (2026-05-22)
+
+
+### Bug Fixes
+
+* **backend:** correct flight mapping times ([e679202](https://github.com/NYT87/booba-pass/commit/e679202501b9fdf468836e616adfb71076dc3676))
+
 ## 1.0.0 (2026-04-09)
 
 ### Features
