@@ -20,12 +20,26 @@ export interface ExtractedTrackingFlightData {
 const AIRCRAFT_PATTERN =
   /\b(AIRBUS\s*A\d{3}(?:-\d{3})?|BOEING\s*7\d{2}(?:-\d{3})?|A\d{3}(?:-\d{3})?|B7\d{2}(?:-\d{3})?)\b/i
 
-function normalizeDateTime(dateTime: string): { date: string; time: string } | null {
+function hasExplicitTimeZone(dateTime: string): boolean {
+  return /(?:Z|[+-]\d{2}:?\d{2}|\bUTC\b|\bGMT\b)$/i.test(dateTime.trim())
+}
+
+function normalizeDateTime(dateTime: string): { date: string; time: string; timesInUtc?: boolean } | null {
+  const trimmed = dateTime.trim()
+  const naiveIsoMatch = trimmed.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(?::\d{2}(?:\.\d+)?)?$/)
+  if (naiveIsoMatch && !hasExplicitTimeZone(trimmed)) {
+    return {
+      date: naiveIsoMatch[1],
+      time: naiveIsoMatch[2],
+    }
+  }
+
   const parsed = new Date(dateTime)
   if (Number.isNaN(parsed.getTime())) return null
   return {
     date: parsed.toISOString().slice(0, 10),
     time: parsed.toISOString().slice(11, 16),
+    timesInUtc: hasExplicitTimeZone(dateTime) || undefined,
   }
 }
 
@@ -50,7 +64,10 @@ function splitFlightCode(value: string): { carrier: string; number: string } | n
   return { carrier: match[1], number: match[2] }
 }
 
-function extractDateTimeNearLabel(source: string, labelPattern: RegExp): { date: string; time: string } | null {
+function extractDateTimeNearLabel(
+  source: string,
+  labelPattern: RegExp
+): { date: string; time: string; timesInUtc?: boolean } | null {
   const labelMatch = source.match(labelPattern)
   if (!labelMatch || labelMatch.index === undefined) return null
 
@@ -170,6 +187,7 @@ function extractFromJsonLd(html: string): Partial<ExtractedTrackingFlightData> {
         scheduledDepartureTime: dep?.time,
         scheduledArrivalDate: arr?.date,
         scheduledArrivalTime: arr?.time,
+        timesInUtc: dep?.timesInUtc || arr?.timesInUtc || undefined,
       }
     }
   }
@@ -212,6 +230,75 @@ function extractAirlineImageFromHtml(html: string, baseUrl?: string): string | u
   return undefined
 }
 
+function extractFromFlightStatsState(html: string): Partial<ExtractedTrackingFlightData> {
+  const stateMatch =
+    html.match(/window\.__data\s*=\s*([\s\S]*?)<\/script>/i) ??
+    html.match(/window\.__INITIAL_STATE__\s*=\s*([\s\S]*?)<\/script>/i)
+  if (!stateMatch?.[1]) return {}
+
+  const rawState = stateMatch[1].trim().replace(/;\s*$/, '')
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(rawState)
+  } catch {
+    return {}
+  }
+
+  const root = parsed as {
+    SingleFlightTracker?: {
+      extendedData?: {
+        carrier?: { name?: string; fs?: string; flightNumber?: string; icao?: string }
+        departureAirport?: {
+          fs?: string
+          iata?: string
+          icao?: string
+          date?: string
+        }
+        arrivalAirport?: {
+          fs?: string
+          iata?: string
+          icao?: string
+          date?: string
+        }
+        schedule?: {
+          scheduledGateDeparture?: string
+          scheduledGateArrival?: string
+        }
+        additionalFlightInfo?: {
+          equipment?: { iata?: string; name?: string }
+        }
+      }
+    }
+  }
+
+  const extended = root.SingleFlightTracker?.extendedData
+  if (!extended) return {}
+
+  const scheduledDeparture = extended.schedule?.scheduledGateDeparture ?? extended.departureAirport?.date
+  const scheduledArrival = extended.schedule?.scheduledGateArrival ?? extended.arrivalAirport?.date
+  const dep = scheduledDeparture ? normalizeDateTime(scheduledDeparture) : null
+  const arr = scheduledArrival ? normalizeDateTime(scheduledArrival) : null
+
+  const carrierCode = extended.carrier?.fs
+  const flightNumberPart = extended.carrier?.flightNumber
+
+  return {
+    airline: extended.carrier?.name,
+    flightNumber: carrierCode && flightNumberPart ? cleanFlightNumber(`${carrierCode}${flightNumberPart}`) : undefined,
+    departureIata: extended.departureAirport?.fs ?? extended.departureAirport?.iata,
+    arrivalIata: extended.arrivalAirport?.fs ?? extended.arrivalAirport?.iata,
+    scheduledDepartureDate: dep?.date,
+    scheduledDepartureTime: dep?.time,
+    scheduledArrivalDate: arr?.date,
+    scheduledArrivalTime: arr?.time,
+    timesInUtc: false,
+    aircraft:
+      extended.additionalFlightInfo?.equipment?.iata ??
+      normalizeAircraft(extended.additionalFlightInfo?.equipment?.name ?? ''),
+  }
+}
+
 function extractWithRegex(text: string): Partial<ExtractedTrackingFlightData> {
   const uppercaseText = text.toUpperCase()
   const extracted: Partial<ExtractedTrackingFlightData> = {}
@@ -226,26 +313,32 @@ function extractWithRegex(text: string): Partial<ExtractedTrackingFlightData> {
   if (scheduledDep) {
     extracted.scheduledDepartureDate = scheduledDep.date
     extracted.scheduledDepartureTime = scheduledDep.time
+    extracted.timesInUtc = extracted.timesInUtc || scheduledDep.timesInUtc
   }
   if (scheduledArr) {
     extracted.scheduledArrivalDate = scheduledArr.date
     extracted.scheduledArrivalTime = scheduledArr.time
+    extracted.timesInUtc = extracted.timesInUtc || scheduledArr.timesInUtc
   }
   if (actualDep) {
     extracted.actualDepartureDate = actualDep.date
     extracted.actualDepartureTime = actualDep.time
+    extracted.timesInUtc = extracted.timesInUtc || actualDep.timesInUtc
   }
   if (actualArr) {
     extracted.actualArrivalDate = actualArr.date
     extracted.actualArrivalTime = actualArr.time
+    extracted.timesInUtc = extracted.timesInUtc || actualArr.timesInUtc
   }
   if (!actualDep && estimatedDep) {
     extracted.actualDepartureDate = estimatedDep.date
     extracted.actualDepartureTime = estimatedDep.time
+    extracted.timesInUtc = extracted.timesInUtc || estimatedDep.timesInUtc
   }
   if (!actualArr && estimatedArr) {
     extracted.actualArrivalDate = estimatedArr.date
     extracted.actualArrivalTime = estimatedArr.time
+    extracted.timesInUtc = extracted.timesInUtc || estimatedArr.timesInUtc
   }
 
   // FlightStats pages often expose airline name in a title/header pattern like:
@@ -305,11 +398,13 @@ function extractWithRegex(text: string): Partial<ExtractedTrackingFlightData> {
     const dep = normalizeDateTime(isoDateMatches[0][1])
     extracted.scheduledDepartureDate = extracted.scheduledDepartureDate ?? dep?.date
     extracted.scheduledDepartureTime = extracted.scheduledDepartureTime ?? dep?.time
+    extracted.timesInUtc = extracted.timesInUtc || dep?.timesInUtc
   }
   if (isoDateMatches[1]?.[1]) {
     const arr = normalizeDateTime(isoDateMatches[1][1])
     extracted.scheduledArrivalDate = extracted.scheduledArrivalDate ?? arr?.date
     extracted.scheduledArrivalTime = extracted.scheduledArrivalTime ?? arr?.time
+    extracted.timesInUtc = extracted.timesInUtc || arr?.timesInUtc
   }
 
   const aircraftMatch = uppercaseText.match(AIRCRAFT_PATTERN)
@@ -361,6 +456,7 @@ function mergeExtracted(
     actualDepartureTime: primary.actualDepartureTime ?? fallback.actualDepartureTime,
     actualArrivalDate: primary.actualArrivalDate ?? fallback.actualArrivalDate,
     actualArrivalTime: primary.actualArrivalTime ?? fallback.actualArrivalTime,
+    timesInUtc: primary.timesInUtc ?? fallback.timesInUtc,
     aircraft: primary.aircraft ?? fallback.aircraft,
   }
 }
@@ -369,10 +465,11 @@ export function extractTrackingFlightDataFromHtml(
   html: string,
   options?: { baseUrl?: string }
 ): Partial<ExtractedTrackingFlightData> | null {
+  const fromFlightStatsState = extractFromFlightStatsState(html)
   const fromJsonLd = extractFromJsonLd(html)
   const fromRegex = extractWithRegex(html)
   const airlineImage = extractAirlineImageFromHtml(html, options?.baseUrl)
-  const merged = mergeExtracted(fromJsonLd, fromRegex, airlineImage)
+  const merged = mergeExtracted(mergeExtracted(fromFlightStatsState, fromJsonLd, airlineImage), fromRegex, airlineImage)
   const hasAnyValue = Object.values(merged).some(Boolean)
   return hasAnyValue ? merged : null
 }
@@ -486,6 +583,32 @@ async function extractFromSourceUrl(sourceUrl: string): Promise<Partial<Extracte
   return null
 }
 
+export function isLowConfidenceFlightCodeResult(
+  extracted: Partial<ExtractedTrackingFlightData>,
+  providerUrl: string
+): boolean {
+  try {
+    const host = new URL(providerUrl).hostname.toLowerCase()
+    if (!host.includes('flightaware.com')) return false
+  } catch {
+    return false
+  }
+
+  // FlightAware live/history URL parsing can provide only a departure UTC timestamp from the path.
+  // For flight-code lookup we should not trust that partial fallback as final schedule data.
+  return Boolean(
+    extracted.departureIata &&
+    extracted.arrivalIata &&
+    extracted.scheduledDepartureDate &&
+    extracted.scheduledDepartureTime &&
+    !extracted.scheduledArrivalDate &&
+    !extracted.scheduledArrivalTime &&
+    !extracted.actualDepartureTime &&
+    !extracted.actualArrivalTime &&
+    !extracted.airline
+  )
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -545,6 +668,7 @@ export default {
           try {
             const extracted = await extractFromSourceUrl(providerUrl)
             if (!extracted) continue
+            if (isLowConfidenceFlightCodeResult(extracted, providerUrl)) continue
             return new Response(
               JSON.stringify({
                 data: {

@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { extractFromTrackingUrl, extractTrackingFlightDataFromHtml } from '../src/index'
+import {
+  extractFromTrackingUrl,
+  extractTrackingFlightDataFromHtml,
+  isLowConfidenceFlightCodeResult,
+} from '../src/index'
 
 describe('extractTrackingFlightDataFromHtml', () => {
   it('parses flight fields from JSON-LD and meta', () => {
@@ -111,6 +115,56 @@ describe('extractTrackingFlightDataFromHtml', () => {
     expect(extracted?.actualArrivalTime).toBe('18:45')
   })
 
+  it('marks FlightStats UTC-bearing timestamps as UTC so the web app can localize them', () => {
+    const html = `
+      <html>
+        <body>
+          <div>Flight OZ333</div>
+          <div>Scheduled Departure 2026-05-22T03:50:00Z</div>
+          <div>Scheduled Arrival 2026-05-22T12:50:00Z</div>
+        </body>
+      </html>
+    `
+
+    const extracted = extractTrackingFlightDataFromHtml(html, {
+      baseUrl: 'https://www.flightstats.com/v2/flight-details/OZ/333?year=2026&month=5&date=22',
+    })
+
+    expect(extracted).toBeTruthy()
+    expect(extracted?.scheduledDepartureTime).toBe('03:50')
+    expect(extracted?.scheduledArrivalTime).toBe('12:50')
+    expect(extracted?.timesInUtc).toBe(true)
+  })
+
+  it('prefers FlightStats embedded state for local scheduled gate times', () => {
+    const html = `
+      <html>
+        <body>
+          <script>
+            window.__INITIAL_STATE__={"SingleFlightTracker":{"extendedData":{"carrier":{"fs":"OZ","name":"Asiana Airlines","flightNumber":"333"},"departureAirport":{"fs":"ICN","icao":"RKSI","date":"2026-05-22T12:50:00.000"},"arrivalAirport":{"fs":"PEK","icao":"ZBAA","date":"2026-05-22T14:00:00.000"},"schedule":{"scheduledGateDeparture":"2026-05-22T12:50:00.000","scheduledGateArrival":"2026-05-22T14:00:00.000"},"additionalFlightInfo":{"equipment":{"iata":"321","name":"Airbus A321"}}}}};
+          </script>
+          <div>Scheduled Departure 2026-05-21T18:50:00Z</div>
+          <div>Scheduled Arrival 2026-05-22T03:50:00Z</div>
+        </body>
+      </html>
+    `
+
+    const extracted = extractTrackingFlightDataFromHtml(html, {
+      baseUrl: 'https://www.flightstats.com/v2/flight-details/OZ/333?year=2026&month=5&date=22',
+    })
+
+    expect(extracted).toBeTruthy()
+    expect(extracted?.flightNumber).toBe('OZ333')
+    expect(extracted?.departureIata).toBe('ICN')
+    expect(extracted?.arrivalIata).toBe('PEK')
+    expect(extracted?.scheduledDepartureDate).toBe('2026-05-22')
+    expect(extracted?.scheduledDepartureTime).toBe('12:50')
+    expect(extracted?.scheduledArrivalDate).toBe('2026-05-22')
+    expect(extracted?.scheduledArrivalTime).toBe('14:00')
+    expect(extracted?.aircraft).toBe('321')
+    expect(extracted?.timesInUtc).toBe(false)
+  })
+
   it('extracts airline name from FlightStats title/header pattern', () => {
     const html = `
       <html>
@@ -189,5 +243,41 @@ describe('extractFromTrackingUrl', () => {
     expect(extracted?.departureIata).toBe('VTBS')
     expect(extracted?.scheduledDepartureDate).toBe('2026-03-06')
     expect(extracted?.arrivalIata).toBeUndefined()
+  })
+})
+
+describe('isLowConfidenceFlightCodeResult', () => {
+  it('treats FlightAware URL-only departure schedule as low confidence', () => {
+    expect(
+      isLowConfidenceFlightCodeResult(
+        {
+          flightNumber: 'OZ333',
+          departureIata: 'RKSI',
+          arrivalIata: 'ZBAA',
+          scheduledDepartureDate: '2026-05-23',
+          scheduledDepartureTime: '04:00',
+          timesInUtc: true,
+          aircraft: 'A321',
+        },
+        'https://www.flightaware.com/live/flight/AAR333/history/20260523/0400Z/RKSI/ZBAA'
+      )
+    ).toBe(true)
+  })
+
+  it('keeps richer non-FlightAware or full-schedule results eligible', () => {
+    expect(
+      isLowConfidenceFlightCodeResult(
+        {
+          flightNumber: 'OZ333',
+          departureIata: 'RKSI',
+          arrivalIata: 'ZBAA',
+          scheduledDepartureDate: '2026-05-23',
+          scheduledDepartureTime: '04:00',
+          scheduledArrivalDate: '2026-05-23',
+          scheduledArrivalTime: '06:00',
+        },
+        'https://www.flightaware.com/live/flight/AAR333/history/20260523/0400Z/RKSI/ZBAA'
+      )
+    ).toBe(false)
   })
 })
