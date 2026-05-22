@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMemberships } from '../hooks/useMemberships'
 import PageScaffold from '../components/PageScaffold'
-import { Barcode as BarcodeIcon, Check, Copy, CreditCard, List, Pencil, Plus, QrCode, X } from 'lucide-react'
+import { Barcode as BarcodeIcon, Check, Copy, CreditCard, Download, List, Pencil, Plus, QrCode, X } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import Barcode from 'react-barcode'
 import { useHapticFeedback } from '../hooks/useHapticFeedback'
+import { exportMembershipsToJSON } from '../utils/dataTransfer'
 
 export default function Memberships() {
   const navigate = useNavigate()
@@ -62,15 +63,28 @@ export default function Memberships() {
     <PageScaffold
       title={<h1>Memberships</h1>}
       right={
-        <button
-          className="btn-ghost btn-ghost-accent"
-          onClick={() => {
-            triggerHaptic()
-            navigate('/memberships/new')
-          }}
-        >
-          <Plus size={24} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            className="btn-ghost"
+            onClick={() => {
+              triggerHaptic()
+              exportMembershipsToJSON(memberships)
+            }}
+            aria-label="Export memberships"
+            title="Export memberships"
+          >
+            <Download size={20} />
+          </button>
+          <button
+            className="btn-ghost btn-ghost-accent"
+            onClick={() => {
+              triggerHaptic()
+              navigate('/memberships/new')
+            }}
+          >
+            <Plus size={24} />
+          </button>
+        </div>
       }
     >
       <div className="memberships-list">

@@ -184,6 +184,31 @@ export default function Settings() {
     }
   }
 
+  const onMembershipImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setImporting(true)
+    setMessage(null)
+    setImportResult(null)
+    try {
+      const result = await handleImportFile(file, { mode: 'memberships-only' })
+      setImportResult({
+        type: 'success',
+        text: `Membership import complete. ${result.success} memberships upserted successfully. ${result.failed} rows skipped.`,
+      })
+    } catch (err) {
+      console.error(err)
+      setImportResult({
+        type: 'error',
+        text: 'Failed to import memberships. Please use a memberships-only JSON export file.',
+      })
+    } finally {
+      setImporting(false)
+      e.target.value = ''
+    }
+  }
+
   const migrateTimezones = async () => {
     setImporting(true)
     setMessage(null)
@@ -448,6 +473,27 @@ export default function Settings() {
               <FileJson size={18} />
               {importing ? 'Importing...' : 'Import 1 Flight'}
             </label>
+
+            <label
+              className={`btn-primary ${importing ? 'disabled' : ''}`}
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              <input
+                type="file"
+                accept=".json,application/json"
+                onChange={onMembershipImport}
+                disabled={importing}
+                hidden
+              />
+              <FileJson size={18} />
+              {importing ? 'Importing...' : 'Import Memberships'}
+            </label>
           </div>
           <p
             style={{
@@ -457,8 +503,8 @@ export default function Settings() {
               textAlign: 'center',
             }}
           >
-            Smart Upsert enabled: Existing flights will be updated, new ones will be added. Single-flight import accepts
-            JSON only.
+            Smart Upsert enabled: Existing flights and memberships will be updated, new ones will be added. Flight-only
+            and membership-only imports accept JSON only.
           </p>
         </div>
 

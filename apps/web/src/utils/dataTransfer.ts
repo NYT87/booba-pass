@@ -1,13 +1,20 @@
 import type { Airline, Flight, Membership } from '../types'
 import { db } from '../db/db'
 
-type ImportMode = 'auto' | 'single-flight'
+type ImportMode = 'auto' | 'single-flight' | 'memberships-only'
 
 type SingleFlightExportPayload = {
   kind: 'single-flight'
   version: 1
   exportedAt: string
   flight: Flight
+}
+
+type MembershipsExportPayload = {
+  kind: 'memberships-only'
+  version: 1
+  exportedAt: string
+  memberships: Membership[]
 }
 
 const downloadJsonFile = (data: unknown, filename: string) => {
@@ -32,6 +39,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isSingleFlightPayload = (value: unknown): value is SingleFlightExportPayload =>
   isRecord(value) && value.kind === 'single-flight' && isRecord(value.flight)
+
+const isMembershipsOnlyPayload = (value: unknown): value is MembershipsExportPayload =>
+  isRecord(value) && value.kind === 'memberships-only' && Array.isArray(value.memberships)
 
 const looksLikeFlightRecord = (value: unknown): value is Record<string, unknown> =>
   isRecord(value) &&
@@ -156,6 +166,16 @@ export const exportSingleFlightToJSON = (flight: Flight) => {
   downloadJsonFile(payload, `booba-pass-flight-${flight.scheduledDepartureDate}-${route}-${flightNumber}.json`)
 }
 
+export const exportMembershipsToJSON = (memberships: Membership[]) => {
+  const payload: MembershipsExportPayload = {
+    kind: 'memberships-only',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    memberships,
+  }
+  downloadJsonFile(payload, `booba-pass-memberships-${new Date().toISOString().slice(0, 10)}.json`)
+}
+
 async function smartUpsertAirline(airline: Omit<Airline, 'id'>) {
   const normalizedName = airline.name.trim().toUpperCase()
   if (!normalizedName || !airline.image) return
@@ -223,6 +243,36 @@ const importSingleFlight = async (payload: unknown): Promise<{ success: number; 
   return { success: 1, failed: 0 }
 }
 
+const importMembershipsOnly = async (payload: unknown): Promise<{ success: number; failed: number }> => {
+  const rawMemberships = isMembershipsOnlyPayload(payload)
+    ? payload.memberships
+    : Array.isArray(payload)
+      ? payload
+      : isRecord(payload) && Array.isArray(payload.memberships)
+        ? payload.memberships
+        : null
+
+  if (!rawMemberships) {
+    throw new Error('The selected JSON file is not a memberships export.')
+  }
+
+  let success = 0
+  let failed = 0
+
+  for (const membership of rawMemberships) {
+    if (membership.airlineName && membership.membershipNumber) {
+      const data = { ...(membership as Record<string, unknown>) }
+      delete data.id
+      await smartUpsertMembership(normalizeImportedMembership(data))
+      success++
+    } else {
+      failed++
+    }
+  }
+
+  return { success, failed }
+}
+
 export const handleImportFile = async (
   file: File,
   options: { mode?: ImportMode } = {}
@@ -242,6 +292,10 @@ export const handleImportFile = async (
 
           if (mode === 'single-flight') {
             resolve(await importSingleFlight(bundle))
+            return
+          }
+          if (mode === 'memberships-only') {
+            resolve(await importMembershipsOnly(bundle))
             return
           }
 
@@ -326,11 +380,19 @@ export const handleImportFile = async (
             success += result.success
             failed += result.failed
           }
+          // Case 4: Dedicated memberships-only JSON
+          else if (isMembershipsOnlyPayload(bundle)) {
+            const result = await importMembershipsOnly(bundle)
+            success += result.success
+            failed += result.failed
+          }
         }
         // Handle CSV (Flights only)
         else if (file.name.endsWith('.csv')) {
-          if (mode === 'single-flight') {
-            throw new Error('Single-flight import only supports JSON files.')
+          if (mode === 'single-flight' || mode === 'memberships-only') {
+            throw new Error(
+              `${mode === 'single-flight' ? 'Single-flight' : 'Membership-only'} import only supports JSON files.`
+            )
           }
 
           const lines = content.split('\n')
