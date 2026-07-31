@@ -613,6 +613,10 @@ img {
   text-align: left;
 }
 
+.flight-card-skeleton {
+  pointer-events: none;
+}
+
 .flight-card-main {
   display: grid;
   gap: var(--space-sm);
@@ -678,6 +682,16 @@ img {
   border-top: 1px dashed var(--border-visible);
 }
 
+.flight-arc-line-skeleton {
+  color: transparent;
+}
+
+.flight-arc-line-skeleton::before,
+.flight-arc-line-skeleton::after {
+  border-top-style: solid;
+  border-top-color: rgba(28, 28, 28, 0.08);
+}
+
 .flight-card-meta {
   display: grid;
   gap: 4px;
@@ -709,6 +723,77 @@ img {
   color: var(--text-secondary);
   font-size: 0.8rem;
   line-height: 1.2;
+}
+
+.flight-skeleton {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(28, 28, 28, 0.08);
+}
+
+.flight-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.85) 50%, transparent 100%);
+  animation: flight-skeleton-shimmer 1.3s ease-in-out infinite;
+}
+
+.flight-skeleton-pill {
+  width: 108px;
+  height: 26px;
+}
+
+.flight-skeleton-date {
+  width: 92px;
+  height: 14px;
+}
+
+.flight-skeleton-year {
+  width: 48px;
+  height: 18px;
+}
+
+.flight-skeleton-iata {
+  width: 56px;
+  height: 32px;
+  border-radius: 12px;
+}
+
+.flight-skeleton-iata-wide {
+  width: 72px;
+}
+
+.flight-skeleton-city {
+  width: 74px;
+  height: 12px;
+}
+
+.flight-skeleton-city-short {
+  width: 58px;
+}
+
+.flight-skeleton-meta {
+  width: 92px;
+  height: 12px;
+}
+
+.flight-skeleton-meta-wide {
+  width: 136px;
+}
+
+.flight-skeleton-separator {
+  width: 8px;
+  height: 12px;
+}
+
+.year-group-header-skeleton {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
 }
 
 .badge {
@@ -1484,6 +1569,12 @@ img {
   40% {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes flight-skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
   }
 }
 
