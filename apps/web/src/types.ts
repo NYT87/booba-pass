@@ -73,6 +73,52 @@ export interface Membership {
   notes?: string
 }
 
+const zonedDateTimeToUtcMs = (dateStr: string, timeStr: string, timeZone: string): number => {
+  const [year, month, day] = dateStr.split('-').map((part) => Number.parseInt(part, 10))
+  const [hour, minute] = timeStr.split(':').map((part) => Number.parseInt(part, 10))
+
+  if ([year, month, day, hour, minute].some((value) => Number.isNaN(value))) {
+    return Number.NaN
+  }
+
+  const targetUtcEquivalent = Date.UTC(year, month - 1, day, hour, minute, 0)
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  })
+
+  let utcGuess = targetUtcEquivalent
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const parts = formatter.formatToParts(new Date(utcGuess))
+    const map = Object.fromEntries(
+      parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value])
+    )
+    const observedUtcEquivalent = Date.UTC(
+      Number.parseInt(map.year, 10),
+      Number.parseInt(map.month, 10) - 1,
+      Number.parseInt(map.day, 10),
+      Number.parseInt(map.hour, 10),
+      Number.parseInt(map.minute, 10),
+      Number.parseInt(map.second, 10)
+    )
+    const delta = targetUtcEquivalent - observedUtcEquivalent
+    utcGuess += delta
+
+    if (delta === 0) {
+      break
+    }
+  }
+
+  return utcGuess
+}
+
 /** Returns duration in minutes from two date+time strings */
 export function computeDurationMin(
   startDate: string,
@@ -94,20 +140,8 @@ export function computeDurationMin(
     return Number.isFinite(diff) && diff > 0 ? diff : 0
   }
 
-  const getUTC = (dateStr: string, timeStr: string, timeZone: string) => {
-    // Create UTC date assuming the string is UTC
-    const utcDate = new Date(`${dateStr}T${timeStr}:00Z`)
-    // Format it in the TARGET timezone
-    const localStr = utcDate.toLocaleString('en-US', { timeZone, hour12: false })
-    // This gives something like "2/20/2026, 00:15:00"
-    // We want to know the difference between the target timezone and UTC
-    const localDate = new Date(localStr)
-    const offset = utcDate.getTime() - localDate.getTime()
-    return utcDate.getTime() + offset
-  }
-
-  const startUTC = getUTC(startDate, startTime, startTimeZone)
-  const endUTC = getUTC(endDate, endTime, endTimeZone)
+  const startUTC = zonedDateTimeToUtcMs(startDate, startTime, startTimeZone)
+  const endUTC = zonedDateTimeToUtcMs(endDate, endTime, endTimeZone)
 
   const diff = Math.round((endUTC - startUTC) / 60000)
   return Number.isFinite(diff) && diff > 0 ? diff : 0
@@ -133,6 +167,19 @@ export function flightDurationMin(f: Flight): number {
     f.departureTimeZone,
     f.arrivalTimeZone
   )
+}
+
+export function scheduledDepartureSortKey(
+  flight: Pick<Flight, 'scheduledDepartureDate' | 'scheduledDepartureTime'>
+): string {
+  return `${flight.scheduledDepartureDate}T${flight.scheduledDepartureTime || '00:00'}`
+}
+
+export function compareFlightsByScheduledDepartureDesc(
+  a: Pick<Flight, 'scheduledDepartureDate' | 'scheduledDepartureTime'>,
+  b: Pick<Flight, 'scheduledDepartureDate' | 'scheduledDepartureTime'>
+): number {
+  return scheduledDepartureSortKey(b).localeCompare(scheduledDepartureSortKey(a))
 }
 
 export function formatDuration(minutes: number): string {

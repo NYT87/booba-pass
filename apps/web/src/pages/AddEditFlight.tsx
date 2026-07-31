@@ -109,6 +109,19 @@ export default function AddEditFlight() {
         lon: existingFlight.arrivalLon,
         timezone: existingFlight.arrivalTimeZone,
       })
+
+      if (!Number.isFinite(existingFlight.departureLat) || !Number.isFinite(existingFlight.departureLon)) {
+        void getAirportByIata(existingFlight.departureIata).then((airport) => {
+          if (airport)
+            setDeparture((current) => (current ? { ...current, lat: airport.lat, lon: airport.lon } : current))
+        })
+      }
+      if (!Number.isFinite(existingFlight.arrivalLat) || !Number.isFinite(existingFlight.arrivalLon)) {
+        void getAirportByIata(existingFlight.arrivalIata).then((airport) => {
+          if (airport) setArrival((current) => (current ? { ...current, lat: airport.lat, lon: airport.lon } : current))
+        })
+      }
+
       setScheduledDepartureDate(existingFlight.scheduledDepartureDate)
       setScheduledDepartureTime(existingFlight.scheduledDepartureTime)
       setScheduledArrivalDate(existingFlight.scheduledArrivalDate)

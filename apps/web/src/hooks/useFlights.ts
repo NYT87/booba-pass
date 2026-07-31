@@ -1,11 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
-import { flightDurationMin, isUpcoming } from '../types'
+import { compareFlightsByScheduledDepartureDesc, flightDurationMin, isUpcoming } from '../types'
 import type { Flight } from '../types'
 
 export function useFlights(filter: 'all' | 'past' | 'upcoming' = 'all') {
   return useLiveQuery(async () => {
-    const all = await db.flights.orderBy('scheduledDepartureDate').reverse().toArray()
+    const all = (await db.flights.toArray()).sort(compareFlightsByScheduledDepartureDesc)
     if (filter === 'past') return all.filter((f) => !isUpcoming(f))
     if (filter === 'upcoming') return all.filter((f) => isUpcoming(f))
     return all
@@ -20,11 +20,7 @@ export function useFlightsByMembership(membershipId: number | undefined) {
   return useLiveQuery(async () => {
     if (membershipId === undefined) return []
     const flights = await db.flights.where('membershipId').equals(membershipId).toArray()
-    return flights.sort((a, b) => {
-      const aDate = `${a.scheduledDepartureDate}T${a.scheduledDepartureTime ?? '00:00'}`
-      const bDate = `${b.scheduledDepartureDate}T${b.scheduledDepartureTime ?? '00:00'}`
-      return bDate.localeCompare(aDate)
-    })
+    return flights.sort(compareFlightsByScheduledDepartureDesc)
   }, [membershipId])
 }
 
