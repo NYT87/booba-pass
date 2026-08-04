@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6](https://github.com/NYT87/booba-pass/compare/booba-pass-web-v0.1.5...booba-pass-web-v0.1.6) (2026-08-04)
+
+
+### Features
+
+* **web:** add skeleton for flight list page ([cd559fd](https://github.com/NYT87/booba-pass/commit/cd559fd66a8817a8125489f3bf036040ba252597))
+* **web:** add trip management ([4eda351](https://github.com/NYT87/booba-pass/commit/4eda35160b4e317ee67fcbd2d2655d2e4c5868d2))
+* **web:** refine trip browsing ([f8d5a63](https://github.com/NYT87/booba-pass/commit/f8d5a63f7cb7c1a4856896143ee42ef0210b98ec))
+
+
+### Bug Fixes
+
+* **app:** correct edit flight page airport selection and timezones ([f42f162](https://github.com/NYT87/booba-pass/commit/f42f162d99823f739e29535397cde98d01361773))
+* **web:** improve flight detail return flow ([f63d918](https://github.com/NYT87/booba-pass/commit/f63d9188f01c3193032a681d75ab080608b62c15))
+
 ## [0.1.5](https://github.com/NYT87/booba-pass/compare/booba-pass-web-v0.1.4...booba-pass-web-v0.1.5) (2026-05-22)
 
 
