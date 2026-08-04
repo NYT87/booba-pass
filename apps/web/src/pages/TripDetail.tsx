@@ -25,13 +25,25 @@ function FlightLinkRow({
   flight,
   action,
   onAction,
+  onOpen,
 }: {
   flight: Flight
   action: 'link' | 'unlink'
   onAction: () => void
+  onOpen?: () => void
 }) {
   return (
-    <div className="trip-flight-row">
+    <div
+      className={`trip-flight-row ${onOpen ? 'trip-flight-row-clickable' : ''}`}
+      role={onOpen ? 'button' : undefined}
+      tabIndex={onOpen ? 0 : undefined}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (!onOpen || (event.key !== 'Enter' && event.key !== ' ')) return
+        event.preventDefault()
+        onOpen()
+      }}
+    >
       <div className="trip-flight-route">
         <span className="trip-flight-iata">{flight.departureIata}</span>
         <span className="trip-flight-divider">-</span>
@@ -46,7 +58,10 @@ function FlightLinkRow({
         <button
           type="button"
           className={`membership-icon-btn ${action === 'unlink' ? 'membership-icon-btn-danger' : ''}`}
-          onClick={onAction}
+          onClick={(event) => {
+            event.stopPropagation()
+            onAction()
+          }}
           aria-label={action === 'link' ? `Link ${flight.flightNumber}` : `Unlink ${flight.flightNumber}`}
         >
           {action === 'link' ? <Link2 size={18} /> : <Unlink size={18} />}
@@ -327,6 +342,11 @@ export default function TripDetail() {
                   if (flight.id === undefined) return
                   triggerHaptic()
                   void unlinkFlightFromTrip(trip, flight.id)
+                }}
+                onOpen={() => {
+                  if (flight.id === undefined || trip.id === undefined) return
+                  triggerHaptic()
+                  navigate(`/flights/${flight.id}`, { state: { returnTo: `/trips/${trip.id}` } })
                 }}
               />
             ))}

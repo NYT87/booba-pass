@@ -1010,6 +1010,14 @@ img {
   border-top: 1px solid var(--border);
 }
 
+.trip-flight-row-clickable {
+  cursor: pointer;
+}
+
+.trip-flight-row-clickable:hover {
+  background: var(--surface-raised);
+}
+
 .trip-flight-row:first-child {
   border-top: 0;
 }
@@ -1425,6 +1433,59 @@ img {
 .membership-icon-btn-danger {
   color: var(--accent);
   border-color: var(--accent);
+}
+
+.membership-mileage-list {
+  margin: 0 var(--space-md);
+  padding: 0;
+  overflow: hidden;
+}
+
+.membership-mileage-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px 94px;
+  gap: var(--space-sm);
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.membership-mileage-row:last-child {
+  border-bottom: 0;
+}
+
+.membership-mileage-row:hover {
+  background: var(--surface-raised);
+}
+
+.membership-mileage-flight {
+  min-width: 0;
+}
+
+.membership-mileage-flight-code {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  color: var(--text-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.membership-mileage-flight-code span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.membership-mileage-value {
+  min-height: 1em;
+  font-weight: 700;
+  text-align: right;
 }
 
 .photo-upload-grid,

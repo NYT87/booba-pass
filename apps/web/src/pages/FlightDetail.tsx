@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useFlightById, deleteFlight, saveFlight } from '../hooks/useFlights'
 import { useMembershipById } from '../hooks/useMemberships'
 import AirlineLabel from '../components/AirlineLabel'
@@ -25,6 +25,7 @@ import { exportSingleFlightToJSON } from '../utils/dataTransfer'
 export default function FlightDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const flight = useFlightById(id ? parseInt(id) : undefined)
   const linkedMembership = useMembershipById(flight?.membershipId)
   const triggerHaptic = useHapticFeedback()
@@ -44,6 +45,23 @@ export default function FlightDetail() {
     : null
   const hasMileage = flight.mileageGranted !== undefined
   const showMembershipSection = Boolean(membershipProgram || hasMileage)
+  const returnTo =
+    typeof (location.state as { returnTo?: unknown } | null)?.returnTo === 'string'
+      ? ((location.state as { returnTo: string }).returnTo ?? null)
+      : null
+
+  const handleBack = () => {
+    triggerHaptic()
+    if (returnTo?.startsWith('/')) {
+      navigate(returnTo)
+      return
+    }
+    if ((window.history.state?.idx ?? 0) > 0) {
+      navigate(-1)
+      return
+    }
+    navigate('/flights')
+  }
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -74,13 +92,7 @@ export default function FlightDetail() {
     <PageScaffold
       title={<h1>Flight Details</h1>}
       left={
-        <button
-          onClick={() => {
-            triggerHaptic()
-            navigate('/flights')
-          }}
-          className="btn-ghost"
-        >
+        <button onClick={handleBack} className="btn-ghost">
           <ArrowLeft size={24} />
         </button>
       }

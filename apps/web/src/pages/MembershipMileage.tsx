@@ -6,7 +6,7 @@ import { useFlightsByMembership } from '../hooks/useFlights'
 import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
 function formatMileage(value: number | undefined) {
-  if (value === undefined) return '—'
+  if (value === undefined) return ''
   const sign = value >= 0 ? '+' : ''
   return `${sign}${value.toLocaleString()}`
 }
@@ -64,49 +64,44 @@ export default function MembershipMileage() {
         </div>
       </div>
 
-      <div className="card" style={{ margin: '0 20px', padding: 0, overflow: 'hidden' }}>
-        {flights.filter((f) => f.mileageGranted !== undefined).length > 0 ? (
-          flights
-            .filter((f) => f.mileageGranted !== undefined)
-            .map((f) => (
-              <div
-                key={f.id}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(0, 1fr) 94px 80px',
-                  gap: 8,
-                  padding: '12px 14px',
-                  borderBottom: '1px solid var(--border)',
-                  alignItems: 'center',
-                }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: '0.9rem',
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {f.flightNumber}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    {f.departureIata}/{f.arrivalIata}
-                  </div>
+      <div className="card membership-mileage-list">
+        {flights.length > 0 ? (
+          flights.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              className="membership-mileage-row"
+              onClick={() => {
+                if (f.id === undefined) return
+                triggerHaptic()
+                navigate(`/flights/${f.id}`, { state: { returnTo: `/memberships/${membershipId}/mileage` } })
+              }}
+              aria-label={`Open ${f.flightNumber} details`}
+            >
+              <div className="membership-mileage-flight">
+                <div className="membership-mileage-flight-code">
+                  <span>{f.flightNumber}</span>
                 </div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                  {formatDateDot(f.scheduledDepartureDate)}
-                </div>
-                <div style={{ fontWeight: 700, textAlign: 'right', color: 'var(--accent)' }}>
-                  {formatMileage(f.mileageGranted)}
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  {f.departureIata}/{f.arrivalIata}
                 </div>
               </div>
-            ))
+              <div
+                className="membership-mileage-value"
+                style={{
+                  color: f.mileageGranted !== undefined ? 'var(--accent)' : 'transparent',
+                }}
+              >
+                {formatMileage(f.mileageGranted)}
+              </div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', textAlign: 'right' }}>
+                {formatDateDot(f.scheduledDepartureDate)}
+              </div>
+            </button>
+          ))
         ) : (
           <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-secondary)' }}>
-            No flights with mileage assigned yet.
+            No flights linked to this membership yet.
           </div>
         )}
       </div>
