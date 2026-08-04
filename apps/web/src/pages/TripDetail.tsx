@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CalendarDays, Edit2, Link2, MapPin, Plus, Search, Trash2, Unlink, X } from 'lucide-react'
 import AirlineLabel from '../components/AirlineLabel'
 import PageScaffold from '../components/PageScaffold'
@@ -74,6 +74,7 @@ function FlightLinkRow({
 export default function TripDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const tripId = id ? Number.parseInt(id, 10) : undefined
   const trip = useTripById(tripId)
   const linkedFlights = useTripFlights(trip)
@@ -93,6 +94,10 @@ export default function TripDetail() {
   const [showFlightPicker, setShowFlightPicker] = useState(false)
   const [flightSearchQuery, setFlightSearchQuery] = useState('')
   const [airportsByIata, setAirportsByIata] = useState<Map<string, Airport>>(new Map())
+  const returnTo =
+    typeof (location.state as { returnTo?: unknown } | null)?.returnTo === 'string'
+      ? ((location.state as { returnTo: string }).returnTo ?? null)
+      : null
 
   useEffect(() => {
     let cancelled = false
@@ -259,17 +264,24 @@ export default function TripDetail() {
     navigate('/trips')
   }
 
+  const handleBack = () => {
+    triggerHaptic()
+    if (returnTo?.startsWith('/')) {
+      navigate(returnTo)
+      return
+    }
+    if ((window.history.state?.idx ?? 0) > 0) {
+      navigate(-1)
+      return
+    }
+    navigate('/trips')
+  }
+
   return (
     <PageScaffold
       title={<h1>Trip Details</h1>}
       left={
-        <button
-          onClick={() => {
-            triggerHaptic()
-            navigate('/trips')
-          }}
-          className="btn-ghost"
-        >
+        <button onClick={handleBack} className="btn-ghost">
           <ArrowLeft size={24} />
         </button>
       }
@@ -665,18 +677,17 @@ export default function TripDetail() {
                       aria-label="City name"
                     />
                   </div>
-                  <button
-                    type="button"
-                    className="membership-icon-btn"
-                    onClick={() => {
-                      triggerHaptic()
-                      void handleAddCity()
-                    }}
-                    aria-label={editingCity ? 'Update city' : 'Save city'}
-                  >
-                    {editingCity ? <Edit2 size={18} /> : <Plus size={18} />}
-                  </button>
                 </div>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => {
+                    triggerHaptic()
+                    void handleAddCity()
+                  }}
+                >
+                  {editingCity ? 'Update City' : 'Save City'}
+                </button>
               </div>
             </div>
           </div>,

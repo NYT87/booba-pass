@@ -1,11 +1,11 @@
 import FlightCard from '../components/FlightCard'
 import PageScaffold from '../components/PageScaffold'
 import TripCard from '../components/TripCard'
-import { useFlights, useStats } from '../hooks/useFlights'
+import { useFlights } from '../hooks/useFlights'
 import { compareTripsByStartDateDesc, isUpcomingTrip, useTrips } from '../hooks/useTrips'
 import { MapPin, Settings as SettingsIcon, Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { compareFlightsByScheduledDepartureDesc, isUpcoming } from '../types'
+import { compareFlightsByScheduledDepartureDesc, flightDurationMin, isUpcoming } from '../types'
 import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
 type HomeProps = {
@@ -14,14 +14,82 @@ type HomeProps = {
   onUpdate: () => void
 }
 
+function FlightCardSkeleton({ index }: { index: number }) {
+  return (
+    <div className="card flight-card flight-card-skeleton" aria-hidden="true">
+      <div className="flight-card-main">
+        <div className="flight-card-topline">
+          <span className="flight-skeleton flight-skeleton-pill" />
+          <span className="flight-skeleton flight-skeleton-date" />
+        </div>
+        <div className="flight-card-route">
+          <div className="flight-card-airport">
+            <span
+              className={`flight-skeleton flight-skeleton-iata ${index % 2 === 0 ? 'flight-skeleton-iata-wide' : ''}`}
+            />
+            <span className="flight-skeleton flight-skeleton-city" />
+          </div>
+          <div className="flight-arc-line flight-arc-line-skeleton" />
+          <div className="flight-card-airport flight-card-airport-arrival">
+            <span className="flight-skeleton flight-skeleton-iata" />
+            <span className="flight-skeleton flight-skeleton-city flight-skeleton-city-short" />
+          </div>
+        </div>
+        <div className="flight-card-meta">
+          <div className="flight-card-meta-row">
+            <span className="flight-skeleton flight-skeleton-meta flight-skeleton-meta-wide" />
+            <span className="flight-skeleton flight-skeleton-meta" />
+          </div>
+          <div className="flight-card-meta-row flight-card-meta-row-secondary">
+            <span className="flight-skeleton flight-skeleton-meta" />
+            <span className="flight-skeleton flight-skeleton-separator" />
+            <span className="flight-skeleton flight-skeleton-meta" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TripCardSkeleton() {
+  return (
+    <div className="card trip-card trip-card-skeleton" aria-hidden="true">
+      <div className="trip-card-main">
+        <div className="trip-card-topline">
+          <span className="flight-skeleton flight-skeleton-pill" />
+          <span className="flight-skeleton flight-skeleton-date" />
+        </div>
+        <div>
+          <div className="home-trip-skeleton-name">
+            <span className="flight-skeleton" />
+          </div>
+          <div className="trip-card-cities">
+            <span className="flight-skeleton flight-skeleton-city" />
+            <span className="flight-skeleton flight-skeleton-meta" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Home({ hasUpdateAvailable, availableVersion, onUpdate }: HomeProps) {
   const navigate = useNavigate()
   const triggerHaptic = useHapticFeedback()
   const flights = useFlights('all')
   const trips = useTrips()
-  const stats = useStats()
+  const isTripsLoading = trips === undefined
+  const isFlightsLoading = flights === undefined
 
   const upcomingFlights = flights?.filter(isUpcoming).sort((a, b) => compareFlightsByScheduledDepartureDesc(b, a)) ?? []
+  const completedFlights = flights?.filter((flight) => !isUpcoming(flight))
+  const completedStats = completedFlights
+    ? {
+        totalFlights: completedFlights.length,
+        totalDistanceKm: Math.round(completedFlights.reduce((sum, flight) => sum + flight.distanceKm, 0)),
+        totalDurationMin: completedFlights.reduce((sum, flight) => sum + flightDurationMin(flight), 0),
+      }
+    : undefined
   const upcomingTrips = trips?.filter(isUpcomingTrip).sort(compareTripsByStartDateDesc) ?? []
 
   return (
@@ -70,20 +138,44 @@ export default function Home({ hasUpdateAvailable, availableVersion, onUpdate }:
         <div className="hero-grid">
           <div>
             <div className="eyebrow">TOTAL SEGMENTS</div>
-            <div className="hero-value">{stats?.totalFlights ?? 0}</div>
+            {isFlightsLoading ? (
+              <div className="hero-value home-hero-value-skeleton">
+                <span className="flight-skeleton" />
+              </div>
+            ) : (
+              <div className="hero-value">{completedStats?.totalFlights ?? 0}</div>
+            )}
           </div>
           <div className="hero-meta">
             <div className="instrument-row">
               <span>DISTANCE</span>
-              <strong>{Math.round(stats?.totalDistanceKm ?? 0).toLocaleString()} KM</strong>
+              {isFlightsLoading ? (
+                <strong className="home-instrument-skeleton">
+                  <span className="flight-skeleton" />
+                </strong>
+              ) : (
+                <strong>{Math.round(completedStats?.totalDistanceKm ?? 0).toLocaleString()} KM</strong>
+              )}
             </div>
             <div className="instrument-row">
               <span>AIR TIME</span>
-              <strong>{Math.round((stats?.totalDurationMin ?? 0) / 60)} H</strong>
+              {isFlightsLoading ? (
+                <strong className="home-instrument-skeleton">
+                  <span className="flight-skeleton" />
+                </strong>
+              ) : (
+                <strong>{Math.round((completedStats?.totalDurationMin ?? 0) / 60)} H</strong>
+              )}
             </div>
             <div className="instrument-row">
               <span>NEXT DEPARTURE</span>
-              <strong>{upcomingFlights[0]?.scheduledDepartureDate ?? 'NONE SCHEDULED'}</strong>
+              {isFlightsLoading ? (
+                <strong className="home-instrument-skeleton">
+                  <span className="flight-skeleton" />
+                </strong>
+              ) : (
+                <strong>{upcomingFlights[0]?.scheduledDepartureDate ?? 'NONE SCHEDULED'}</strong>
+              )}
             </div>
           </div>
         </div>
@@ -115,11 +207,11 @@ export default function Home({ hasUpdateAvailable, availableVersion, onUpdate }:
         </div>
       </section>
 
-      {upcomingTrips.length > 0 && (
-        <section style={{ marginTop: 12 }}>
+      {(isTripsLoading || upcomingTrips.length > 0) && (
+        <section style={{ marginTop: 12 }} aria-busy={isTripsLoading ? 'true' : undefined}>
           <div className="section-header">
             <h2>Upcoming Trips</h2>
-            {trips && trips.length > upcomingTrips.length && (
+            {!isTripsLoading && trips && trips.length > upcomingTrips.length && (
               <button
                 onClick={() => {
                   triggerHaptic()
@@ -131,21 +223,21 @@ export default function Home({ hasUpdateAvailable, availableVersion, onUpdate }:
             )}
           </div>
           <div className="trips-list">
-            {upcomingTrips.map((trip) => (
-              <TripCard key={trip.id} trip={trip} />
-            ))}
+            {isTripsLoading
+              ? Array.from({ length: 2 }, (_, index) => <TripCardSkeleton key={index} />)
+              : upcomingTrips.map((trip) => <TripCard key={trip.id} trip={trip} />)}
           </div>
         </section>
       )}
 
-      {upcomingFlights.length > 0 && (
-        <section style={{ marginTop: 12 }}>
+      {(isFlightsLoading || upcomingFlights.length > 0) && (
+        <section style={{ marginTop: 12 }} aria-busy={isFlightsLoading ? 'true' : undefined}>
           <div className="section-header">
             <h2>Upcoming Flights</h2>
           </div>
-          {upcomingFlights.map((f) => (
-            <FlightCard key={f.id} flight={f} />
-          ))}
+          {isFlightsLoading
+            ? Array.from({ length: 2 }, (_, index) => <FlightCardSkeleton key={index} index={index} />)
+            : upcomingFlights.map((f) => <FlightCard key={f.id} flight={f} />)}
         </section>
       )}
     </PageScaffold>

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { CalendarDays, MapPin, Plane } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Clock, MapPin, Plane } from 'lucide-react'
 import type { Trip } from '../types'
 import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
@@ -12,10 +12,13 @@ const formatTripDates = (trip: Trip) => {
   return `${trip.startDate} - ${trip.endDate}`
 }
 
+const isTripCompleted = (trip: Trip) => trip.endDate < new Date().toISOString().slice(0, 10)
+
 export default function TripCard({ trip }: Props) {
   const navigate = useNavigate()
   const triggerHaptic = useHapticFeedback()
   const citySummary = trip.cities.length > 0 ? trip.cities.join(' / ') : 'No cities added'
+  const completed = isTripCompleted(trip)
 
   return (
     <button
@@ -28,9 +31,18 @@ export default function TripCard({ trip }: Props) {
     >
       <div className="trip-card-main">
         <div className="trip-card-topline">
-          <span className="badge">
-            <Plane size={12} />
-            {trip.flightIds.length} {trip.flightIds.length === 1 ? 'Flight' : 'Flights'}
+          <span className="trip-card-badges">
+            <span className="badge">
+              <Plane size={12} />
+              {trip.flightIds.length} {trip.flightIds.length === 1 ? 'Flight' : 'Flights'}
+            </span>
+            <span
+              className={`trip-status-icon ${completed ? 'trip-status-completed' : 'trip-status-upcoming'}`}
+              title={completed ? 'Completed trip' : 'Upcoming trip'}
+              aria-label={completed ? 'Completed trip' : 'Upcoming trip'}
+            >
+              {completed ? <CheckCircle2 size={16} /> : <Clock size={16} />}
+            </span>
           </span>
           <span className="trip-card-date">
             <CalendarDays size={12} />

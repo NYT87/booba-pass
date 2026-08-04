@@ -25,7 +25,9 @@ export function useTripFlights(trip: Trip | undefined) {
   return useLiveQuery(async () => {
     if (!trip?.flightIds.length) return []
     const flights = await db.flights.bulkGet(trip.flightIds)
-    return flights.filter((flight): flight is Flight => Boolean(flight)).sort(compareFlightsByScheduledDepartureDesc)
+    return flights
+      .filter((flight): flight is Flight => Boolean(flight))
+      .sort((a, b) => compareFlightsByScheduledDepartureDesc(b, a))
   }, [trip?.id, trip?.flightIds.join(',')])
 }
 
