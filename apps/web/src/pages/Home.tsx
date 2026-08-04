@@ -1,9 +1,11 @@
 import FlightCard from '../components/FlightCard'
 import PageScaffold from '../components/PageScaffold'
+import TripCard from '../components/TripCard'
 import { useFlights, useStats } from '../hooks/useFlights'
+import { compareTripsByStartDateDesc, isUpcomingTrip, useTrips } from '../hooks/useTrips'
 import { MapPin, Settings as SettingsIcon, Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { isUpcoming } from '../types'
+import { compareFlightsByScheduledDepartureDesc, isUpcoming } from '../types'
 import { useHapticFeedback } from '../hooks/useHapticFeedback'
 
 type HomeProps = {
@@ -16,10 +18,11 @@ export default function Home({ hasUpdateAvailable, availableVersion, onUpdate }:
   const navigate = useNavigate()
   const triggerHaptic = useHapticFeedback()
   const flights = useFlights('all')
+  const trips = useTrips()
   const stats = useStats()
 
-  const upcomingFlights = flights?.filter(isUpcoming) ?? []
-  const pastFlights = flights?.filter((f) => !isUpcoming(f)).slice(0, 3) ?? []
+  const upcomingFlights = flights?.filter(isUpcoming).sort((a, b) => compareFlightsByScheduledDepartureDesc(b, a)) ?? []
+  const upcomingTrips = trips?.filter(isUpcomingTrip).sort(compareTripsByStartDateDesc) ?? []
 
   return (
     <PageScaffold
@@ -112,34 +115,35 @@ export default function Home({ hasUpdateAvailable, availableVersion, onUpdate }:
         </div>
       </section>
 
-      {upcomingFlights.length > 0 && (
+      {upcomingTrips.length > 0 && (
         <section style={{ marginTop: 12 }}>
           <div className="section-header">
-            <h2>Upcoming Flights</h2>
-          </div>
-          {upcomingFlights.map((f) => (
-            <FlightCard key={f.id} flight={f} />
-          ))}
-        </section>
-      )}
-
-      {pastFlights.length > 0 && (
-        <section style={{ marginTop: 12 }}>
-          <div className="section-header">
-            <h2>Recent Flights</h2>
-            {flights && flights.length > pastFlights.length && (
+            <h2>Upcoming Trips</h2>
+            {trips && trips.length > upcomingTrips.length && (
               <button
                 onClick={() => {
                   triggerHaptic()
-                  navigate('/flights')
+                  navigate('/trips')
                 }}
               >
                 View All
               </button>
             )}
           </div>
+          <div className="trips-list">
+            {upcomingTrips.map((trip) => (
+              <TripCard key={trip.id} trip={trip} />
+            ))}
+          </div>
+        </section>
+      )}
 
-          {pastFlights.map((f) => (
+      {upcomingFlights.length > 0 && (
+        <section style={{ marginTop: 12 }}>
+          <div className="section-header">
+            <h2>Upcoming Flights</h2>
+          </div>
+          {upcomingFlights.map((f) => (
             <FlightCard key={f.id} flight={f} />
           ))}
         </section>

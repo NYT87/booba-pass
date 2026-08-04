@@ -7,6 +7,8 @@ import Home from './pages/Home'
 import Flights from './pages/Flights'
 import FlightDetail from './pages/FlightDetail'
 import AddEditFlight from './pages/AddEditFlight'
+import Trips from './pages/Trips'
+import TripDetail from './pages/TripDetail'
 import MapView from './pages/MapView'
 import Stats from './pages/Stats'
 import Memberships from './pages/Memberships'
@@ -24,7 +26,7 @@ function App() {
   const [availableVersion, setAvailableVersion] = useState<string | null>(null)
   const splashStartTimeRef = useRef<number>(0)
   const initialDataLoaded = useLiveQuery(async () => {
-    await Promise.all([db.flights.count(), db.memberships.count()])
+    await Promise.all([db.flights.count(), db.memberships.count(), db.trips.count()])
     return true
   })
   const { needRefresh, updateServiceWorker } = useRegisterSW({
@@ -115,6 +117,8 @@ function App() {
           <Route path="/flights/:id" element={<FlightDetail />} />
           <Route path="/flights/new" element={<AddEditFlight />} />
           <Route path="/flights/:id/edit" element={<AddEditFlight />} />
+          <Route path="/trips" element={<Trips />} />
+          <Route path="/trips/:id" element={<TripDetail />} />
           <Route path="/map" element={<MapView />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/memberships" element={<Memberships />} />

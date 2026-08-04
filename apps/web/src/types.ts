@@ -56,6 +56,25 @@ export interface Flight {
   mileageGranted?: number
 }
 
+export interface Trip {
+  id?: number
+  name: string
+  startDate: string
+  endDate: string
+  cities: string[]
+  flightIds: number[]
+  payments: TripPayment[]
+}
+
+export interface TripPayment {
+  id: string
+  description: string
+  price: {
+    amount: number
+    currency: string
+  }
+}
+
 export type MembershipCodeType = 'QR' | 'BARCODE' | 'NONE'
 
 export interface Membership {

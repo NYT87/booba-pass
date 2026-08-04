@@ -67,6 +67,7 @@ export default function Settings() {
   const flights = useLiveQuery(() => db.flights.toArray())
   const memberships = useLiveQuery(() => db.memberships.toArray())
   const airlines = useLiveQuery(() => db.airlines.toArray())
+  const trips = useLiveQuery(() => db.trips.toArray())
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<{
     type: 'success' | 'error'
@@ -147,7 +148,7 @@ export default function Settings() {
       const result = await handleImportFile(file)
       setImportResult({
         type: 'success',
-        text: `Import complete! ${result.success} items (Flights/Loyalty) upserted successfully. ${result.failed} rows skipped.`,
+        text: `Import complete! ${result.success} records (trips, flights, loyalty, and related data) upserted successfully. ${result.failed} rows skipped.`,
       })
     } catch (err) {
       console.error(err)
@@ -308,9 +309,11 @@ export default function Settings() {
 
   const clearData = async () => {
     if (
-      confirm('Are you ABSOLUTELY sure? This will delete all your flights, memberships, and photos from this device.')
+      confirm(
+        'Are you ABSOLUTELY sure? This will delete all your trips, flights, memberships, and photos from this device.'
+      )
     ) {
-      await Promise.all([db.flights.clear(), db.memberships.clear()])
+      await Promise.all([db.trips.clear(), db.flights.clear(), db.memberships.clear()])
       alert('Local storage cleared.')
     }
   }
@@ -401,7 +404,9 @@ export default function Settings() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button
               className="btn-ghost"
-              onClick={() => flights && memberships && airlines && exportToJSON(flights, memberships, airlines)}
+              onClick={() =>
+                flights && memberships && airlines && trips && exportToJSON(flights, memberships, airlines, trips)
+              }
               style={{
                 justifyContent: 'flex-start',
                 padding: 12,
@@ -412,7 +417,9 @@ export default function Settings() {
               <FileJson size={18} style={{ marginRight: 10, color: 'var(--accent)' }} />
               <div className="settings-action-copy">
                 <div className="settings-action-title">Full Backup (JSON)</div>
-                <div className="settings-action-description">Includes flights, boarding passes, and loyalty cards.</div>
+                <div className="settings-action-description">
+                  Includes trips, cities, payments, linked flights, boarding passes, and loyalty cards.
+                </div>
               </div>
             </button>
 

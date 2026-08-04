@@ -1,4 +1,4 @@
-import type { Airline, Flight, Membership } from '../types'
+import type { Airline, Flight, Membership, Trip, TripPayment } from '../types'
 import { db } from '../db/db'
 
 type ImportMode = 'auto' | 'single-flight' | 'memberships-only'
@@ -37,6 +37,8 @@ const sanitizeFilenamePart = (value: string) =>
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
+const isTripPayment = (value: TripPayment | null): value is TripPayment => Boolean(value)
+
 const isSingleFlightPayload = (value: unknown): value is SingleFlightExportPayload =>
   isRecord(value) && value.kind === 'single-flight' && isRecord(value.flight)
 
@@ -64,6 +66,25 @@ const toNumberOrUndefined = (value: unknown): number | undefined => {
 const normalizeSeatClass = (value: unknown): Flight['seatClass'] => {
   if (value === 'Business' || value === 'First' || value === 'Economy') return value
   return 'Economy'
+}
+
+const normalizeTripPayment = (raw: unknown): TripPayment | null => {
+  if (!isRecord(raw)) return null
+  const price = isRecord(raw.price) ? raw.price : {}
+  const description = typeof raw.description === 'string' ? raw.description.trim() : ''
+  const amount = toNumberOrUndefined(price.amount) ?? 0
+  const currency = typeof price.currency === 'string' ? price.currency.trim().toUpperCase() : ''
+
+  if (!description || amount <= 0 || !currency) return null
+
+  return {
+    id: typeof raw.id === 'string' && raw.id ? raw.id : crypto.randomUUID(),
+    description,
+    price: {
+      amount,
+      currency,
+    },
+  }
 }
 
 function normalizeImportedFlight(raw: Record<string, unknown>): Omit<Flight, 'id'> {
@@ -94,6 +115,38 @@ function normalizeImportedMembership(raw: Record<string, unknown>): Omit<Members
   return normalized
 }
 
+function normalizeImportedTrip(
+  raw: Record<string, unknown>,
+  flightIdRemap = new Map<number, number>()
+): Omit<Trip, 'id'> {
+  const rawFlightIds = Array.isArray(raw.flightIds) ? raw.flightIds : []
+  const flightIds = rawFlightIds
+    .map((value) => toIntOrUndefined(value))
+    .filter((value): value is number => value !== undefined)
+    .map((value) => flightIdRemap.get(value) ?? value)
+
+  return {
+    name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'Untitled Trip',
+    startDate: typeof raw.startDate === 'string' ? raw.startDate : '',
+    endDate: typeof raw.endDate === 'string' ? raw.endDate : typeof raw.startDate === 'string' ? raw.startDate : '',
+    cities: Array.isArray(raw.cities) ? raw.cities.map((city) => String(city).trim()).filter(Boolean) : [],
+    flightIds: Array.from(new Set(flightIds)),
+    payments: Array.isArray(raw.payments) ? raw.payments.map(normalizeTripPayment).filter(isTripPayment) : [],
+  }
+}
+
+function normalizeTripForExport(trip: Trip): Trip {
+  return {
+    ...trip,
+    name: trip.name.trim() || 'Untitled Trip',
+    startDate: trip.startDate,
+    endDate: trip.endDate || trip.startDate,
+    cities: (trip.cities ?? []).map((city) => String(city).trim()).filter(Boolean),
+    flightIds: Array.from(new Set((trip.flightIds ?? []).filter((flightId) => Number.isFinite(flightId)))),
+    payments: (trip.payments ?? []).map(normalizeTripPayment).filter(isTripPayment),
+  }
+}
+
 /**
  * Smart Upsert: Update if matching flight exists, otherwise add.
  * Matching criteria: Airline, Flight Number, and Scheduled Departure Date.
@@ -114,6 +167,18 @@ async function smartUpsert(flight: Omit<Flight, 'id'>) {
   }
 }
 
+async function upsertFlightAndGetId(flight: Omit<Flight, 'id'>): Promise<number | undefined> {
+  await smartUpsert(flight)
+  const stored = await db.flights
+    .where({
+      airline: flight.airline,
+      flightNumber: flight.flightNumber,
+      scheduledDepartureDate: flight.scheduledDepartureDate,
+    })
+    .first()
+  return stored?.id
+}
+
 /**
  * Smart Upsert for Memberships: Update if matching airline and number exists.
  */
@@ -132,6 +197,29 @@ async function smartUpsertMembership(membership: Omit<Membership, 'id'>) {
   }
 }
 
+async function smartUpsertTrip(trip: Omit<Trip, 'id'>, sourceId?: number) {
+  if (sourceId !== undefined) {
+    const existingById = await db.trips.get(sourceId)
+    if (existingById) {
+      return db.trips.update(sourceId, trip)
+    }
+  }
+
+  const existing = await db.trips
+    .where({
+      name: trip.name,
+      startDate: trip.startDate,
+      endDate: trip.endDate,
+    })
+    .first()
+
+  if (existing) {
+    return db.trips.update(existing.id!, trip)
+  } else {
+    return db.trips.add(trip)
+  }
+}
+
 async function upsertMembershipAndGetId(membership: Omit<Membership, 'id'>): Promise<number | undefined> {
   await smartUpsertMembership(membership)
   const stored = await db.memberships
@@ -143,13 +231,14 @@ async function upsertMembershipAndGetId(membership: Omit<Membership, 'id'>): Pro
   return stored?.id
 }
 
-export const exportToJSON = (flights: Flight[], memberships: Membership[], airlines: Airline[]) => {
+export const exportToJSON = (flights: Flight[], memberships: Membership[], airlines: Airline[], trips: Trip[]) => {
   const bundle = {
-    version: 5,
+    version: 7,
     exportedAt: new Date().toISOString(),
     flights,
     memberships,
     airlines,
+    trips: trips.map(normalizeTripForExport),
   }
   downloadJsonFile(bundle, `booba-pass-bundle-${new Date().toISOString().slice(0, 10)}.json`)
 }
@@ -313,8 +402,9 @@ export const handleImportFile = async (
             }
           }
           // Case 2: New Bundle format
-          else if (bundle.flights || bundle.memberships) {
+          else if (bundle.flights || bundle.memberships || bundle.trips) {
             const membershipIdRemap = new Map<number, number>()
+            const flightIdRemap = new Map<number, number>()
 
             if (bundle.memberships && Array.isArray(bundle.memberships)) {
               for (const m of bundle.memberships) {
@@ -340,6 +430,10 @@ export const handleImportFile = async (
             if (bundle.flights && Array.isArray(bundle.flights)) {
               for (const f of bundle.flights) {
                 if (f.airline && f.flightNumber && f.scheduledDepartureDate) {
+                  const sourceId =
+                    typeof (f as Record<string, unknown>).id === 'number'
+                      ? ((f as Record<string, unknown>).id as number)
+                      : undefined
                   const data = { ...(f as Record<string, unknown>) }
                   delete data.id
                   const normalizedFlight = normalizeImportedFlight(data)
@@ -351,7 +445,10 @@ export const handleImportFile = async (
                     normalizedFlight.membershipId = membershipIdRemap.get(normalizedFlight.membershipId)
                   }
 
-                  await smartUpsert(normalizedFlight)
+                  const storedId = await upsertFlightAndGetId(normalizedFlight)
+                  if (sourceId !== undefined && storedId !== undefined) {
+                    flightIdRemap.set(sourceId, storedId)
+                  }
                   success++
                 } else {
                   failed++
@@ -367,6 +464,23 @@ export const handleImportFile = async (
                     name: String(data.name),
                     image: String(data.image),
                   })
+                  success++
+                } else {
+                  failed++
+                }
+              }
+            }
+
+            if (bundle.trips && Array.isArray(bundle.trips)) {
+              for (const trip of bundle.trips) {
+                if (trip.name && trip.startDate) {
+                  const sourceId =
+                    typeof (trip as Record<string, unknown>).id === 'number'
+                      ? ((trip as Record<string, unknown>).id as number)
+                      : undefined
+                  const data = { ...(trip as Record<string, unknown>) }
+                  delete data.id
+                  await smartUpsertTrip(normalizeImportedTrip(data, flightIdRemap), sourceId)
                   success++
                 } else {
                   failed++
