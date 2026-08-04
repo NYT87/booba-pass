@@ -5,22 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.5](https://github.com/NYT87/booba-pass/compare/booba-pass-web-v0.1.4...booba-pass-web-v0.1.5) (2026-05-22)
-
+## [0.1.6](https://github.com/NYT87/booba-pass/compare/booba-pass-web-v0.1.5...booba-pass-web-v0.1.6) (2026-08-04)
 
 ### Features
 
-* add filter for flights list ([9947ef3](https://github.com/NYT87/booba-pass/commit/9947ef3cc8460ed05a3f57029e0f5162a05dcdc3))
-* allow to export/import one single flight ([086e2e8](https://github.com/NYT87/booba-pass/commit/086e2e8f7ec0f2df57f02edbb8b1d32b4297db67))
-* allow to export/import only memberships ([dd2d7c3](https://github.com/NYT87/booba-pass/commit/dd2d7c386bcfa479da870f60a0a90b9c77f421f8))
-* allow to update from settings page ([b88dccb](https://github.com/NYT87/booba-pass/commit/b88dccb57e69e3aebb356df7a27be9f412688ac2))
-* update components layouts ([c57135a](https://github.com/NYT87/booba-pass/commit/c57135a6ae4e8209864d11234b32047b67f73fde))
-
+- **web:** add skeleton for flight list page ([cd559fd](https://github.com/NYT87/booba-pass/commit/cd559fd66a8817a8125489f3bf036040ba252597))
+- **web:** add trip management ([4eda351](https://github.com/NYT87/booba-pass/commit/4eda35160b4e317ee67fcbd2d2655d2e4c5868d2))
+- **web:** refine trip browsing ([f8d5a63](https://github.com/NYT87/booba-pass/commit/f8d5a63f7cb7c1a4856896143ee42ef0210b98ec))
 
 ### Bug Fixes
 
-* correct map page to not break if incorrect data ([9deb01e](https://github.com/NYT87/booba-pass/commit/9deb01e90a90b48c9c12fc2f62552311c16c4c72))
-* handle timezone on flight time selection ([d1a45cc](https://github.com/NYT87/booba-pass/commit/d1a45cc3051bf55bd4c3d51b972a7771b5f346ec))
+- **app:** correct edit flight page airport selection and timezones ([f42f162](https://github.com/NYT87/booba-pass/commit/f42f162d99823f739e29535397cde98d01361773))
+- **web:** improve flight detail return flow ([f63d918](https://github.com/NYT87/booba-pass/commit/f63d9188f01c3193032a681d75ab080608b62c15))
+
+## [0.1.5](https://github.com/NYT87/booba-pass/compare/booba-pass-web-v0.1.4...booba-pass-web-v0.1.5) (2026-05-22)
+
+### Features
+
+- add filter for flights list ([9947ef3](https://github.com/NYT87/booba-pass/commit/9947ef3cc8460ed05a3f57029e0f5162a05dcdc3))
+- allow to export/import one single flight ([086e2e8](https://github.com/NYT87/booba-pass/commit/086e2e8f7ec0f2df57f02edbb8b1d32b4297db67))
+- allow to export/import only memberships ([dd2d7c3](https://github.com/NYT87/booba-pass/commit/dd2d7c386bcfa479da870f60a0a90b9c77f421f8))
+- allow to update from settings page ([b88dccb](https://github.com/NYT87/booba-pass/commit/b88dccb57e69e3aebb356df7a27be9f412688ac2))
+- update components layouts ([c57135a](https://github.com/NYT87/booba-pass/commit/c57135a6ae4e8209864d11234b32047b67f73fde))
+
+### Bug Fixes
+
+- correct map page to not break if incorrect data ([9deb01e](https://github.com/NYT87/booba-pass/commit/9deb01e90a90b48c9c12fc2f62552311c16c4c72))
+- handle timezone on flight time selection ([d1a45cc](https://github.com/NYT87/booba-pass/commit/d1a45cc3051bf55bd4c3d51b972a7771b5f346ec))
 
 ## [0.1.4](https://github.com/NYT87/booba-pass/compare/booba-pass-web-v0.1.3...booba-pass-web-v0.1.4) (2026-04-09)
 
